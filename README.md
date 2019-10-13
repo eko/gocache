@@ -19,8 +19,9 @@ Here is what it brings in detail:
 
 ## Built-in stores
 
-* [Ristretto](https://github.com/dgraph-io/ristretto) (in memory)
-* [Go-Redis](github.com/go-redis/redis/v7) (redis)
+* [Memory](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
+* [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
+* [Redis](https://github.com/go-redis/redis/v7) (go-redis/redis)
 * More to come soon
 
 ## Built-in metrics providers
@@ -33,16 +34,50 @@ Here is what it brings in detail:
 
 Here is a simple cache instanciation with Redis but you can also look at other available stores:
 
-```go
-redisStore := store.NewRedis(redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"}))
+#### Memcache
 
-cache.New(redisStore, 15*time.Second)
-err := cache.Set("my-key", "my-value)
+```go
+memcacheStore := store.NewMemcache(memcache.New("10.0.0.1:11211", "10.0.0.2:11211", "10.0.0.3:11212"))
+
+cacheManager := cache.New(memcacheStore, 15*time.Second)
+err := cacheManager.Set("my-key", []byte("my-value))
 if err != nil {
     panic(err)
 }
 
-value := cache.Get("my-key")
+value := cacheManager.Get("my-key")
+```
+
+#### Memory (using Ristretto)
+
+```go
+ristrettoCache, err := ristretto.NewCache(&ristretto.Config{NumCounters: 1000, MaxCost: 100, BufferItems: 64})
+if err != nil {
+    panic(err)
+}
+ristrettoStore := store.NewRistretto(ristrettoCache)
+
+cacheManager := cache.New(ristrettoStore, 1*time.Second)
+err := cacheManager.Set("my-key", "my-value)
+if err != nil {
+    panic(err)
+}
+
+value := cacheManager.Get("my-key")
+```
+
+#### Redis
+
+```go
+redisStore := store.NewRedis(redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"}))
+
+cacheManager := cache.New(redisStore, 15*time.Second)
+err := cacheManager.Set("my-key", "my-value)
+if err != nil {
+    panic(err)
+}
+
+value := cacheManager.Get("my-key")
 ```
 
 ### A chained cache
@@ -63,7 +98,7 @@ ristrettoStore := store.NewRistretto(ristrettoCache)
 redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
-cache := cache.NewChain(
+cacheManager := cache.NewChain(
     cache.New(ristrettoStore, 5*time.Second),
     cache.New(redisStore, 15*time.Second),
 )
@@ -89,7 +124,7 @@ loadFunction := func(key interface{}) (interface{}, error) {
 }
 
 // Initialize loadable cache
-cache := cache.NewLoadable(loadFunction, cache.New(redisStore, 15*time.Second))
+cacheManager := cache.NewLoadable(loadFunction, cache.New(redisStore, 15*time.Second))
 
 // ... Then, you can get your data and your function will automatically put them in cache(s)
 ```
@@ -107,14 +142,14 @@ redisStore := store.NewRedis(redisClient)
 promMetrics := metrics.NewPrometheus("my-test-app")
 
 // Initialize metric cache
-cache := cache.NewMetric(promMetrics, cache.New(redisStore, 15*time.Second))
+cacheManager := cache.NewMetric(promMetrics, cache.New(redisStore, 15*time.Second))
 
 // ... Then, you can get your data and metrics will be observed by Prometheus
 ```
 
 Of course, you can pass a `Chain` cache into the `Loadable` one so if your data is not available in all caches, it will bring it back in all caches.
 
-### A marshaler wraper
+### A marshaler wrapper
 
 Some caches like Redis stores and returns the value as a string so you have to marshal/unmarshal your structs if you want to cache an object. That's why we bring a marshaler service that wraps your cache and make the work for you:
 
@@ -124,10 +159,10 @@ redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
-cache := cache.NewMetric(promMetrics, cache.New(redisStore, 15*time.Second))
+cacheManager := cache.NewMetric(promMetrics, cache.New(redisStore, 15*time.Second))
 
 // Initializes marshaler
-marshaller := marshaler.New(cache)
+marshaller := marshaler.New(cacheManager)
 
 key := BookQuery{Slug: "my-test-amazing-book"}
 value := Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
@@ -194,14 +229,14 @@ func main() {
 
 	// Initialize a chained cache (memory with Ristretto then Redis) with Prometheus metrics
 	// and a load function that will put data back into caches if none has the value
-	cache := cache.NewMetric(promMetrics, cache.NewLoadable(loadFunction,
+	cacheManager := cache.NewMetric(promMetrics, cache.NewLoadable(loadFunction,
 		cache.NewChain(
 			cache.New(ristrettoStore, 5*time.Second),
 			cache.New(redisStore, 15*time.Second),
 		),
 	))
 
-	marshaller := marshaler.New(cache)
+	marshaller := marshaler.New(cacheManager)
 
 	key := Book{Slug: "my-test-amazing-book"}
 	value := Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
