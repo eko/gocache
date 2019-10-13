@@ -19,7 +19,8 @@ Here is what it brings in detail:
 
 ## Built-in stores
 
-* [Memory](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
+* [Memory (bigcache)](https://github.com/allegro/bigcache) (allegro/bigcache)
+* [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis/v7) (go-redis/redis)
 * More to come soon
@@ -48,6 +49,23 @@ if err != nil {
 value := cacheManager.Get("my-key")
 ```
 
+#### Memory (using Bigcache)
+
+```go
+bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute))
+bigcacheStore := store.NewBigcache(
+	bigcacheClient,
+)
+
+cacheManager := cache.New(bigcacheStore, nil)
+err := cacheManager.Set("my-key", "my-value")
+if err != nil {
+    panic(err)
+}
+
+value := cacheManager.Get("my-key")
+```
+
 #### Memory (using Ristretto)
 
 ```go
@@ -57,8 +75,8 @@ if err != nil {
 }
 ristrettoStore := store.NewRistretto(ristrettoCache)
 
-cacheManager := cache.New(ristrettoStore, 1*time.Second)
-err := cacheManager.Set("my-key", "my-value)
+cacheManager := cache.New(ristrettoStore, nil)
+err := cacheManager.Set("my-key", "my-value")
 if err != nil {
     panic(err)
 }
@@ -71,8 +89,8 @@ value := cacheManager.Get("my-key")
 ```go
 redisStore := store.NewRedis(redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"}))
 
-cacheManager := cache.New(redisStore, 15*time.Second)
-err := cacheManager.Set("my-key", "my-value)
+cacheManager := cache.New(redisStore, &cache.Options{Expiration: 15*time.Second})
+err := cacheManager.Set("my-key", "my-value")
 if err != nil {
     panic(err)
 }
@@ -99,8 +117,8 @@ redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
 cacheManager := cache.NewChain(
-    cache.New(ristrettoStore, 5*time.Second),
-    cache.New(redisStore, 15*time.Second),
+    cache.New(ristrettoStore, nil),
+    cache.New(redisStore, &cache.Options{Expiration: 15*time.Second}),
 )
 
 // ... Then, do what you want with your cache
@@ -124,7 +142,10 @@ loadFunction := func(key interface{}) (interface{}, error) {
 }
 
 // Initialize loadable cache
-cacheManager := cache.NewLoadable(loadFunction, cache.New(redisStore, 15*time.Second))
+cacheManager := cache.NewLoadable(
+	loadFunction,
+	cache.New(redisStore, &cache.Options{Expiration: 15*time.Second}),
+)
 
 // ... Then, you can get your data and your function will automatically put them in cache(s)
 ```
@@ -142,7 +163,10 @@ redisStore := store.NewRedis(redisClient)
 promMetrics := metrics.NewPrometheus("my-test-app")
 
 // Initialize metric cache
-cacheManager := cache.NewMetric(promMetrics, cache.New(redisStore, 15*time.Second))
+cacheManager := cache.NewMetric(
+	promMetrics,
+	cache.New(redisStore, &cache.Options{Expiration: 15*time.Second}),
+)
 
 // ... Then, you can get your data and metrics will be observed by Prometheus
 ```
@@ -159,7 +183,10 @@ redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
-cacheManager := cache.NewMetric(promMetrics, cache.New(redisStore, 15*time.Second))
+cacheManager := cache.NewMetric(
+	promMetrics,
+	cache.New(redisStore, &cache.Options{Expiration: 15*time.Second}),
+)
 
 // Initializes marshaler
 marshaller := marshaler.New(cacheManager)
@@ -231,8 +258,8 @@ func main() {
 	// and a load function that will put data back into caches if none has the value
 	cacheManager := cache.NewMetric(promMetrics, cache.NewLoadable(loadFunction,
 		cache.NewChain(
-			cache.New(ristrettoStore, 5*time.Second),
-			cache.New(redisStore, 15*time.Second),
+			cache.New(ristrettoStore, nil),
+			cache.New(redisStore, &cache.Options{Expiration: 15*time.Second}),
 		),
 	))
 
