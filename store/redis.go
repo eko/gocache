@@ -6,17 +6,23 @@ import (
 	"github.com/go-redis/redis/v7"
 )
 
+// RedisClientInterface represents a go-redis/redis client
+type RedisClientInterface interface {
+	Get(key string) *redis.StringCmd
+	Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+}
+
 const (
 	RedisType = "redis"
 )
 
 // RedisStore is a store for Redis
 type RedisStore struct {
-	client *redis.Client
+	client RedisClientInterface
 }
 
 // NewRedis creates a new store to Redis instance(s)
-func NewRedis(client *redis.Client) *RedisStore {
+func NewRedis(client RedisClientInterface) *RedisStore {
 	return &RedisStore{
 		client: client,
 	}

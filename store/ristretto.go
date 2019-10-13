@@ -4,21 +4,25 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/dgraph-io/ristretto"
 )
 
 const (
 	RistrettoType = "ristretto"
 )
 
+// RistrettoClientInterface represents a dgraph-io/ristretto client
+type RistrettoClientInterface interface {
+	Get(key interface{}) (interface{}, bool)
+	Set(key, value interface{}, cost int64) bool
+}
+
 // RistrettoStore is a store for Ristretto (memory) library
 type RistrettoStore struct {
-	client *ristretto.Cache
+	client RistrettoClientInterface
 }
 
 // NewRistretto creates a new store to Ristretto (memory) library instance
-func NewRistretto(client *ristretto.Cache) *RistrettoStore {
+func NewRistretto(client RistrettoClientInterface) *RistrettoStore {
 	return &RistrettoStore{
 		client: client,
 	}
