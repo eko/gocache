@@ -69,11 +69,7 @@ func TestMetricGetWhenChainCache(t *testing.T) {
 	cache1.On("Get", "my-key").Return(cacheValue, nil)
 	cache1.On("GetCodec").Return(codec1)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
-		return cacheValue, nil
-	}
-
-	chainCache := NewChain(loadFunc, cache1)
+	chainCache := NewChain(cache1)
 
 	metrics := &mocksMetrics.MetricsInterface{}
 	metrics.On("RecordFromCodec", codec1)

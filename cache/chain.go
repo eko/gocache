@@ -10,29 +10,26 @@ const (
 	ChainType = "chain"
 )
 
-type loadFunction func(key interface{}) (interface{}, error)
-
 // ChainCache represents the configuration needed by a cache aggregator
 type ChainCache struct {
-	loadFunc loadFunction
-	caches   []SetterCacheInterface
+	caches []SetterCacheInterface
 }
 
 // NewChain instanciates a new cache aggregator
-func NewChain(loadFunc loadFunction, caches ...SetterCacheInterface) *ChainCache {
+func NewChain(caches ...SetterCacheInterface) *ChainCache {
 	return &ChainCache{
-		loadFunc: loadFunc,
-		caches:   caches,
+		caches: caches,
 	}
 }
 
 // Get returns the object stored in cache if it exists
 func (c *ChainCache) Get(key interface{}) (interface{}, error) {
+	var object interface{}
 	var err error
 
 	for _, cache := range c.caches {
 		storeType := cache.GetCodec().GetStore().GetType()
-		object, err := cache.Get(key)
+		object, err = cache.Get(key)
 		if err == nil {
 			// Set the value back until this cache layer
 			go c.setUntil(key, object, &storeType)
@@ -41,16 +38,6 @@ func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 
 		log.Printf("Unable to retrieve item from cache with store '%s': %v\n", storeType, err)
 	}
-
-	// Unable to find in all caches, load it from remote source
-	object, err := c.loadFunc(key)
-	if err != nil {
-		log.Printf("An error has occured while trying to load item from load function: %v\n", err)
-		return object, err
-	}
-
-	// Then, put it in all available caches
-	go c.setUntil(key, object, nil)
 
 	return object, err
 }
