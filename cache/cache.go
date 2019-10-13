@@ -2,7 +2,6 @@ package cache
 
 import (
 	"strings"
-	"time"
 
 	"github.com/eko/gache/codec"
 	"github.com/eko/gache/store"
@@ -14,15 +13,19 @@ const (
 
 // Cache represents the configuration needed by a cache
 type Cache struct {
-	codec      codec.CodecInterface
-	expiration time.Duration
+	codec   codec.CodecInterface
+	options *Options
 }
 
 // New instanciates a new cache entry
-func New(store store.StoreInterface, expiration time.Duration) *Cache {
+func New(store store.StoreInterface, options *Options) *Cache {
+	if options == nil {
+		options = &Options{}
+	}
+
 	return &Cache{
-		codec:      codec.New(store),
-		expiration: expiration,
+		codec:   codec.New(store),
+		options: options,
 	}
 }
 
@@ -35,7 +38,7 @@ func (c *Cache) Get(key interface{}) (interface{}, error) {
 // Set populates the cache item using the given key
 func (c *Cache) Set(key, object interface{}) error {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Set(cacheKey, object, c.expiration)
+	return c.codec.Set(cacheKey, object, c.options.ExpirationValue())
 }
 
 // GetCodec returns the current codec

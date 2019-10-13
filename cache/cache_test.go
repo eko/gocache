@@ -14,22 +14,26 @@ import (
 func TestNew(t *testing.T) {
 	// Given
 	store := &mocksStore.StoreInterface{}
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 5 * time.Second,
+	}
 
 	// When
-	cache := New(store, expiration)
+	cache := New(store, options)
 
 	// Then
 	assert.IsType(t, new(Cache), cache)
 	assert.IsType(t, new(codec.Codec), cache.codec)
 
 	assert.Equal(t, store, cache.codec.GetStore())
-	assert.Equal(t, expiration, cache.expiration)
+	assert.Equal(t, options, cache.options)
 }
 
 func TestCacheSet(t *testing.T) {
 	// Given
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 5 * time.Second,
+	}
 
 	value := &struct {
 		Hello string
@@ -38,9 +42,10 @@ func TestCacheSet(t *testing.T) {
 	}
 
 	store := &mocksStore.StoreInterface{}
-	store.On("Set", "9b1ac8a6e8ca8ca9477c0a252eb37756", value, expiration).Return(nil)
+	store.On("Set", "9b1ac8a6e8ca8ca9477c0a252eb37756", value, options.ExpirationValue()).
+		Return(nil)
 
-	cache := New(store, expiration)
+	cache := New(store, options)
 
 	// When
 	err := cache.Set("my-key", value)
@@ -49,7 +54,9 @@ func TestCacheSet(t *testing.T) {
 
 func TestCacheSetWhenErrorOccurs(t *testing.T) {
 	// Given
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 5 * time.Second,
+	}
 
 	value := &struct {
 		Hello string
@@ -60,9 +67,10 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 	storeErr := errors.New("An error has occured while inserting data into store")
 
 	store := &mocksStore.StoreInterface{}
-	store.On("Set", "9b1ac8a6e8ca8ca9477c0a252eb37756", value, expiration).Return(storeErr)
+	store.On("Set", "9b1ac8a6e8ca8ca9477c0a252eb37756", value, options.ExpirationValue()).
+		Return(storeErr)
 
-	cache := New(store, expiration)
+	cache := New(store, options)
 
 	// When
 	err := cache.Set("my-key", value)
@@ -71,7 +79,9 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 
 func TestCacheGet(t *testing.T) {
 	// Given
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 5 * time.Second,
+	}
 
 	cacheValue := &struct {
 		Hello string
@@ -82,7 +92,7 @@ func TestCacheGet(t *testing.T) {
 	store := &mocksStore.StoreInterface{}
 	store.On("Get", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(cacheValue, nil)
 
-	cache := New(store, expiration)
+	cache := New(store, options)
 
 	// When
 	value, err := cache.Get("my-key")
@@ -94,14 +104,16 @@ func TestCacheGet(t *testing.T) {
 
 func TestCacheGetWhenNotFound(t *testing.T) {
 	// Given
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 5 * time.Second,
+	}
 
 	returnedErr := errors.New("Unable to find item in store")
 
 	store := &mocksStore.StoreInterface{}
 	store.On("Get", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil, returnedErr)
 
-	cache := New(store, expiration)
+	cache := New(store, options)
 
 	// When
 	value, err := cache.Get("my-key")
@@ -114,9 +126,11 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 func TestCacheGetCodec(t *testing.T) {
 	// Given
 	store := &mocksStore.StoreInterface{}
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 5 * time.Second,
+	}
 
-	cache := New(store, expiration)
+	cache := New(store, options)
 
 	// When
 	value := cache.GetCodec()
@@ -129,9 +143,11 @@ func TestCacheGetCodec(t *testing.T) {
 func TestCacheGetType(t *testing.T) {
 	// Given
 	store := &mocksStore.StoreInterface{}
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 5 * time.Second,
+	}
 
-	cache := New(store, expiration)
+	cache := New(store, options)
 
 	// When - Then
 	assert.Equal(t, CacheType, cache.GetType())
