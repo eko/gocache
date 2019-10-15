@@ -126,7 +126,7 @@ redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 
 // Initialize stores
 ristrettoStore := store.NewRistretto(ristrettoCache, nil)
-redisStore := store.NewRedis(redisClient, &cache.Optiobs{Expiration: 5*time.Second})
+redisStore := store.NewRedis(redisClient, &cache.Options{Expiration: 5*time.Second})
 
 // Initialize chained cache
 cacheManager := cache.NewChain(
