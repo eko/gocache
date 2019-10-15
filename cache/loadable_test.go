@@ -4,10 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/eko/gache/store"
-	mocksCache "github.com/eko/gache/test/mocks/cache"
-	mocksCodec "github.com/eko/gache/test/mocks/codec"
-	mocksStore "github.com/eko/gache/test/mocks/store"
+	"github.com/eko/gocache/store"
+	mocksCache "github.com/eko/gocache/test/mocks/cache"
+	mocksCodec "github.com/eko/gocache/test/mocks/codec"
+	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/stretchr/testify/assert"
 )
 

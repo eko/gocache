@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gache/store"
-	mocksStore "github.com/eko/gache/test/mocks/store"
+	"github.com/eko/gocache/store"
+	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/stretchr/testify/assert"
 )
 

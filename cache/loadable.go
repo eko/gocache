@@ -2,7 +2,7 @@ package cache
 
 import (
 	"log"
-	"github.com/eko/gache/store"
+	"github.com/eko/gocache/store"
 )
 
 const (

@@ -3,8 +3,8 @@ package cache
 import (
 	"strings"
 
-	"github.com/eko/gache/codec"
-	"github.com/eko/gache/store"
+	"github.com/eko/gocache/codec"
+	"github.com/eko/gocache/store"
 )
 
 const (

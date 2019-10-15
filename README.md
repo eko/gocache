@@ -1,11 +1,12 @@
-[![TravisBuildStatus](https://api.travis-ci.org/eko/gache.svg?branch=master)](https://travis-ci.org/eko/gache)
-[![GoDoc](https://godoc.org/github.com/eko/gache?status.png)](https://godoc.org/github.com/eko/gache)
-[![GoReportCard](https://goreportcard.com/badge/github.com/eko/gache)](https://goreportcard.com/report/github.com/eko/gache)
+[![TravisBuildStatus](https://api.travis-ci.org/eko/gocache.svg?branch=master)](https://travis-ci.org/eko/gocache)
+[![GoDoc](https://godoc.org/github.com/eko/gocache?status.png)](https://godoc.org/github.com/eko/gocache)
+[![GoReportCard](https://goreportcard.com/badge/github.com/eko/gocache)](https://goreportcard.com/report/github.com/eko/gocache)
 
-Go + Cache = Gache
-==================
+Gocache
+=======
 
-An extendable Go cache library that brings you a lot of features for caching data.
+Guess what is Gocache? a Go cache library.
+This is an extendable cache library that brings you a lot of features for caching data.
 
 ## Overview
 
@@ -234,10 +235,10 @@ import (
 	"time"
 
 	"github.com/dgraph-io/ristretto"
-	"github.com/eko/gache/cache"
-	"github.com/eko/gache/marshaler"
-	"github.com/eko/gache/metrics"
-	"github.com/eko/gache/store"
+	"github.com/eko/gocache/cache"
+	"github.com/eko/gocache/marshaler"
+	"github.com/eko/gocache/metrics"
+	"github.com/eko/gocache/store"
 	"github.com/go-redis/redis/v7"
 )
 
