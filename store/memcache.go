@@ -2,7 +2,6 @@ package store
 
 import (
 	"errors"
-	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
 )
@@ -20,12 +19,18 @@ const (
 // MemcacheStore is a store for Redis
 type MemcacheStore struct {
 	client MemcacheClientInterface
+	options *Options
 }
 
 // NewMemcache creates a new store to Memcache instance(s)
-func NewMemcache(client MemcacheClientInterface) *MemcacheStore {
+func NewMemcache(client MemcacheClientInterface, options *Options) *MemcacheStore {
+	if options == nil {
+		options = &Options{}
+	}
+
 	return &MemcacheStore{
 		client: client,
+		options: options,
 	}
 }
 
@@ -43,11 +48,15 @@ func (s *MemcacheStore) Get(key interface{}) (interface{}, error) {
 }
 
 // Set defines data in Redis for given key idntifier
-func (s *MemcacheStore) Set(key interface{}, value interface{}, expiration time.Duration) error {
+func (s *MemcacheStore) Set(key interface{}, value interface{}, options *Options) error {
+	if options == nil {
+		options = s.options
+	}
+
 	item := &memcache.Item{
 		Key:        key.(string),
 		Value:      value.([]byte),
-		Expiration: int32(expiration.Seconds()),
+		Expiration: int32(options.ExpirationValue().Seconds()),
 	}
 
 	return s.client.Set(item)

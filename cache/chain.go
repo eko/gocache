@@ -2,8 +2,9 @@ package cache
 
 import (
 	"fmt"
-
 	"log"
+
+	"github.com/eko/gache/store"
 )
 
 const (
@@ -43,9 +44,9 @@ func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 }
 
 // Set sets a value in available caches
-func (c *ChainCache) Set(key, object interface{}) error {
+func (c *ChainCache) Set(key, object interface{}, options *store.Options) error {
 	for _, cache := range c.caches {
-		err := cache.Set(key, object)
+		err := cache.Set(key, object, options)
 		if err != nil {
 			storeType := cache.GetCodec().GetStore().GetType()
 			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)
@@ -62,7 +63,7 @@ func (c *ChainCache) setUntil(key, object interface{}, until *string) error {
 			break
 		}
 
-		err := cache.Set(key, object)
+		err := cache.Set(key, object, nil)
 		if err != nil {
 			storeType := cache.GetCodec().GetStore().GetType()
 			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)

@@ -3,7 +3,9 @@ package marshaler
 import (
 	"errors"
 	"testing"
+	"time"
 
+	"github.com/eko/gache/store"
 	mocksCache "github.com/eko/gache/test/mocks/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmihailenco/msgpack"
@@ -111,13 +113,17 @@ func TestSetWhenStruct(t *testing.T) {
 		Hello: "world",
 	}
 
+	options := &store.Options{
+		Expiration: 5 * time.Second,
+	}
+
 	cache := &mocksCache.CacheInterface{}
-	cache.On("Set", "my-key", []byte{0x81, 0xa5, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0xa5, 0x77, 0x6f, 0x72, 0x6c, 0x64}).Return(nil)
+	cache.On("Set", "my-key", []byte{0x81, 0xa5, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0xa5, 0x77, 0x6f, 0x72, 0x6c, 0x64}, options).Return(nil)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Set("my-key", cacheValue)
+	err := marshaler.Set("my-key", cacheValue, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -127,13 +133,17 @@ func TestSetWhenString(t *testing.T) {
 	// Given
 	cacheValue := "test"
 
+	options := &store.Options{
+		Expiration: 5 * time.Second,
+	}
+
 	cache := &mocksCache.CacheInterface{}
-	cache.On("Set", "my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}).Return(nil)
+	cache.On("Set", "my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(nil)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Set("my-key", cacheValue)
+	err := marshaler.Set("my-key", cacheValue, options)
 
 	// Then
 	assert.Nil(t, err)

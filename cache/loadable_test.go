@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/eko/gache/store"
 	mocksCache "github.com/eko/gache/test/mocks/cache"
 	mocksCodec "github.com/eko/gache/test/mocks/codec"
 	mocksStore "github.com/eko/gache/test/mocks/store"
@@ -73,7 +74,7 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	cache1 := &mocksCache.SetterCacheInterface{}
 	cache1.On("GetCodec").Return(codec1)
 	cache1.On("Get", "my-key").Return(nil, errors.New("Unable to find in cache 1"))
-	cache1.On("Set", "my-key", cacheValue).Return(nil)
+	cache1.On("Set", "my-key", cacheValue, (*store.Options)(nil)).Return(nil)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return cacheValue, nil

@@ -2,22 +2,21 @@ package store
 
 import (
 	"testing"
-	"time"
 
-	mocksStore "github.com/eko/gache/test/mocks/store"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewBigcache(t *testing.T) {
 	// Given
-	client := &mocksStore.BigcacheClientInterface{}
+	client := &MockBigcacheClientInterface{}
 
 	// When
-	store := NewBigcache(client)
+	store := NewBigcache(client, nil)
 
 	// Then
 	assert.IsType(t, new(BigcacheStore), store)
 	assert.Equal(t, client, store.client)
+	assert.IsType(t, new(Options), store.options)
 }
 
 func TestBigcacheGet(t *testing.T) {
@@ -25,10 +24,10 @@ func TestBigcacheGet(t *testing.T) {
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &mocksStore.BigcacheClientInterface{}
+	client := &MockBigcacheClientInterface{}
 	client.On("Get", cacheKey).Return(cacheValue, nil)
 
-	store := NewBigcache(client)
+	store := NewBigcache(client, nil)
 
 	// When
 	value, err := store.Get(cacheKey)
@@ -42,15 +41,14 @@ func TestBigcacheSet(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	expiration := 5 * time.Second
 
-	client := &mocksStore.BigcacheClientInterface{}
+	client := &MockBigcacheClientInterface{}
 	client.On("Set", cacheKey, cacheValue).Return(nil)
 
-	store := NewBigcache(client)
+	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, expiration)
+	err := store.Set(cacheKey, cacheValue, nil)
 
 	// Then
 	assert.Nil(t, err)
@@ -58,9 +56,9 @@ func TestBigcacheSet(t *testing.T) {
 
 func TestBigcacheGetType(t *testing.T) {
 	// Given
-	client := &mocksStore.BigcacheClientInterface{}
+	client := &MockBigcacheClientInterface{}
 
-	store := NewBigcache(client)
+	store := NewBigcache(client, nil)
 
 	// When - Then
 	assert.Equal(t, BigcacheType, store.GetType())

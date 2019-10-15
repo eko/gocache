@@ -1,4 +1,4 @@
-package cache
+package store
 
 import (
 	"testing"
@@ -6,6 +6,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestOptionsCostValue(t *testing.T) {
+	// Given
+	options := Options{
+		Cost: 7,
+	}
+
+	// When - Then
+	assert.Equal(t, int64(7), options.CostValue())
+}
 
 func TestOptionsExpirationValue(t *testing.T) {
 	// Given

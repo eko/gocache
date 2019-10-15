@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/eko/gache/metrics"
+	"github.com/eko/gache/store"
 )
 
 const (
@@ -32,8 +33,8 @@ func (c *MetricCache) Get(key interface{}) (interface{}, error) {
 }
 
 // Set sets a value in cache and also records set metric
-func (c *MetricCache) Set(key, object interface{}) error {
-	return c.cache.Set(key, object)
+func (c *MetricCache) Set(key, object interface{}, options *store.Options) error {
+	return c.cache.Set(key, object, options)
 }
 
 // Get obtains a value from cache and also records metrics

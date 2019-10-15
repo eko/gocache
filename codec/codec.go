@@ -1,8 +1,6 @@
 package codec
 
 import (
-	"time"
-
 	"github.com/eko/gache/store"
 )
 
@@ -43,8 +41,8 @@ func (c *Codec) Get(key interface{}) (interface{}, error) {
 
 // Set allows to set a value for a given key identifier and also allows to specify
 // an expiration time
-func (c *Codec) Set(key interface{}, value interface{}, expiration time.Duration) error {
-	err := c.store.Set(key, value, expiration)
+func (c *Codec) Set(key interface{}, value interface{}, options *store.Options) error {
+	err := c.store.Set(key, value, options)
 
 	if err == nil {
 		c.stats.SetSuccess++
