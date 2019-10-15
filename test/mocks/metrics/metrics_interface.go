@@ -2,7 +2,7 @@
 
 package mocks
 
-import codec "github.com/eko/gache/codec"
+import codec "github.com/eko/gocache/codec"
 
 import mock "github.com/stretchr/testify/mock"
 

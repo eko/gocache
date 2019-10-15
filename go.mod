@@ -1,4 +1,4 @@
-module github.com/eko/gache
+module github.com/eko/gocache
 
 go 1.13
 

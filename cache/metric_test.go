@@ -3,10 +3,10 @@ package cache
 import (
 	"testing"
 
-	mocksCache "github.com/eko/gache/test/mocks/cache"
-	mocksCodec "github.com/eko/gache/test/mocks/codec"
-	mocksMetrics "github.com/eko/gache/test/mocks/metrics"
-	mocksStore "github.com/eko/gache/test/mocks/store"
+	mocksCache "github.com/eko/gocache/test/mocks/cache"
+	mocksCodec "github.com/eko/gocache/test/mocks/codec"
+	mocksMetrics "github.com/eko/gocache/test/mocks/metrics"
+	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/stretchr/testify/assert"
 )
 

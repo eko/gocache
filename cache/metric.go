@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"github.com/eko/gache/metrics"
-	"github.com/eko/gache/store"
+	"github.com/eko/gocache/metrics"
+	"github.com/eko/gocache/store"
 )
 
 const (

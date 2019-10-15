@@ -3,9 +3,9 @@ package metrics
 import (
 	"testing"
 
-	"github.com/eko/gache/codec"
-	mocksCodec "github.com/eko/gache/test/mocks/codec"
-	mocksStore "github.com/eko/gache/test/mocks/store"
+	"github.com/eko/gocache/codec"
+	mocksCodec "github.com/eko/gocache/test/mocks/codec"
+	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
