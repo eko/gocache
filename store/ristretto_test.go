@@ -2,22 +2,24 @@ package store
 
 import (
 	"testing"
-	"time"
 
-	mocksStore "github.com/eko/gache/test/mocks/store"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRistretto(t *testing.T) {
 	// Given
-	client := &mocksStore.RistrettoClientInterface{}
+	client := &MockRistrettoClientInterface{}
+	options := &Options{
+		Cost: 8,
+	}
 
 	// When
-	store := NewRistretto(client)
+	store := NewRistretto(client, options)
 
 	// Then
 	assert.IsType(t, new(RistrettoStore), store)
 	assert.Equal(t, client, store.client)
+	assert.Equal(t, options, store.options)
 }
 
 func TestRistrettoGet(t *testing.T) {
@@ -25,10 +27,10 @@ func TestRistrettoGet(t *testing.T) {
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
-	client := &mocksStore.RistrettoClientInterface{}
+	client := &MockRistrettoClientInterface{}
 	client.On("Get", cacheKey).Return(cacheValue, true)
 
-	store := NewRistretto(client)
+	store := NewRistretto(client, nil)
 
 	// When
 	value, err := store.Get(cacheKey)
@@ -42,15 +44,19 @@ func TestRistrettoSet(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
-	expiration := 5 * time.Second
+	options := &Options{
+		Cost: 7,
+	}
 
-	client := &mocksStore.RistrettoClientInterface{}
-	client.On("Set", cacheKey, cacheValue, int64(1)).Return(true)
+	client := &MockRistrettoClientInterface{}
+	client.On("Set", cacheKey, cacheValue, int64(4)).Return(true)
 
-	store := NewRistretto(client)
+	store := NewRistretto(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, expiration)
+	err := store.Set(cacheKey, cacheValue, &Options{
+		Cost: 4,
+	})
 
 	// Then
 	assert.Nil(t, err)
@@ -58,9 +64,9 @@ func TestRistrettoSet(t *testing.T) {
 
 func TestRistrettoGetType(t *testing.T) {
 	// Given
-	client := &mocksStore.RistrettoClientInterface{}
+	client := &MockRistrettoClientInterface{}
 
-	store := NewRistretto(client)
+	store := NewRistretto(client, nil)
 
 	// When - Then
 	assert.Equal(t, RistrettoType, store.GetType())

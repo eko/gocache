@@ -2,7 +2,6 @@ package store
 
 import (
 	"errors"
-	"time"
 )
 
 // BigcacheClientInterface represents a allegro/bigcache client
@@ -18,12 +17,18 @@ const (
 // BigcacheStore is a store for Redis
 type BigcacheStore struct {
 	client BigcacheClientInterface
+	options *Options
 }
 
 // NewBigcache creates a new store to Bigcache instance(s)
-func NewBigcache(client BigcacheClientInterface) *BigcacheStore {
+func NewBigcache(client BigcacheClientInterface, options *Options) *BigcacheStore {
+	if options == nil {
+		options = &Options{}
+	}
+
 	return &BigcacheStore{
 		client: client,
+		options: options,
 	}
 }
 
@@ -41,7 +46,7 @@ func (s *BigcacheStore) Get(key interface{}) (interface{}, error) {
 }
 
 // Set defines data in Redis for given key idntifier
-func (s *BigcacheStore) Set(key interface{}, value interface{}, expiration time.Duration) error {
+func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options) error {
 	return s.client.Set(key.(string), value.([]byte))
 }
 

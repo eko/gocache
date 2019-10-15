@@ -2,6 +2,7 @@ package cache
 
 import (
 	"log"
+	"github.com/eko/gache/store"
 )
 
 const (
@@ -41,14 +42,14 @@ func (c *LoadableCache) Get(key interface{}) (interface{}, error) {
 	}
 
 	// Then, put it back in cache
-	go c.Set(key, object)
+	go c.Set(key, object, nil)
 
 	return object, err
 }
 
 // Set sets a value in available caches
-func (c *LoadableCache) Set(key, object interface{}) error {
-	return c.cache.Set(key, object)
+func (c *LoadableCache) Set(key, object interface{}, options *store.Options) error {
+	return c.cache.Set(key, object, options)
 }
 
 // GetType returns the cache type

@@ -19,12 +19,18 @@ const (
 // RedisStore is a store for Redis
 type RedisStore struct {
 	client RedisClientInterface
+	options *Options
 }
 
 // NewRedis creates a new store to Redis instance(s)
-func NewRedis(client RedisClientInterface) *RedisStore {
+func NewRedis(client RedisClientInterface, options *Options) *RedisStore {
+	if options == nil {
+		options = &Options{}
+	}
+
 	return &RedisStore{
 		client: client,
+		options: options,
 	}
 }
 
@@ -34,8 +40,12 @@ func (s *RedisStore) Get(key interface{}) (interface{}, error) {
 }
 
 // Set defines data in Redis for given key idntifier
-func (s *RedisStore) Set(key interface{}, value interface{}, expiration time.Duration) error {
-	return s.client.Set(key.(string), value, expiration).Err()
+func (s *RedisStore) Set(key interface{}, value interface{}, options *Options) error {
+	if options == nil {
+		options = s.options
+	}
+
+	return s.client.Set(key.(string), value, options.ExpirationValue()).Err()
 }
 
 // GetType returns the store type

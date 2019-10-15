@@ -14,18 +14,12 @@ const (
 // Cache represents the configuration needed by a cache
 type Cache struct {
 	codec   codec.CodecInterface
-	options *Options
 }
 
 // New instanciates a new cache entry
-func New(store store.StoreInterface, options *Options) *Cache {
-	if options == nil {
-		options = &Options{}
-	}
-
+func New(store store.StoreInterface) *Cache {
 	return &Cache{
 		codec:   codec.New(store),
-		options: options,
 	}
 }
 
@@ -36,9 +30,9 @@ func (c *Cache) Get(key interface{}) (interface{}, error) {
 }
 
 // Set populates the cache item using the given key
-func (c *Cache) Set(key, object interface{}) error {
+func (c *Cache) Set(key, object interface{}, options *store.Options) error {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Set(cacheKey, object, c.options.ExpirationValue())
+	return c.codec.Set(cacheKey, object, options)
 }
 
 // GetCodec returns the current codec

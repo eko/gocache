@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eko/gache/store"
 	mocksStore "github.com/eko/gache/test/mocks/store"
 	"github.com/stretchr/testify/assert"
 )
@@ -76,15 +77,17 @@ func TestSetWhenSuccess(t *testing.T) {
 		Hello: "world",
 	}
 
-	expiration := 5 * time.Second
+	options := &store.Options{
+		Expiration: 5 * time.Second,
+	}
 
 	store := &mocksStore.StoreInterface{}
-	store.On("Set", "my-key", cacheValue, expiration).Return(nil)
+	store.On("Set", "my-key", cacheValue, options).Return(nil)
 
 	codec := New(store)
 
 	// When
-	err := codec.Set("my-key", cacheValue, expiration)
+	err := codec.Set("my-key", cacheValue, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -103,17 +106,19 @@ func TestSetWhenError(t *testing.T) {
 		Hello: "world",
 	}
 
-	expiration := 5 * time.Second
+	options := &store.Options{
+		Expiration: 5 * time.Second,
+	}
 
 	expectedErr := errors.New("Unable to set value in store")
 
 	store := &mocksStore.StoreInterface{}
-	store.On("Set", "my-key", cacheValue, expiration).Return(expectedErr)
+	store.On("Set", "my-key", cacheValue, options).Return(expectedErr)
 
 	codec := New(store)
 
 	// When
-	err := codec.Set("my-key", cacheValue, expiration)
+	err := codec.Set("my-key", cacheValue, options)
 
 	// Then
 	assert.Equal(t, expectedErr, err)

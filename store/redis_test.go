@@ -4,29 +4,32 @@ import (
 	"testing"
 	"time"
 
-	mocksStore "github.com/eko/gache/test/mocks/store"
 	"github.com/go-redis/redis/v7"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRedis(t *testing.T) {
 	// Given
-	client := &mocksStore.RedisClientInterface{}
+	client := &MockRedisClientInterface{}
+	options := &Options{
+		Expiration: 6 * time.Second,
+	}
 
 	// When
-	store := NewRedis(client)
+	store := NewRedis(client, options)
 
 	// Then
 	assert.IsType(t, new(RedisStore), store)
 	assert.Equal(t, client, store.client)
+	assert.Equal(t, options, store.options)
 }
 
 func TestRedisGet(t *testing.T) {
 	// Given
-	client := &mocksStore.RedisClientInterface{}
+	client := &MockRedisClientInterface{}
 	client.On("Get", "my-key").Return(&redis.StringCmd{})
 
-	store := NewRedis(client)
+	store := NewRedis(client, nil)
 
 	// When
 	value, err := store.Get("my-key")
@@ -40,15 +43,19 @@ func TestRedisSet(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
-	expiration := 5 * time.Second
+	options := &Options{
+		Expiration: 6 * time.Second,
+	}
 
-	client := &mocksStore.RedisClientInterface{}
-	client.On("Set", "my-key", cacheValue, expiration).Return(&redis.StatusCmd{})
+	client := &MockRedisClientInterface{}
+	client.On("Set", "my-key", cacheValue, 5*time.Second).Return(&redis.StatusCmd{})
 
-	store := NewRedis(client)
+	store := NewRedis(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, expiration)
+	err := store.Set(cacheKey, cacheValue, &Options{
+		Expiration: 5 * time.Second,
+	})
 
 	// Then
 	assert.Nil(t, err)
@@ -56,9 +63,9 @@ func TestRedisSet(t *testing.T) {
 
 func TestRedisGetType(t *testing.T) {
 	// Given
-	client := &mocksStore.RedisClientInterface{}
+	client := &MockRedisClientInterface{}
 
-	store := NewRedis(client)
+	store := NewRedis(client, nil)
 
 	// When - Then
 	assert.Equal(t, RedisType, store.GetType())
