@@ -9,6 +9,7 @@ import (
 type CacheInterface interface {
 	Get(key interface{}) (interface{}, error)
 	Set(key, object interface{}, options *store.Options) error
+	Delete(key interface{}) error
 	GetType() string
 }
 

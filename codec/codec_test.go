@@ -45,6 +45,8 @@ func TestGetWhenHit(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().Miss)
 	assert.Equal(t, 0, codec.GetStats().SetSuccess)
 	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
 }
 
 func TestGetWhenMiss(t *testing.T) {
@@ -67,6 +69,8 @@ func TestGetWhenMiss(t *testing.T) {
 	assert.Equal(t, 1, codec.GetStats().Miss)
 	assert.Equal(t, 0, codec.GetStats().SetSuccess)
 	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
 }
 
 func TestSetWhenSuccess(t *testing.T) {
@@ -96,6 +100,8 @@ func TestSetWhenSuccess(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().Miss)
 	assert.Equal(t, 1, codec.GetStats().SetSuccess)
 	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
 }
 
 func TestSetWhenError(t *testing.T) {
@@ -127,6 +133,52 @@ func TestSetWhenError(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().Miss)
 	assert.Equal(t, 0, codec.GetStats().SetSuccess)
 	assert.Equal(t, 1, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
+}
+
+func TestDeleteWhenSuccess(t *testing.T) {
+	// Given
+	store := &mocksStore.StoreInterface{}
+	store.On("Delete", "my-key").Return(nil)
+
+	codec := New(store)
+
+	// When
+	err := codec.Delete("my-key")
+
+	// Then
+	assert.Nil(t, err)
+
+	assert.Equal(t, 0, codec.GetStats().Hits)
+	assert.Equal(t, 0, codec.GetStats().Miss)
+	assert.Equal(t, 0, codec.GetStats().SetSuccess)
+	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 1, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
+}
+
+func TesDeleteWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unable to delete key")
+
+	store := &mocksStore.StoreInterface{}
+	store.On("Delete", "my-key").Return(expectedErr)
+
+	codec := New(store)
+
+	// When
+	err := codec.Delete("my-key")
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+
+	assert.Equal(t, 0, codec.GetStats().Hits)
+	assert.Equal(t, 0, codec.GetStats().Miss)
+	assert.Equal(t, 0, codec.GetStats().SetSuccess)
+	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 1, codec.GetStats().DeleteError)
 }
 
 func TestGetStore(t *testing.T) {

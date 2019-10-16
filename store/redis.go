@@ -10,6 +10,7 @@ import (
 type RedisClientInterface interface {
 	Get(key string) *redis.StringCmd
 	Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Del(keys ...string) *redis.IntCmd
 }
 
 const (
@@ -18,7 +19,7 @@ const (
 
 // RedisStore is a store for Redis
 type RedisStore struct {
-	client RedisClientInterface
+	client  RedisClientInterface
 	options *Options
 }
 
@@ -29,7 +30,7 @@ func NewRedis(client RedisClientInterface, options *Options) *RedisStore {
 	}
 
 	return &RedisStore{
-		client: client,
+		client:  client,
 		options: options,
 	}
 }
@@ -46,6 +47,12 @@ func (s *RedisStore) Set(key interface{}, value interface{}, options *Options) e
 	}
 
 	return s.client.Set(key.(string), value, options.ExpirationValue()).Err()
+}
+
+// Delete removes data from Redis for given key idntifier
+func (s *RedisStore) Delete(key interface{}) error {
+	_, err := s.client.Del(key.(string)).Result()
+	return err
 }
 
 // GetType returns the store type

@@ -13,11 +13,12 @@ const (
 type RistrettoClientInterface interface {
 	Get(key interface{}) (interface{}, bool)
 	Set(key, value interface{}, cost int64) bool
+	Del(key interface{})
 }
 
 // RistrettoStore is a store for Ristretto (memory) library
 type RistrettoStore struct {
-	client RistrettoClientInterface
+	client  RistrettoClientInterface
 	options *Options
 }
 
@@ -28,7 +29,7 @@ func NewRistretto(client RistrettoClientInterface, options *Options) *RistrettoS
 	}
 
 	return &RistrettoStore{
-		client: client,
+		client:  client,
 		options: options,
 	}
 }
@@ -58,6 +59,12 @@ func (s *RistrettoStore) Set(key interface{}, value interface{}, options *Option
 	}
 
 	return err
+}
+
+// Delete removes data in Ristretto memoey cache for given key idntifier
+func (s *RistrettoStore) Delete(key interface{}) error {
+	s.client.Del(key)
+	return nil
 }
 
 // GetType returns the store type

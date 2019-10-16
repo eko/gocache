@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"testing"
 
 	mocksCache "github.com/eko/gocache/test/mocks/cache"
@@ -82,6 +83,40 @@ func TestMetricGetWhenChainCache(t *testing.T) {
 	// Then
 	assert.Nil(t, err)
 	assert.Equal(t, cacheValue, value)
+}
+
+func TestMetricDelete(t *testing.T) {
+	// Given
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Delete", "my-key").Return(nil)
+
+	metrics := &mocksMetrics.MetricsInterface{}
+
+	cache := NewMetric(metrics, cache1)
+
+	// When
+	err := cache.Delete("my-key")
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMetricDeleteWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unable to delete key")
+
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Delete", "my-key").Return(expectedErr)
+
+	metrics := &mocksMetrics.MetricsInterface{}
+
+	cache := NewMetric(metrics, cache1)
+
+	// When
+	err := cache.Delete("my-key")
+
+	// Then
+	assert.Equal(t, expectedErr, err)
 }
 
 func TestMetricGetType(t *testing.T) {

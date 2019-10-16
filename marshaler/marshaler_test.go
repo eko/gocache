@@ -148,3 +148,33 @@ func TestSetWhenString(t *testing.T) {
 	// Then
 	assert.Nil(t, err)
 }
+
+func TestDelete(t *testing.T) {
+	// Given
+	cache := &mocksCache.CacheInterface{}
+	cache.On("Delete", "my-key").Return(nil)
+
+	marshaler := New(cache)
+
+	// When
+	err := marshaler.Delete("my-key")
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestDeleteWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unable to delete key")
+
+	cache := &mocksCache.CacheInterface{}
+	cache.On("Delete", "my-key").Return(expectedErr)
+
+	marshaler := New(cache)
+
+	// When
+	err := marshaler.Delete("my-key")
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}

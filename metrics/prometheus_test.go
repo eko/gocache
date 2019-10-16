@@ -46,10 +46,12 @@ func TestRecordFromCodec(t *testing.T) {
 	redisStore.On("GetType").Return("redis")
 
 	stats := &codec.Stats{
-		Hits:       4,
-		Miss:       6,
-		SetSuccess: 12,
-		SetError:   3,
+		Hits:          4,
+		Miss:          6,
+		SetSuccess:    12,
+		SetError:      3,
+		DeleteSuccess: 8,
+		DeleteError:   5,
 	}
 
 	testCodec := &mocksCodec.CodecInterface{}
@@ -81,6 +83,14 @@ func TestRecordFromCodec(t *testing.T) {
 		{
 			metricName: "set_error",
 			expected:   float64(stats.SetError),
+		},
+		{
+			metricName: "delete_success",
+			expected:   float64(stats.DeleteSuccess),
+		},
+		{
+			metricName: "delete_error",
+			expected:   float64(stats.DeleteError),
 		},
 	}
 

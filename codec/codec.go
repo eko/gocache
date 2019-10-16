@@ -6,10 +6,12 @@ import (
 
 // Stats allows to returns some statistics of codec usage
 type Stats struct {
-	Hits       int
-	Miss       int
-	SetSuccess int
-	SetError   int
+	Hits          int
+	Miss          int
+	SetSuccess    int
+	SetError      int
+	DeleteSuccess int
+	DeleteError   int
 }
 
 // Codec represents an instance of a cache store
@@ -48,6 +50,19 @@ func (c *Codec) Set(key interface{}, value interface{}, options *store.Options) 
 		c.stats.SetSuccess++
 	} else {
 		c.stats.SetError++
+	}
+
+	return err
+}
+
+// Delete allows to remove a value for a given key identifier
+func (c *Codec) Delete(key interface{}) error {
+	err := c.store.Delete(key)
+
+	if err == nil {
+		c.stats.DeleteSuccess++
+	} else {
+		c.stats.DeleteError++
 	}
 
 	return err

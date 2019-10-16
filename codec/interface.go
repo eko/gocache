@@ -8,6 +8,7 @@ import (
 type CodecInterface interface {
 	Get(key interface{}) (interface{}, error)
 	Set(key interface{}, value interface{}, options *store.Options) error
+	Delete(key interface{}) error
 
 	GetStore() store.StoreInterface
 	GetStats() *Stats

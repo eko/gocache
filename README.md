@@ -56,6 +56,8 @@ if err != nil {
 }
 
 value := cacheManager.Get("my-key")
+
+cacheManager.Delete("my-key")
 ```
 
 #### Memory (using Bigcache)
@@ -93,6 +95,8 @@ if err != nil {
 }
 
 value := cacheManager.Get("my-key")
+
+cacheManager.Delete("my-key")
 ```
 
 #### Redis
@@ -202,22 +206,24 @@ cacheManager := cache.NewMetric(
 )
 
 // Initializes marshaler
-marshaller := marshaler.New(cacheManager)
+marshal := marshaler.New(cacheManager)
 
 key := BookQuery{Slug: "my-test-amazing-book"}
 value := Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
 
-err = marshaller.Set(key, value)
+err = marshal.Set(key, value)
 if err != nil {
     panic(err)
 }
 
-returnedValue, err := marshaller.Get(key, new(Book))
+returnedValue, err := marshal.Get(key, new(Book))
 if err != nil {
     panic(err)
 }
 
 // Then, do what you want with the  value
+
+marshal.Delete("my-key")
 ```
 
 The only thing you have to do is to specify the struct in which you want your value to be unmarshalled as a second argument when calling the `.Get()` method.
@@ -283,22 +289,24 @@ func main() {
 		),
 	))
 
-	marshaller := marshaler.New(cacheManager)
+	marshal := marshaler.New(cacheManager)
 
 	key := Book{Slug: "my-test-amazing-book"}
 	value := Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
 
-	err = marshaller.Set(key, value, nil)
+	err = marshal.Set(key, value, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	returnedValue, err := marshaller.Get(key, new(Book))
+	returnedValue, err := marshal.Get(key, new(Book))
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Printf("%v\n", returnedValue)
+
+	marshal.Delete(key)
 }
 ```
 

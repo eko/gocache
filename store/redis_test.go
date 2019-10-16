@@ -61,6 +61,22 @@ func TestRedisSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRedisDelete(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+
+	client := &MockRedisClientInterface{}
+	client.On("Del", "my-key").Return(&redis.IntCmd{})
+
+	store := NewRedis(client, nil)
+
+	// When
+	err := store.Delete(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestRedisGetType(t *testing.T) {
 	// Given
 	client := &MockRedisClientInterface{}

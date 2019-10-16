@@ -32,9 +32,14 @@ func (c *MetricCache) Get(key interface{}) (interface{}, error) {
 	return result, err
 }
 
-// Set sets a value in cache and also records set metric
+// Set sets a value from the cache
 func (c *MetricCache) Set(key, object interface{}, options *store.Options) error {
 	return c.cache.Set(key, object, options)
+}
+
+// Delete removes a value from the cache
+func (c *MetricCache) Delete(key interface{}) error {
+	return c.cache.Delete(key)
 }
 
 // Get obtains a value from cache and also records metrics

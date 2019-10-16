@@ -48,4 +48,7 @@ func (m *Prometheus) RecordFromCodec(codec codec.CodecInterface) {
 
 	m.Record(storeType, "set_success", float64(stats.SetSuccess))
 	m.Record(storeType, "set_error", float64(stats.SetError))
+
+	m.Record(storeType, "delete_success", float64(stats.DeleteSuccess))
+	m.Record(storeType, "delete_error", float64(stats.DeleteError))
 }

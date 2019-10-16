@@ -2,6 +2,7 @@ package cache
 
 import (
 	"log"
+
 	"github.com/eko/gocache/store"
 )
 
@@ -50,6 +51,11 @@ func (c *LoadableCache) Get(key interface{}) (interface{}, error) {
 // Set sets a value in available caches
 func (c *LoadableCache) Set(key, object interface{}, options *store.Options) error {
 	return c.cache.Set(key, object, options)
+}
+
+// Delete removes a value from cache
+func (c *LoadableCache) Delete(key interface{}) error {
+	return c.cache.Delete(key)
 }
 
 // GetType returns the cache type
