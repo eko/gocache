@@ -49,3 +49,8 @@ func (c *Marshaler) Set(key, object interface{}, options *store.Options) error {
 
 	return c.cache.Set(key, bytes, options)
 }
+
+// Delete removes a value from the cache
+func (c *Marshaler) Delete(key interface{}) error {
+	return c.cache.Delete(key)
+}

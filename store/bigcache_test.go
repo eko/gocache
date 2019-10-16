@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,6 +53,40 @@ func TestBigcacheSet(t *testing.T) {
 
 	// Then
 	assert.Nil(t, err)
+}
+
+func TestBigcacheDelete(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+
+	client := &MockBigcacheClientInterface{}
+	client.On("Delete", cacheKey).Return(nil)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Delete(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestBigcacheDeleteWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unable to delete key")
+
+	cacheKey := "my-key"
+
+	client := &MockBigcacheClientInterface{}
+	client.On("Delete", cacheKey).Return(expectedErr)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Delete(cacheKey)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
 }
 
 func TestBigcacheGetType(t *testing.T) {

@@ -56,6 +56,15 @@ func (c *ChainCache) Set(key, object interface{}, options *store.Options) error 
 	return nil
 }
 
+// Delete removes a value from all available caches
+func (c *ChainCache) Delete(key interface{}) error {
+	for _, cache := range c.caches {
+		cache.Delete(key)
+	}
+
+	return nil
+}
+
 // setUntil sets a value in available caches, eventually until a given cache layer
 func (c *ChainCache) setUntil(key, object interface{}, until *string) error {
 	for _, cache := range c.caches {

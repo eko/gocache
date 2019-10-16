@@ -62,6 +62,22 @@ func TestRistrettoSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRistrettoDelete(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+
+	client := &MockRistrettoClientInterface{}
+	client.On("Del", cacheKey).Return(nil)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	err := store.Delete(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestRistrettoGetType(t *testing.T) {
 	// Given
 	client := &MockRistrettoClientInterface{}

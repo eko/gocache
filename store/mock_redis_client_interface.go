@@ -11,6 +11,28 @@ type MockRedisClientInterface struct {
 	mock.Mock
 }
 
+// Del provides a mock function with given fields: keys
+func (_m *MockRedisClientInterface) Del(keys ...string) *redis.IntCmd {
+	_va := make([]interface{}, len(keys))
+	for _i := range keys {
+		_va[_i] = keys[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *redis.IntCmd
+	if rf, ok := ret.Get(0).(func(...string) *redis.IntCmd); ok {
+		r0 = rf(keys...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*redis.IntCmd)
+		}
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: key
 func (_m *MockRedisClientInterface) Get(key string) *redis.StringCmd {
 	ret := _m.Called(key)

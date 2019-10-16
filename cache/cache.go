@@ -13,13 +13,13 @@ const (
 
 // Cache represents the configuration needed by a cache
 type Cache struct {
-	codec   codec.CodecInterface
+	codec codec.CodecInterface
 }
 
 // New instanciates a new cache entry
 func New(store store.StoreInterface) *Cache {
 	return &Cache{
-		codec:   codec.New(store),
+		codec: codec.New(store),
 	}
 }
 
@@ -33,6 +33,12 @@ func (c *Cache) Get(key interface{}) (interface{}, error) {
 func (c *Cache) Set(key, object interface{}, options *store.Options) error {
 	cacheKey := c.getCacheKey(key)
 	return c.codec.Set(cacheKey, object, options)
+}
+
+// Delete removes the cache item using the given key
+func (c *Cache) Delete(key interface{}) error {
+	cacheKey := c.getCacheKey(key)
+	return c.codec.Delete(cacheKey)
 }
 
 // GetCodec returns the current codec

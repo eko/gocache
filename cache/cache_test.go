@@ -135,3 +135,33 @@ func TestCacheGetType(t *testing.T) {
 	// When - Then
 	assert.Equal(t, CacheType, cache.GetType())
 }
+
+func TestCacheDelete(t *testing.T) {
+	// Given
+	store := &mocksStore.StoreInterface{}
+	store.On("Delete", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil)
+
+	cache := New(store)
+
+	// When
+	err := cache.Delete("my-key")
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestCacheDeleteWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unable to delete key")
+
+	store := &mocksStore.StoreInterface{}
+	store.On("Delete", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(expectedErr)
+
+	cache := New(store)
+
+	// When
+	err := cache.Delete("my-key")
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}

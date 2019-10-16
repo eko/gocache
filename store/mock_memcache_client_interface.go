@@ -10,6 +10,20 @@ type MockMemcacheClientInterface struct {
 	mock.Mock
 }
 
+// Delete provides a mock function with given fields: item
+func (_m *MockMemcacheClientInterface) Delete(item string) error {
+	ret := _m.Called(item)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(item)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: key
 func (_m *MockMemcacheClientInterface) Get(key string) (*memcache.Item, error) {
 	ret := _m.Called(key)

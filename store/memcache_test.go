@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 func TestNewMemcache(t *testing.T) {
 	// Given
 	client := &MockMemcacheClientInterface{}
-	options := &Options{Expiration: 3*time.Second}
+	options := &Options{Expiration: 3 * time.Second}
 
 	// When
 	store := NewMemcache(client, options)
@@ -24,7 +25,7 @@ func TestNewMemcache(t *testing.T) {
 
 func TestMemcacheGet(t *testing.T) {
 	// Given
-	options := &Options{Expiration: 3*time.Second}
+	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -46,7 +47,7 @@ func TestMemcacheGet(t *testing.T) {
 
 func TestMemcacheSet(t *testing.T) {
 	// Given
-	options := &Options{Expiration: 3*time.Second}
+	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -67,6 +68,40 @@ func TestMemcacheSet(t *testing.T) {
 
 	// Then
 	assert.Nil(t, err)
+}
+
+func TestMemcacheDelete(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+
+	client := &MockMemcacheClientInterface{}
+	client.On("Delete", cacheKey).Return(nil)
+
+	store := NewMemcache(client, nil)
+
+	// When
+	err := store.Delete(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMemcacheDeleteWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unable to delete key")
+
+	cacheKey := "my-key"
+
+	client := &MockMemcacheClientInterface{}
+	client.On("Delete", cacheKey).Return(expectedErr)
+
+	store := NewMemcache(client, nil)
+
+	// When
+	err := store.Delete(cacheKey)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
 }
 
 func TestMemcacheGetType(t *testing.T) {

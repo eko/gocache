@@ -118,6 +118,44 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 	assert.Equal(t, cacheValue, value)
 }
 
+func TestChainDelete(t *testing.T) {
+	// Given
+	// Cache 1
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Delete", "my-key").Return(nil)
+
+	// Cache 2
+	cache2 := &mocksCache.SetterCacheInterface{}
+	cache2.On("Delete", "my-key").Return(nil)
+
+	cache := NewChain(cache1, cache2)
+
+	// When
+	err := cache.Delete("my-key")
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestChainDeleteWhenError(t *testing.T) {
+	// Given
+	// Cache 1
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Delete", "my-key").Return(errors.New("An error has occured while deleting key"))
+
+	// Cache 2
+	cache2 := &mocksCache.SetterCacheInterface{}
+	cache2.On("Delete", "my-key").Return(nil)
+
+	cache := NewChain(cache1, cache2)
+
+	// When
+	err := cache.Delete("my-key")
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestChainGetType(t *testing.T) {
 	// Given
 	cache1 := &mocksCache.SetterCacheInterface{}

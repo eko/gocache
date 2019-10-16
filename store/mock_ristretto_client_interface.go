@@ -9,6 +9,11 @@ type MockRistrettoClientInterface struct {
 	mock.Mock
 }
 
+// Del provides a mock function with given fields: key
+func (_m *MockRistrettoClientInterface) Del(key interface{}) {
+	_m.Called(key)
+}
+
 // Get provides a mock function with given fields: key
 func (_m *MockRistrettoClientInterface) Get(key interface{}) (interface{}, bool) {
 	ret := _m.Called(key)

@@ -10,15 +10,16 @@ import (
 type MemcacheClientInterface interface {
 	Get(key string) (item *memcache.Item, err error)
 	Set(item *memcache.Item) error
+	Delete(item string) error
 }
 
 const (
 	MemcacheType = "memcache"
 )
 
-// MemcacheStore is a store for Redis
+// MemcacheStore is a store for Memcache
 type MemcacheStore struct {
-	client MemcacheClientInterface
+	client  MemcacheClientInterface
 	options *Options
 }
 
@@ -29,7 +30,7 @@ func NewMemcache(client MemcacheClientInterface, options *Options) *MemcacheStor
 	}
 
 	return &MemcacheStore{
-		client: client,
+		client:  client,
 		options: options,
 	}
 }
@@ -47,7 +48,7 @@ func (s *MemcacheStore) Get(key interface{}) (interface{}, error) {
 	return item.Value, err
 }
 
-// Set defines data in Redis for given key idntifier
+// Set defines data in Memcache for given key idntifier
 func (s *MemcacheStore) Set(key interface{}, value interface{}, options *Options) error {
 	if options == nil {
 		options = s.options
@@ -60,6 +61,11 @@ func (s *MemcacheStore) Set(key interface{}, value interface{}, options *Options
 	}
 
 	return s.client.Set(item)
+}
+
+// Delete removes data from Memcache for given key idntifier
+func (s *MemcacheStore) Delete(key interface{}) error {
+	return s.client.Delete(key.(string))
 }
 
 // GetType returns the store type

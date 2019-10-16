@@ -8,6 +8,7 @@ import (
 type BigcacheClientInterface interface {
 	Get(key string) ([]byte, error)
 	Set(key string, entry []byte) error
+	Delete(key string) error
 }
 
 const (
@@ -16,7 +17,7 @@ const (
 
 // BigcacheStore is a store for Redis
 type BigcacheStore struct {
-	client BigcacheClientInterface
+	client  BigcacheClientInterface
 	options *Options
 }
 
@@ -27,7 +28,7 @@ func NewBigcache(client BigcacheClientInterface, options *Options) *BigcacheStor
 	}
 
 	return &BigcacheStore{
-		client: client,
+		client:  client,
 		options: options,
 	}
 }
@@ -48,6 +49,11 @@ func (s *BigcacheStore) Get(key interface{}) (interface{}, error) {
 // Set defines data in Redis for given key idntifier
 func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options) error {
 	return s.client.Set(key.(string), value.([]byte))
+}
+
+// Delete removes data from Redis for given key idntifier
+func (s *BigcacheStore) Delete(key interface{}) error {
+	return s.client.Delete(key.(string))
 }
 
 // GetType returns the store type
