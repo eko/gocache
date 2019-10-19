@@ -16,7 +16,9 @@ type RedisClientInterface interface {
 }
 
 const (
-	RedisType       = "redis"
+	// RedisType represents the storage type as a string value
+	RedisType = "redis"
+	// RedisTagPattern represents the tag pattern to be used as a key in specified storage
 	RedisTagPattern = "gocache_tag_%s"
 )
 

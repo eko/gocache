@@ -15,7 +15,9 @@ type BigcacheClientInterface interface {
 }
 
 const (
-	BigcacheType       = "bigcache"
+	// BigcacheType represents the storage type as a string value
+	BigcacheType = "bigcache"
+	// BigcacheTagPattern represents the tag pattern to be used as a key in specified storage
 	BigcacheTagPattern = "gocache_tag_%s"
 )
 

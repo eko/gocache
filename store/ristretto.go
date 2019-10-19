@@ -8,7 +8,9 @@ import (
 )
 
 const (
-	RistrettoType       = "ristretto"
+	// RistrettoType represents the storage type as a string value
+	RistrettoType = "ristretto"
+	// RistrettoTagPattern represents the tag pattern to be used as a key in specified storage
 	RistrettoTagPattern = "gocache_tag_%s"
 )
 
@@ -58,7 +60,7 @@ func (s *RistrettoStore) Set(key interface{}, value interface{}, options *Option
 	}
 
 	if set := s.client.Set(key, value, options.CostValue()); !set {
-		err = fmt.Errorf("An error has occured while setting value '%v' on key '%v'", value, key)
+		err = fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", value, key)
 	}
 
 	if err != nil {

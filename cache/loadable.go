@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// LoadableType represents the loadable cache type as a string value
 	LoadableType = "loadable"
 )
 
@@ -38,7 +39,7 @@ func (c *LoadableCache) Get(key interface{}) (interface{}, error) {
 	// Unable to find in cache, try to load it from load function
 	object, err = c.loadFunc(key)
 	if err != nil {
-		log.Printf("An error has occured while trying to load item from load function: %v\n", err)
+		log.Printf("An error has occurred while trying to load item from load function: %v\n", err)
 		return object, err
 	}
 

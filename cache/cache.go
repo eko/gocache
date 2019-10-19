@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// CacheType represents the cache type as a string value
 	CacheType = "cache"
 )
 
