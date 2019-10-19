@@ -178,3 +178,41 @@ func TestDeleteWhenError(t *testing.T) {
 	// Then
 	assert.Equal(t, expectedErr, err)
 }
+
+func TestInvalidate(t *testing.T) {
+	// Given
+	options := store.InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cache := &mocksCache.CacheInterface{}
+	cache.On("Invalidate", options).Return(nil)
+
+	marshaler := New(cache)
+
+	// When
+	err := marshaler.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestInvalidatingWhenError(t *testing.T) {
+	// Given
+	options := store.InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	expectedErr := errors.New("Unexpected error when invalidating data")
+
+	cache := &mocksCache.CacheInterface{}
+	cache.On("Invalidate", options).Return(expectedErr)
+
+	marshaler := New(cache)
+
+	// When
+	err := marshaler.Invalidate(options)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}

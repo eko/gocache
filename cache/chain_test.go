@@ -156,6 +156,52 @@ func TestChainDeleteWhenError(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestChainInvalidate(t *testing.T) {
+	// Given
+	options := store.InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	// Cache 1
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Invalidate", options).Return(nil)
+
+	// Cache 2
+	cache2 := &mocksCache.SetterCacheInterface{}
+	cache2.On("Invalidate", options).Return(nil)
+
+	cache := NewChain(cache1, cache2)
+
+	// When
+	err := cache.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestChainInvalidateWhenError(t *testing.T) {
+	// Given
+	options := store.InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	// Cache 1
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Invalidate", options).Return(errors.New("An unexpected error has occured while invalidation data"))
+
+	// Cache 2
+	cache2 := &mocksCache.SetterCacheInterface{}
+	cache2.On("Invalidate", options).Return(nil)
+
+	cache := NewChain(cache1, cache2)
+
+	// When
+	err := cache.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestChainGetType(t *testing.T) {
 	// Given
 	cache1 := &mocksCache.SetterCacheInterface{}

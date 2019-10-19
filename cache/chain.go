@@ -65,6 +65,15 @@ func (c *ChainCache) Delete(key interface{}) error {
 	return nil
 }
 
+// Invalidate invalidates cache item from given options
+func (c *ChainCache) Invalidate(options store.InvalidateOptions) error {
+	for _, cache := range c.caches {
+		cache.Invalidate(options)
+	}
+
+	return nil
+}
+
 // setUntil sets a value in available caches, eventually until a given cache layer
 func (c *ChainCache) setUntil(key, object interface{}, until *string) error {
 	for _, cache := range c.caches {

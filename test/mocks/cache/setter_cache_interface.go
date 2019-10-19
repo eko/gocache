@@ -78,6 +78,20 @@ func (_m *SetterCacheInterface) GetType() string {
 	return r0
 }
 
+// Invalidate provides a mock function with given fields: options
+func (_m *SetterCacheInterface) Invalidate(options store.InvalidateOptions) error {
+	ret := _m.Called(options)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(store.InvalidateOptions) error); ok {
+		r0 = rf(options)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Set provides a mock function with given fields: key, object, options
 func (_m *SetterCacheInterface) Set(key interface{}, object interface{}, options *store.Options) error {
 	ret := _m.Called(key, object, options)

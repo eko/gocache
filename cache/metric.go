@@ -42,6 +42,11 @@ func (c *MetricCache) Delete(key interface{}) error {
 	return c.cache.Delete(key)
 }
 
+// Invalidate invalidates cache item from given options
+func (c *MetricCache) Invalidate(options store.InvalidateOptions) error {
+	return c.cache.Invalidate(options)
+}
+
 // Get obtains a value from cache and also records metrics
 func (c *MetricCache) updateMetrics(cache CacheInterface) {
 	switch current := cache.(type) {

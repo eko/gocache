@@ -55,6 +55,25 @@ func TestBigcacheSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestBigcacheSetWithTags(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := &MockBigcacheClientInterface{}
+	client.On("Set", cacheKey, cacheValue).Return(nil)
+	client.On("Get", "gocache_tag_tag1").Return(nil, nil)
+	client.On("Set", "gocache_tag_tag1", []byte("my-key")).Return(nil)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestBigcacheDelete(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
@@ -87,6 +106,50 @@ func TestBigcacheDeleteWhenError(t *testing.T) {
 
 	// Then
 	assert.Equal(t, expectedErr, err)
+}
+
+func TestBigcacheInvalidate(t *testing.T) {
+	// Given
+	options := InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cacheKeys := []byte("a23fdf987h2svc23,jHG2372x38hf74")
+
+	client := &MockBigcacheClientInterface{}
+	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
+	client.On("Delete", "a23fdf987h2svc23").Return(nil)
+	client.On("Delete", "jHG2372x38hf74").Return(nil)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestBigcacheInvalidateWhenError(t *testing.T) {
+	// Given
+	options := InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cacheKeys := []byte("a23fdf987h2svc23,jHG2372x38hf74")
+
+	client := &MockBigcacheClientInterface{}
+	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
+	client.On("Delete", "a23fdf987h2svc23").Return(errors.New("Unexpected error"))
+	client.On("Delete", "jHG2372x38hf74").Return(nil)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
 }
 
 func TestBigcacheGetType(t *testing.T) {
