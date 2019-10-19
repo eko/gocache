@@ -18,6 +18,7 @@ Here is what it brings in detail:
 * ✅ A metric cache to let you store metrics about your caches usage (hits, miss, set success, set error, ...)
 * ✅ A marshaler to automatically marshal/unmarshal your cache values as a struct
 * ✅ Define default values in stores and override them when setting data
+* ✅ Cache invalidation by expiration time and/or using tags
 
 ## Built-in stores
 
@@ -227,6 +228,52 @@ marshal.Delete("my-key")
 ```
 
 The only thing you have to do is to specify the struct in which you want your value to be unmarshalled as a second argument when calling the `.Get()` method.
+
+### Cache invalidation using tags
+
+You can attach some tags to items you create so you can easily invalidate some of them later.
+
+Tags are stored using the same storage you choose for your cache.
+
+Here is an example on how to use it:
+
+```go
+// Initialize Redis client and store
+redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
+redisStore := store.NewRedis(redisClient, nil)
+
+// Initialize chained cache
+cacheManager := cache.NewMetric(
+	promMetrics,
+	cache.New(redisStore),
+)
+
+// Initializes marshaler
+marshal := marshaler.New(cacheManager)
+
+key := BookQuery{Slug: "my-test-amazing-book"}
+value := Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
+
+// Set an item in the cache and attach it a "book" tag
+err = marshal.Set(key, value, store.Options{Tags: []string{"book"}})
+if err != nil {
+    panic(err)
+}
+
+// Remove all items that have the "book" tag
+err := marshal.Invalidate(store.InvalidateOptions{Tags: []string{"book"}})
+if err != nil {
+    panic(err)
+}
+
+returnedValue, err := marshal.Get(key, new(Book))
+if err != nil {
+	// Should be triggered because item has been deleted so it cannot be found.
+    panic(err)
+}
+```
+
+Mix this with expiration times on your caches to have a fine tuned control on how your data are cached.
 
 ### All together!
 

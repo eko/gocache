@@ -41,6 +41,11 @@ func (c *Cache) Delete(key interface{}) error {
 	return c.codec.Delete(cacheKey)
 }
 
+// Invalidate invalidates cache item from given options
+func (c *Cache) Invalidate(options store.InvalidateOptions) error {
+	return c.codec.Invalidate(options)
+}
+
 // GetCodec returns the current codec
 func (c *Cache) GetCodec() codec.CodecInterface {
 	return c.codec

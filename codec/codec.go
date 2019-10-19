@@ -6,12 +6,14 @@ import (
 
 // Stats allows to returns some statistics of codec usage
 type Stats struct {
-	Hits          int
-	Miss          int
-	SetSuccess    int
-	SetError      int
-	DeleteSuccess int
-	DeleteError   int
+	Hits              int
+	Miss              int
+	SetSuccess        int
+	SetError          int
+	DeleteSuccess     int
+	DeleteError       int
+	InvalidateSuccess int
+	InvalidateError   int
 }
 
 // Codec represents an instance of a cache store
@@ -63,6 +65,19 @@ func (c *Codec) Delete(key interface{}) error {
 		c.stats.DeleteSuccess++
 	} else {
 		c.stats.DeleteError++
+	}
+
+	return err
+}
+
+// Invalidate invalidates some cach items from given options
+func (c *Codec) Invalidate(options store.InvalidateOptions) error {
+	err := c.store.Invalidate(options)
+
+	if err == nil {
+		c.stats.InvalidateSuccess++
+	} else {
+		c.stats.InvalidateError++
 	}
 
 	return err

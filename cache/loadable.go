@@ -58,6 +58,11 @@ func (c *LoadableCache) Delete(key interface{}) error {
 	return c.cache.Delete(key)
 }
 
+// Invalidate invalidates cache item from given options
+func (c *LoadableCache) Invalidate(options store.InvalidateOptions) error {
+	return c.cache.Invalidate(options)
+}
+
 // GetType returns the cache type
 func (c *LoadableCache) GetType() string {
 	return LoadableType

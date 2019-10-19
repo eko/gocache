@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/eko/gocache/store"
 	mocksCache "github.com/eko/gocache/test/mocks/cache"
 	mocksCodec "github.com/eko/gocache/test/mocks/codec"
 	mocksMetrics "github.com/eko/gocache/test/mocks/metrics"
@@ -114,6 +115,48 @@ func TestMetricDeleteWhenError(t *testing.T) {
 
 	// When
 	err := cache.Delete("my-key")
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}
+
+func TestMetricInvalidate(t *testing.T) {
+	// Given
+	options := store.InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Invalidate", options).Return(nil)
+
+	metrics := &mocksMetrics.MetricsInterface{}
+
+	cache := NewMetric(metrics, cache1)
+
+	// When
+	err := cache.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMetricInvalidateWhenError(t *testing.T) {
+	// Given
+	options := store.InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	expectedErr := errors.New("Unexpected error while invalidating data")
+
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Invalidate", options).Return(expectedErr)
+
+	metrics := &mocksMetrics.MetricsInterface{}
+
+	cache := NewMetric(metrics, cache1)
+
+	// When
+	err := cache.Invalidate(options)
 
 	// Then
 	assert.Equal(t, expectedErr, err)

@@ -12,6 +12,9 @@ type Options struct {
 
 	// Expiration allows to specify an expiration time when setting a value
 	Expiration time.Duration
+
+	// Tags allows to specify associated tags to the current value
+	Tags []string
 }
 
 // CostValue returns the allocated memory capacity
@@ -22,4 +25,9 @@ func (o Options) CostValue() int64 {
 // ExpirationValue returns the expiration option value
 func (o Options) ExpirationValue() time.Duration {
 	return o.Expiration
+}
+
+// TagsValue returns the tags option value
+func (o Options) TagsValue() []string {
+	return o.Tags
 }

@@ -61,6 +61,25 @@ func TestRedisSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRedisSetWithTags(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := &MockRedisClientInterface{}
+	client.On("Set", cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
+	client.On("Get", "gocache_tag_tag1").Return(&redis.StringCmd{})
+	client.On("Set", "gocache_tag_tag1", []byte("my-key"), 720*time.Hour).Return(&redis.StatusCmd{})
+
+	store := NewRedis(client, nil)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestRedisDelete(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
@@ -72,6 +91,26 @@ func TestRedisDelete(t *testing.T) {
 
 	// When
 	err := store.Delete(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestRedisInvalidate(t *testing.T) {
+	// Given
+	options := InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cacheKeys := &redis.StringCmd{}
+
+	client := &MockRedisClientInterface{}
+	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
+
+	store := NewRedis(client, nil)
+
+	// When
+	err := store.Invalidate(options)
 
 	// Then
 	assert.Nil(t, err)

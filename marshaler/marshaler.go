@@ -54,3 +54,8 @@ func (c *Marshaler) Set(key, object interface{}, options *store.Options) error {
 func (c *Marshaler) Delete(key interface{}) error {
 	return c.cache.Delete(key)
 }
+
+// Invalidate invalidate cache values using given options
+func (c *Marshaler) Invalidate(options store.InvalidateOptions) error {
+	return c.cache.Invalidate(options)
+}

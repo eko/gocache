@@ -7,6 +7,7 @@ import (
 
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/stretchr/testify/assert"
+	mock "github.com/stretchr/testify/mock"
 )
 
 func TestNewMemcache(t *testing.T) {
@@ -70,6 +71,25 @@ func TestMemcacheSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestMemcacheSetWithTags(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := &MockMemcacheClientInterface{}
+	client.On("Set", mock.Anything).Return(nil)
+	client.On("Get", "gocache_tag_tag1").Return(nil, nil)
+
+	store := NewMemcache(client, nil)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+
+	// Then
+	assert.Nil(t, err)
+	client.AssertNumberOfCalls(t, "Set", 2)
+}
+
 func TestMemcacheDelete(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
@@ -102,6 +122,54 @@ func TestMemcacheDeleteWhenError(t *testing.T) {
 
 	// Then
 	assert.Equal(t, expectedErr, err)
+}
+
+func TestMemcacheInvalidate(t *testing.T) {
+	// Given
+	options := InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cacheKeys := &memcache.Item{
+		Value: []byte("a23fdf987h2svc23,jHG2372x38hf74"),
+	}
+
+	client := &MockMemcacheClientInterface{}
+	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
+	client.On("Delete", "a23fdf987h2svc23").Return(nil)
+	client.On("Delete", "jHG2372x38hf74").Return(nil)
+
+	store := NewMemcache(client, nil)
+
+	// When
+	err := store.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMemcacheInvalidateWhenError(t *testing.T) {
+	// Given
+	options := InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cacheKeys := &memcache.Item{
+		Value: []byte("a23fdf987h2svc23,jHG2372x38hf74"),
+	}
+
+	client := &MockMemcacheClientInterface{}
+	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
+	client.On("Delete", "a23fdf987h2svc23").Return(errors.New("Unexpected error"))
+	client.On("Delete", "jHG2372x38hf74").Return(nil)
+
+	store := NewMemcache(client, nil)
+
+	// When
+	err := store.Invalidate(options)
+
+	// Then
+	assert.Nil(t, err)
 }
 
 func TestMemcacheGetType(t *testing.T) {
