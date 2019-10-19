@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// ChainType represents the chain cache type as a string value
 	ChainType = "chain"
 )
 

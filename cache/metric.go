@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	// MetricType represents the metric cache type as a string value
 	MetricType = "metric"
 )
 

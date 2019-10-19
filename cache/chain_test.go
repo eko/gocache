@@ -141,7 +141,7 @@ func TestChainDeleteWhenError(t *testing.T) {
 	// Given
 	// Cache 1
 	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Delete", "my-key").Return(errors.New("An error has occured while deleting key"))
+	cache1.On("Delete", "my-key").Return(errors.New("An error has occurred while deleting key"))
 
 	// Cache 2
 	cache2 := &mocksCache.SetterCacheInterface{}
@@ -187,7 +187,7 @@ func TestChainInvalidateWhenError(t *testing.T) {
 
 	// Cache 1
 	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Invalidate", options).Return(errors.New("An unexpected error has occured while invalidation data"))
+	cache1.On("Invalidate", options).Return(errors.New("An unexpected error has occurred while invalidation data"))
 
 	// Cache 2
 	cache2 := &mocksCache.SetterCacheInterface{}

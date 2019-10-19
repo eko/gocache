@@ -43,7 +43,7 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 	cache1.On("Get", "my-key").Return(nil, errors.New("Unable to find in cache 1"))
 
 	loadFunc := func(key interface{}) (interface{}, error) {
-		return nil, errors.New("An error has occured while loading data from custom source")
+		return nil, errors.New("An error has occurred while loading data from custom source")
 	}
 
 	cache := NewLoadable(loadFunc, cache1)
@@ -53,7 +53,7 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("An error has occured while loading data from custom source"), err)
+	assert.Equal(t, errors.New("An error has occurred while loading data from custom source"), err)
 }
 
 func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {

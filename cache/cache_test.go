@@ -61,7 +61,7 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 		Hello: "world",
 	}
 
-	storeErr := errors.New("An error has occured while inserting data into store")
+	storeErr := errors.New("An error has occurred while inserting data into store")
 
 	store := &mocksStore.StoreInterface{}
 	store.On("Set", "9b1ac8a6e8ca8ca9477c0a252eb37756", value, options).

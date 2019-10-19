@@ -17,7 +17,9 @@ type MemcacheClientInterface interface {
 }
 
 const (
-	MemcacheType       = "memcache"
+	// MemcacheType represents the storage type as a string value
+	MemcacheType = "memcache"
+	// MemcacheTagPattern represents the tag pattern to be used as a key in specified storage
 	MemcacheTagPattern = "gocache_tag_%s"
 )
 
