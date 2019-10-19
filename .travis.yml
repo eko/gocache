@@ -1,4 +1,5 @@
 language: go
+
 matrix:
   include:
     - go: 1.x
@@ -15,4 +16,7 @@ install:
   - go get -t -v ./...
 
 script:
-  - go test -cover -v ./...
+  - go test -cover -coverprofile=coverage.txt -covermode=atomic -v ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
