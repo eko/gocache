@@ -76,20 +76,14 @@ func (c *ChainCache) Invalidate(options store.InvalidateOptions) error {
 }
 
 // setUntil sets a value in available caches, eventually until a given cache layer
-func (c *ChainCache) setUntil(key, object interface{}, until *string) error {
+func (c *ChainCache) setUntil(key, object interface{}, until *string) {
 	for _, cache := range c.caches {
 		if until != nil && *until == cache.GetCodec().GetStore().GetType() {
 			break
 		}
 
-		err := cache.Set(key, object, nil)
-		if err != nil {
-			storeType := cache.GetCodec().GetStore().GetType()
-			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)
-		}
+		cache.Set(key, object, nil)
 	}
-
-	return nil
 }
 
 // GetCaches returns all Chaind caches

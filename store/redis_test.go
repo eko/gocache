@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
+	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
 	"github.com/go-redis/redis/v7"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRedis(t *testing.T) {
 	// Given
-	client := &MockRedisClientInterface{}
+	client := &mocksStore.RedisClientInterface{}
 	options := &Options{
 		Expiration: 6 * time.Second,
 	}
@@ -26,7 +27,7 @@ func TestNewRedis(t *testing.T) {
 
 func TestRedisGet(t *testing.T) {
 	// Given
-	client := &MockRedisClientInterface{}
+	client := &mocksStore.RedisClientInterface{}
 	client.On("Get", "my-key").Return(&redis.StringCmd{})
 
 	store := NewRedis(client, nil)
@@ -47,7 +48,7 @@ func TestRedisSet(t *testing.T) {
 		Expiration: 6 * time.Second,
 	}
 
-	client := &MockRedisClientInterface{}
+	client := &mocksStore.RedisClientInterface{}
 	client.On("Set", "my-key", cacheValue, 5*time.Second).Return(&redis.StatusCmd{})
 
 	store := NewRedis(client, options)
@@ -61,12 +62,32 @@ func TestRedisSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRedisSetWhenNoOptionsGiven(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+	options := &Options{
+		Expiration: 6 * time.Second,
+	}
+
+	client := &mocksStore.RedisClientInterface{}
+	client.On("Set", "my-key", cacheValue, 6*time.Second).Return(&redis.StatusCmd{})
+
+	store := NewRedis(client, options)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, nil)
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestRedisSetWithTags(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &MockRedisClientInterface{}
+	client := &mocksStore.RedisClientInterface{}
 	client.On("Set", cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
 	client.On("Get", "gocache_tag_tag1").Return(&redis.StringCmd{})
 	client.On("Set", "gocache_tag_tag1", []byte("my-key"), 720*time.Hour).Return(&redis.StatusCmd{})
@@ -84,7 +105,7 @@ func TestRedisDelete(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
 
-	client := &MockRedisClientInterface{}
+	client := &mocksStore.RedisClientInterface{}
 	client.On("Del", "my-key").Return(&redis.IntCmd{})
 
 	store := NewRedis(client, nil)
@@ -104,7 +125,7 @@ func TestRedisInvalidate(t *testing.T) {
 
 	cacheKeys := &redis.StringCmd{}
 
-	client := &MockRedisClientInterface{}
+	client := &mocksStore.RedisClientInterface{}
 	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
 
 	store := NewRedis(client, nil)
@@ -118,7 +139,7 @@ func TestRedisInvalidate(t *testing.T) {
 
 func TestRedisGetType(t *testing.T) {
 	// Given
-	client := &MockRedisClientInterface{}
+	client := &mocksStore.RedisClientInterface{}
 
 	store := NewRedis(client, nil)
 

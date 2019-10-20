@@ -29,6 +29,31 @@ func TestNewLoadable(t *testing.T) {
 	assert.Equal(t, cache1, cache.cache)
 }
 
+func TestLoadableGetWhenAlreadyInCache(t *testing.T) {
+	// Given
+	cacheValue := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Get", "my-key").Return(cacheValue, nil)
+
+	loadFunc := func(key interface{}) (interface{}, error) {
+		return nil, errors.New("Should not be called")
+	}
+
+	cache := NewLoadable(loadFunc, cache1)
+
+	// When
+	value, err := cache.Get("my-key")
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+}
+
 func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 	// Given
 	// Cache

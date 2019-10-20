@@ -1,14 +1,17 @@
 package store
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
+	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRistretto(t *testing.T) {
 	// Given
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 	options := &Options{
 		Cost: 8,
 	}
@@ -27,7 +30,7 @@ func TestRistrettoGet(t *testing.T) {
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 	client.On("Get", cacheKey).Return(cacheValue, true)
 
 	store := NewRistretto(client, nil)
@@ -40,6 +43,23 @@ func TestRistrettoGet(t *testing.T) {
 	assert.Equal(t, cacheValue, value)
 }
 
+func TestRistrettoGetWhenError(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+
+	client := &mocksStore.RistrettoClientInterface{}
+	client.On("Get", cacheKey).Return(nil, false)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	value, err := store.Get(cacheKey)
+
+	// Then
+	assert.Nil(t, value)
+	assert.Equal(t, errors.New("Value not found in Ristretto store"), err)
+}
+
 func TestRistrettoSet(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
@@ -48,7 +68,7 @@ func TestRistrettoSet(t *testing.T) {
 		Cost: 7,
 	}
 
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 	client.On("Set", cacheKey, cacheValue, int64(4)).Return(true)
 
 	store := NewRistretto(client, options)
@@ -62,15 +82,74 @@ func TestRistrettoSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+	options := &Options{
+		Cost: 7,
+	}
+
+	client := &mocksStore.RistrettoClientInterface{}
+	client.On("Set", cacheKey, cacheValue, int64(7)).Return(true)
+
+	store := NewRistretto(client, options)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, nil)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestRistrettoSetWhenError(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+	options := &Options{
+		Cost: 7,
+	}
+
+	client := &mocksStore.RistrettoClientInterface{}
+	client.On("Set", cacheKey, cacheValue, int64(7)).Return(false)
+
+	store := NewRistretto(client, options)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, nil)
+
+	// Then
+	assert.Equal(t, fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", cacheValue, cacheKey), err)
+}
+
 func TestRistrettoSetWithTags(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 	client.On("Set", cacheKey, cacheValue, int64(0)).Return(true)
 	client.On("Get", "gocache_tag_tag1").Return(nil, true)
 	client.On("Set", "gocache_tag_tag1", []byte("my-key"), int64(0)).Return(true)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
+	// Given
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := &mocksStore.RistrettoClientInterface{}
+	client.On("Set", cacheKey, cacheValue, int64(0)).Return(true)
+	client.On("Get", "gocache_tag_tag1").Return([]byte("my-key,a-second-key"), true)
+	client.On("Set", "gocache_tag_tag1", []byte("my-key,a-second-key"), int64(0)).Return(true)
 
 	store := NewRistretto(client, nil)
 
@@ -85,7 +164,7 @@ func TestRistrettoDelete(t *testing.T) {
 	// Given
 	cacheKey := "my-key"
 
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 	client.On("Del", cacheKey).Return(nil)
 
 	store := NewRistretto(client, nil)
@@ -105,7 +184,7 @@ func TestRistrettoInvalidate(t *testing.T) {
 
 	cacheKeys := []byte("a23fdf987h2svc23,jHG2372x38hf74")
 
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, true)
 	client.On("Del", "a23fdf987h2svc23").Return(nil)
 	client.On("Del", "jHG2372x38hf74").Return(nil)
@@ -127,7 +206,7 @@ func TestRistrettoInvalidateWhenError(t *testing.T) {
 
 	cacheKeys := []byte("a23fdf987h2svc23,jHG2372x38hf74")
 
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, false)
 	client.On("Del", "a23fdf987h2svc23").Return(nil)
 	client.On("Del", "jHG2372x38hf74").Return(nil)
@@ -143,7 +222,7 @@ func TestRistrettoInvalidateWhenError(t *testing.T) {
 
 func TestRistrettoGetType(t *testing.T) {
 	// Given
-	client := &MockRistrettoClientInterface{}
+	client := &mocksStore.RistrettoClientInterface{}
 
 	store := NewRistretto(client, nil)
 

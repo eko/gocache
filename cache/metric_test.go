@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/eko/gocache/store"
 	mocksCache "github.com/eko/gocache/test/mocks/cache"
@@ -84,6 +85,32 @@ func TestMetricGetWhenChainCache(t *testing.T) {
 	// Then
 	assert.Nil(t, err)
 	assert.Equal(t, cacheValue, value)
+}
+
+func TestMetricSet(t *testing.T) {
+	// Given
+	value := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+
+	options := &store.Options{
+		Expiration: 5 * time.Second,
+	}
+
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Set", "my-key", value, options).Return(nil)
+
+	metrics := &mocksMetrics.MetricsInterface{}
+
+	cache := NewMetric(metrics, cache1)
+
+	// When
+	err := cache.Set("my-key", value, options)
+
+	// Then
+	assert.Nil(t, err)
 }
 
 func TestMetricDelete(t *testing.T) {

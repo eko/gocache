@@ -1,6 +1,9 @@
 package cache
 
 import (
+	"crypto"
+	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/eko/gocache/codec"
@@ -61,4 +64,14 @@ func (c *Cache) GetType() string {
 // checksum of key struct
 func (c *Cache) getCacheKey(key interface{}) string {
 	return strings.ToLower(checksum(key))
+}
+
+// checksum hashes a given object into a string
+func checksum(object interface{}) string {
+	digester := crypto.MD5.New()
+	fmt.Fprint(digester, reflect.TypeOf(object))
+	fmt.Fprint(digester, object)
+	hash := digester.Sum(nil)
+
+	return fmt.Sprintf("%x", hash)
 }
