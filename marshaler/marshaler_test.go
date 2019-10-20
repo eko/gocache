@@ -149,6 +149,28 @@ func TestSetWhenString(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestSetWhenError(t *testing.T) {
+	// Given
+	cacheValue := "test"
+
+	options := &store.Options{
+		Expiration: 5 * time.Second,
+	}
+
+	expectedErr := errors.New("An unexpected error occurred")
+
+	cache := &mocksCache.CacheInterface{}
+	cache.On("Set", "my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(expectedErr)
+
+	marshaler := New(cache)
+
+	// When
+	err := marshaler.Set("my-key", cacheValue, options)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}
+
 func TestDelete(t *testing.T) {
 	// Given
 	cache := &mocksCache.CacheInterface{}
