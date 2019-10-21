@@ -276,87 +276,9 @@ if err != nil {
 
 Mix this with expiration times on your caches to have a fine tuned control on how your data are cached.
 
-### All together!
+### Benchmarks
 
-Finally, you can mix all of these available caches or bring them together to build the cache you want to.
-Here is a full example of how it can looks like:
-
-```go
-package main
-
-import (
-	"fmt"
-	"time"
-
-	"github.com/dgraph-io/ristretto"
-	"github.com/eko/gocache/cache"
-	"github.com/eko/gocache/marshaler"
-	"github.com/eko/gocache/metrics"
-	"github.com/eko/gocache/store"
-	"github.com/go-redis/redis/v7"
-)
-
-// Book is a test struct that represents a single book
-type Book struct {
-	ID   int
-	Name string
-	Slug string
-}
-
-func main() {
-	// Initialize Prometheus metrics collector
-	promMetrics := metrics.NewPrometheus("my-test-app")
-
-	// Initialize Ristretto store
-	ristrettoCache, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 1000,
-		MaxCost: 100,
-		BufferItems: 64,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	ristrettoStore := store.NewRistretto(ristrettoCache, &cache.Options{Cost: 4})
-
-	// Initialize Redis store
-	redisStore := store.NewRedis(redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"}), &cache.Options{Expiration: 5*time.Second})
-
-	// Initialize a load function that loads your data from a custom source
-	loadFunction := func(key interface{}) (interface{}, error) {
-		// ... retrieve value from available source
-		return &Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}, nil
-	}
-
-	// Initialize a chained cache (memory with Ristretto then Redis) with Prometheus metrics
-	// and a load function that will put data back into caches if none has the value
-	cacheManager := cache.NewMetric(promMetrics, cache.NewLoadable(loadFunction,
-		cache.NewChain(
-			cache.New(ristrettoStore),
-			cache.New(redisStore),
-		),
-	))
-
-	marshal := marshaler.New(cacheManager)
-
-	key := Book{Slug: "my-test-amazing-book"}
-	value := Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
-
-	err = marshal.Set(key, value, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	returnedValue, err := marshal.Get(key, new(Book))
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("%v\n", returnedValue)
-
-	marshal.Delete(key)
-}
-```
+![Benchmarks](https://raw.githubusercontent.com/eko/gocache/master/misc/benchmarks.jpeg)
 
 ## Community
 
