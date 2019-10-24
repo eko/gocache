@@ -19,6 +19,7 @@ type RistrettoClientInterface interface {
 	Get(key interface{}) (interface{}, bool)
 	Set(key, value interface{}, cost int64) bool
 	Del(key interface{})
+	Clear()
 }
 
 // RistrettoStore is a store for Ristretto (memory) library
@@ -136,4 +137,10 @@ func (s *RistrettoStore) Invalidate(options InvalidateOptions) error {
 // GetType returns the store type
 func (s *RistrettoStore) GetType() string {
 	return RistrettoType
+}
+
+// Clear resets all data in the store
+func (s *RistrettoStore) Clear() error {
+	s.client.Clear()
+	return nil
 }

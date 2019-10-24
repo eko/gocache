@@ -189,6 +189,40 @@ func TestMetricInvalidateWhenError(t *testing.T) {
 	assert.Equal(t, expectedErr, err)
 }
 
+func TestMetricClear(t *testing.T) {
+	// Given
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Clear").Return(nil)
+
+	metrics := &mocksMetrics.MetricsInterface{}
+
+	cache := NewMetric(metrics, cache1)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMetricClearWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unexpected error while clearing cache")
+
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Clear").Return(expectedErr)
+
+	metrics := &mocksMetrics.MetricsInterface{}
+
+	cache := NewMetric(metrics, cache1)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}
+
 func TestMetricGetType(t *testing.T) {
 	// Given
 	cache1 := &mocksCache.SetterCacheInterface{}

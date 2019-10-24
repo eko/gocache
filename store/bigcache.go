@@ -12,6 +12,7 @@ type BigcacheClientInterface interface {
 	Get(key string) ([]byte, error)
 	Set(key string, entry []byte) error
 	Delete(key string) error
+	Reset() error
 }
 
 const (
@@ -126,6 +127,11 @@ func (s *BigcacheStore) Invalidate(options InvalidateOptions) error {
 	}
 
 	return nil
+}
+
+// Clear resets all data in the store
+func (s *BigcacheStore) Clear() error {
+	return s.client.Reset()
 }
 
 // GetType returns the store type

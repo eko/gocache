@@ -9,6 +9,11 @@ type RistrettoClientInterface struct {
 	mock.Mock
 }
 
+// Clear provides a mock function with given fields:
+func (_m *RistrettoClientInterface) Clear() {
+	_m.Called()
+}
+
 // Del provides a mock function with given fields: key
 func (_m *RistrettoClientInterface) Del(key interface{}) {
 	_m.Called(key)

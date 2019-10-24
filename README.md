@@ -60,6 +60,8 @@ if err != nil {
 value := cacheManager.Get("my-key")
 
 cacheManager.Delete("my-key")
+
+cacheManager.Clear() // Clears the entire cache, in case you want to flush all cache
 ```
 
 #### Memory (using Bigcache)

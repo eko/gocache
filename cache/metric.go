@@ -48,6 +48,11 @@ func (c *MetricCache) Invalidate(options store.InvalidateOptions) error {
 	return c.cache.Invalidate(options)
 }
 
+// Clear resets all cache data
+func (c *MetricCache) Clear() error {
+	return c.cache.Clear()
+}
+
 // Get obtains a value from cache and also records metrics
 func (c *MetricCache) updateMetrics(cache CacheInterface) {
 	switch current := cache.(type) {

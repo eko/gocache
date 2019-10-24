@@ -220,6 +220,20 @@ func TestRistrettoInvalidateWhenError(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRistrettoClear(t *testing.T) {
+	// Given
+	client := &mocksStore.RistrettoClientInterface{}
+	client.On("Clear").Return(nil)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	err := store.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestRistrettoGetType(t *testing.T) {
 	// Given
 	client := &mocksStore.RistrettoClientInterface{}

@@ -6,5 +6,6 @@ type StoreInterface interface {
 	Set(key interface{}, value interface{}, options *Options) error
 	Delete(key interface{}) error
 	Invalidate(options InvalidateOptions) error
+	Clear() error
 	GetType() string
 }

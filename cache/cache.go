@@ -50,6 +50,11 @@ func (c *Cache) Invalidate(options store.InvalidateOptions) error {
 	return c.codec.Invalidate(options)
 }
 
+// Clear resets all cache data
+func (c *Cache) Clear() error {
+	return c.codec.Clear()
+}
+
 // GetCodec returns the current codec
 func (c *Cache) GetCodec() codec.CodecInterface {
 	return c.codec

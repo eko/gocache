@@ -64,6 +64,11 @@ func (c *LoadableCache) Invalidate(options store.InvalidateOptions) error {
 	return c.cache.Invalidate(options)
 }
 
+// Clear resets all cache data
+func (c *LoadableCache) Clear() error {
+	return c.cache.Clear()
+}
+
 // GetType returns the cache type
 func (c *LoadableCache) GetType() string {
 	return LoadableType

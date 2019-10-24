@@ -214,6 +214,36 @@ func TestBigcacheInvalidateWhenError(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestBigcacheClear(t *testing.T) {
+	// Given
+	client := &mocksStore.BigcacheClientInterface{}
+	client.On("Reset").Return(nil)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestBigcacheClearWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("An unexpected error occurred")
+
+	client := &mocksStore.BigcacheClientInterface{}
+	client.On("Reset").Return(expectedErr)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Clear()
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}
+
 func TestBigcacheGetType(t *testing.T) {
 	// Given
 	client := &mocksStore.BigcacheClientInterface{}

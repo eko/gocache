@@ -14,6 +14,8 @@ type Stats struct {
 	DeleteError       int
 	InvalidateSuccess int
 	InvalidateError   int
+	ClearSuccess      int
+	ClearError        int
 }
 
 // Codec represents an instance of a cache store
@@ -78,6 +80,19 @@ func (c *Codec) Invalidate(options store.InvalidateOptions) error {
 		c.stats.InvalidateSuccess++
 	} else {
 		c.stats.InvalidateError++
+	}
+
+	return err
+}
+
+// Clear resets all codec store data
+func (c *Codec) Clear() error {
+	err := c.store.Clear()
+
+	if err == nil {
+		c.stats.ClearSuccess++
+	} else {
+		c.stats.ClearError++
 	}
 
 	return err

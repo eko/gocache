@@ -188,6 +188,36 @@ func TestCacheInvalidateWhenError(t *testing.T) {
 	assert.Equal(t, expectedErr, err)
 }
 
+func TestCacheClear(t *testing.T) {
+	// Given
+	store := &mocksStore.StoreInterface{}
+	store.On("Clear").Return(nil)
+
+	cache := New(store)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestCacheClearWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unexpected error during invalidation")
+
+	store := &mocksStore.StoreInterface{}
+	store.On("Clear").Return(expectedErr)
+
+	cache := New(store)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}
+
 func TestCacheDeleteWhenError(t *testing.T) {
 	// Given
 	expectedErr := errors.New("Unable to delete key")

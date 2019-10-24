@@ -302,6 +302,44 @@ func TestChainInvalidateWhenError(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestChainClear(t *testing.T) {
+	// Given
+	// Cache 1
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Clear").Return(nil)
+
+	// Cache 2
+	cache2 := &mocksCache.SetterCacheInterface{}
+	cache2.On("Clear").Return(nil)
+
+	cache := NewChain(cache1, cache2)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestChainClearWhenError(t *testing.T) {
+	// Given
+	// Cache 1
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Clear").Return(errors.New("An unexpected error has occurred while invalidation data"))
+
+	// Cache 2
+	cache2 := &mocksCache.SetterCacheInterface{}
+	cache2.On("Clear").Return(nil)
+
+	cache := NewChain(cache1, cache2)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestChainGetType(t *testing.T) {
 	// Given
 	cache1 := &mocksCache.SetterCacheInterface{}

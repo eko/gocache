@@ -46,6 +46,20 @@ func (_m *BigcacheClientInterface) Get(key string) ([]byte, error) {
 	return r0, r1
 }
 
+// Reset provides a mock function with given fields:
+func (_m *BigcacheClientInterface) Reset() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Set provides a mock function with given fields: key, entry
 func (_m *BigcacheClientInterface) Set(key string, entry []byte) error {
 	ret := _m.Called(key, entry)

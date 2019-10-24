@@ -10,6 +10,7 @@ type CodecInterface interface {
 	Set(key interface{}, value interface{}, options *store.Options) error
 	Delete(key interface{}) error
 	Invalidate(options store.InvalidateOptions) error
+	Clear() error
 
 	GetStore() store.StoreInterface
 	GetStats() *Stats

@@ -11,6 +11,7 @@ type CacheInterface interface {
 	Set(key, object interface{}, options *store.Options) error
 	Delete(key interface{}) error
 	Invalidate(options store.InvalidateOptions) error
+	Clear() error
 	GetType() string
 }
 

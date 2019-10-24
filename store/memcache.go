@@ -14,6 +14,7 @@ type MemcacheClientInterface interface {
 	Get(key string) (item *memcache.Item, err error)
 	Set(item *memcache.Item) error
 	Delete(item string) error
+	FlushAll() error
 }
 
 const (
@@ -134,6 +135,11 @@ func (s *MemcacheStore) Invalidate(options InvalidateOptions) error {
 	}
 
 	return nil
+}
+
+// Clear resets all data in the store
+func (s *MemcacheStore) Clear() error {
+	return s.client.FlushAll()
 }
 
 // GetType returns the store type
