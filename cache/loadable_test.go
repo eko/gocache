@@ -199,6 +199,44 @@ func TestLoadableInvalidateWhenError(t *testing.T) {
 	assert.Equal(t, expectedErr, err)
 }
 
+func TestLoadableClear(t *testing.T) {
+	// Given
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Clear").Return(nil)
+
+	loadFunc := func(key interface{}) (interface{}, error) {
+		return "a value", nil
+	}
+
+	cache := NewLoadable(loadFunc, cache1)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestLoadableClearWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unexpected error when invalidating data")
+
+	cache1 := &mocksCache.SetterCacheInterface{}
+	cache1.On("Clear").Return(expectedErr)
+
+	loadFunc := func(key interface{}) (interface{}, error) {
+		return "a value", nil
+	}
+
+	cache := NewLoadable(loadFunc, cache1)
+
+	// When
+	err := cache.Clear()
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}
+
 func TestLoadableGetType(t *testing.T) {
 	// Given
 	cache1 := &mocksCache.SetterCacheInterface{}

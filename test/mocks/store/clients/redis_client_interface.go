@@ -34,6 +34,22 @@ func (_m *RedisClientInterface) Del(keys ...string) *redis.IntCmd {
 	return r0
 }
 
+// FlushAll provides a mock function with given fields:
+func (_m *RedisClientInterface) FlushAll() *redis.StatusCmd {
+	ret := _m.Called()
+
+	var r0 *redis.StatusCmd
+	if rf, ok := ret.Get(0).(func() *redis.StatusCmd); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*redis.StatusCmd)
+		}
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: key
 func (_m *RedisClientInterface) Get(key string) *redis.StringCmd {
 	ret := _m.Called(key)

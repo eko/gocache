@@ -75,6 +75,15 @@ func (c *ChainCache) Invalidate(options store.InvalidateOptions) error {
 	return nil
 }
 
+// Clear resets all cache data
+func (c *ChainCache) Clear() error {
+	for _, cache := range c.caches {
+		cache.Clear()
+	}
+
+	return nil
+}
+
 // setUntil sets a value in available caches, eventually until a given cache layer
 func (c *ChainCache) setUntil(key, object interface{}, until *string) {
 	for _, cache := range c.caches {

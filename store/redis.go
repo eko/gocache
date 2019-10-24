@@ -13,6 +13,7 @@ type RedisClientInterface interface {
 	Get(key string) *redis.StringCmd
 	Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Del(keys ...string) *redis.IntCmd
+	FlushAll() *redis.StatusCmd
 }
 
 const (
@@ -125,4 +126,13 @@ func (s *RedisStore) Invalidate(options InvalidateOptions) error {
 // GetType returns the store type
 func (s *RedisStore) GetType() string {
 	return RedisType
+}
+
+// Clear resets all data in the store
+func (s *RedisStore) Clear() error {
+	if err := s.client.FlushAll().Err(); err != nil {
+		return err
+	}
+
+	return nil
 }

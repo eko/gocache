@@ -238,3 +238,33 @@ func TestInvalidatingWhenError(t *testing.T) {
 	// Then
 	assert.Equal(t, expectedErr, err)
 }
+
+func TestClear(t *testing.T) {
+	// Given
+	cache := &mocksCache.CacheInterface{}
+	cache.On("Clear").Return(nil)
+
+	marshaler := New(cache)
+
+	// When
+	err := marshaler.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestClearWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("An unexpected error occurred")
+
+	cache := &mocksCache.CacheInterface{}
+	cache.On("Clear").Return(expectedErr)
+
+	marshaler := New(cache)
+
+	// When
+	err := marshaler.Clear()
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}

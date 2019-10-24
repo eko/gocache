@@ -24,6 +24,20 @@ func (_m *MemcacheClientInterface) Delete(item string) error {
 	return r0
 }
 
+// FlushAll provides a mock function with given fields:
+func (_m *MemcacheClientInterface) FlushAll() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: key
 func (_m *MemcacheClientInterface) Get(key string) (*memcache.Item, error) {
 	ret := _m.Called(key)

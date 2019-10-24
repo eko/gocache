@@ -49,6 +49,8 @@ func TestGetWhenHit(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().DeleteError)
 	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
 func TestGetWhenMiss(t *testing.T) {
@@ -75,6 +77,8 @@ func TestGetWhenMiss(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().DeleteError)
 	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
 func TestSetWhenSuccess(t *testing.T) {
@@ -108,6 +112,8 @@ func TestSetWhenSuccess(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().DeleteError)
 	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
 func TestSetWhenError(t *testing.T) {
@@ -143,6 +149,8 @@ func TestSetWhenError(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().DeleteError)
 	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
 func TestDeleteWhenSuccess(t *testing.T) {
@@ -166,6 +174,8 @@ func TestDeleteWhenSuccess(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().DeleteError)
 	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
 func TesDeleteWhenError(t *testing.T) {
@@ -191,6 +201,8 @@ func TesDeleteWhenError(t *testing.T) {
 	assert.Equal(t, 1, codec.GetStats().DeleteError)
 	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
 func TestInvalidateWhenSuccess(t *testing.T) {
@@ -218,6 +230,8 @@ func TestInvalidateWhenSuccess(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().DeleteError)
 	assert.Equal(t, 1, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
 func TestInvalidateWhenError(t *testing.T) {
@@ -247,6 +261,60 @@ func TestInvalidateWhenError(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().DeleteError)
 	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
 	assert.Equal(t, 1, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
+}
+
+func TestClearWhenSuccess(t *testing.T) {
+	// Given
+	store := &mocksStore.StoreInterface{}
+	store.On("Clear").Return(nil)
+
+	codec := New(store)
+
+	// When
+	err := codec.Clear()
+
+	// Then
+	assert.Nil(t, err)
+
+	assert.Equal(t, 0, codec.GetStats().Hits)
+	assert.Equal(t, 0, codec.GetStats().Miss)
+	assert.Equal(t, 0, codec.GetStats().SetSuccess)
+	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
+	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
+	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 1, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
+}
+
+func TestClearWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("Unexpected error when clearing cache")
+
+	store := &mocksStore.StoreInterface{}
+	store.On("Clear").Return(expectedErr)
+
+	codec := New(store)
+
+	// When
+	err := codec.Clear()
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+
+	assert.Equal(t, 0, codec.GetStats().Hits)
+	assert.Equal(t, 0, codec.GetStats().Miss)
+	assert.Equal(t, 0, codec.GetStats().SetSuccess)
+	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
+	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
+	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 1, codec.GetStats().ClearError)
 }
 
 func TestGetStore(t *testing.T) {

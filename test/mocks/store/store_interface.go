@@ -10,6 +10,20 @@ type StoreInterface struct {
 	mock.Mock
 }
 
+// Clear provides a mock function with given fields:
+func (_m *StoreInterface) Clear() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Delete provides a mock function with given fields: key
 func (_m *StoreInterface) Delete(key interface{}) error {
 	ret := _m.Called(key)

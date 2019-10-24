@@ -59,3 +59,8 @@ func (c *Marshaler) Delete(key interface{}) error {
 func (c *Marshaler) Invalidate(options store.InvalidateOptions) error {
 	return c.cache.Invalidate(options)
 }
+
+// Clear reset all cache data
+func (c *Marshaler) Clear() error {
+	return c.cache.Clear()
+}

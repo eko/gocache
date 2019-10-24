@@ -137,6 +137,20 @@ func TestRedisInvalidate(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRedisClear(t *testing.T) {
+	// Given
+	client := &mocksStore.RedisClientInterface{}
+	client.On("FlushAll").Return(&redis.StatusCmd{})
+
+	store := NewRedis(client, nil)
+
+	// When
+	err := store.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestRedisGetType(t *testing.T) {
 	// Given
 	client := &mocksStore.RedisClientInterface{}

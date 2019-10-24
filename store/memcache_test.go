@@ -263,6 +263,36 @@ func TestMemcacheInvalidateWhenError(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestMemcacheClear(t *testing.T) {
+	// Given
+	client := &mocksStore.MemcacheClientInterface{}
+	client.On("FlushAll").Return(nil)
+
+	store := NewMemcache(client, nil)
+
+	// When
+	err := store.Clear()
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMemcacheClearWhenError(t *testing.T) {
+	// Given
+	expectedErr := errors.New("An unexpected error occurred")
+
+	client := &mocksStore.MemcacheClientInterface{}
+	client.On("FlushAll").Return(expectedErr)
+
+	store := NewMemcache(client, nil)
+
+	// When
+	err := store.Clear()
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+}
+
 func TestMemcacheGetType(t *testing.T) {
 	// Given
 	client := &mocksStore.MemcacheClientInterface{}
