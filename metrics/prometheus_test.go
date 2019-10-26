@@ -7,7 +7,7 @@ import (
 	mocksCodec "github.com/eko/gocache/test/mocks/codec"
 	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,11 +33,13 @@ func TestRecord(t *testing.T) {
 	metrics.Record("redis", "hit_count", 6)
 
 	// Then
-	dtoMetric := &dto.Metric{}
-	metric, _ := metrics.collector.GetMetricWithLabelValues("my-test-service-name", "redis", "hit_count")
-	metric.Write(dtoMetric)
+	metric, err := metrics.collector.GetMetricWithLabelValues("my-test-service-name", "redis", "hit_count")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	v := testutil.ToFloat64(metric)
 
-	assert.Equal(t, float64(6), dtoMetric.GetGauge().GetValue())
+	assert.Equal(t, float64(6), v)
 }
 
 func TestRecordFromCodec(t *testing.T) {
@@ -105,10 +107,12 @@ func TestRecordFromCodec(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		dtoMetric := &dto.Metric{}
-		metric, _ := metrics.collector.GetMetricWithLabelValues("my-test-service-name", "redis", tc.metricName)
-		metric.Write(dtoMetric)
+		metric, err := metrics.collector.GetMetricWithLabelValues("my-test-service-name", "redis", tc.metricName)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		v := testutil.ToFloat64(metric)
 
-		assert.Equal(t, tc.expected, dtoMetric.GetGauge().GetValue())
+		assert.Equal(t, tc.expected, v)
 	}
 }

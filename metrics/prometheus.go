@@ -3,6 +3,7 @@ package metrics
 import (
 	"github.com/eko/gocache/codec"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
@@ -20,7 +21,7 @@ type Prometheus struct {
 }
 
 func initCacheCollector(namespace string) *prometheus.GaugeVec {
-	c := prometheus.NewGaugeVec(
+	c := promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name:      "collector",
 			Namespace: namespace,
@@ -28,7 +29,6 @@ func initCacheCollector(namespace string) *prometheus.GaugeVec {
 		},
 		[]string{"service", "store", "metric"},
 	)
-	prometheus.MustRegister(c)
 	return c
 }
 
