@@ -278,6 +278,50 @@ if err != nil {
 
 Mix this with expiration times on your caches to have a fine tuned control on how your data are cached.
 
+### Write your own custom cache
+
+Cache respect the following interface so you can write your own (proprietary?) cache logic if needed by implementing the following interface:
+
+```go
+type CacheInterface interface {
+	Get(key interface{}) (interface{}, error)
+	Set(key, object interface{}, options *store.Options) error
+	Delete(key interface{}) error
+	Invalidate(options store.InvalidateOptions) error
+	Clear() error
+	GetType() string
+}
+```
+
+Or, in case you use a setter cache, also implement the `GetCodec()` method:
+
+```go
+type SetterCacheInterface interface {
+	CacheInterface
+
+	GetCodec() codec.CodecInterface
+}
+```
+
+As all caches available in this library implement `CacheInterface`, you will be able to mix your own caches with your own.
+
+### Write your own custom store
+
+You also have the ability to write your own custom store by implementing the following interface:
+
+```go
+type StoreInterface interface {
+	Get(key interface{}) (interface{}, error)
+	Set(key interface{}, value interface{}, options *Options) error
+	Delete(key interface{}) error
+	Invalidate(options InvalidateOptions) error
+	Clear() error
+	GetType() string
+}
+```
+
+Of course, I suggest you to have a look at current caches or stores to implement your own.
+
 ### Benchmarks
 
 ![Benchmarks](https://raw.githubusercontent.com/eko/gocache/master/misc/benchmarks.jpeg)
