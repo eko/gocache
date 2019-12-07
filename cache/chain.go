@@ -34,7 +34,7 @@ func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 		object, err = cache.Get(key)
 		if err == nil {
 			// Set the value back until this cache layer
-			go c.setUntil(key, object, &storeType)
+			c.setUntil(key, object, &storeType)
 			return object, nil
 		}
 
