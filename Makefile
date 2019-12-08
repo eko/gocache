@@ -1,13 +1,11 @@
 .PHONY: mocks
 
 mocks:
-	# mocks
-	mockery -case=snake -name=CacheInterface -dir=cache/ -output test/mocks/cache/
-	mockery -case=snake -name=CodecInterface -dir=codec/ -output test/mocks/codec/
-	mockery -case=snake -name=SetterCacheInterface -dir=cache/ -output test/mocks/cache/
-	mockery -case=snake -name=MetricsInterface -dir=metrics/ -output test/mocks/metrics/
-	mockery -case=snake -name=StoreInterface -dir=store/ -output test/mocks/store/
-	mockery -case=snake -name=BigcacheClientInterface -dir=store/ -output test/mocks/store/clients/
-	mockery -case=snake -name=MemcacheClientInterface -dir=store/ -output test/mocks/store/clients/
-	mockery -case=snake -name=RedisClientInterface -dir=store/ -output test/mocks/store/clients/
-	mockery -case=snake -name=RistrettoClientInterface -dir=store/ -output test/mocks/store/clients/
+	mockgen -source=cache/interface.go -destination=test/mocks/cache/cache_interface.go -package=mocks
+	mockgen -source=codec/interface.go -destination=test/mocks/codec/codec_interface.go -package=mocks
+	mockgen -source=metrics/interface.go -destination=test/mocks/metrics/metrics_interface.go -package=mocks
+	mockgen -source=store/interface.go -destination=test/mocks/store/store_interface.go -package=mocks
+	mockgen -source=store/bigcache.go -destination=test/mocks/store/clients/bigcache_interface.go -package=mocks
+	mockgen -source=store/memcache.go -destination=test/mocks/store/clients/memcache_interface.go -package=mocks
+	mockgen -source=store/redis.go -destination=test/mocks/store/clients/redis_interface.go -package=mocks
+	mockgen -source=store/ristretto.go -destination=test/mocks/store/clients/ristretto_interface.go -package=mocks

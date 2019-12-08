@@ -3,17 +3,20 @@ package cache
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/eko/gocache/store"
 	mocksCache "github.com/eko/gocache/test/mocks/cache"
-	mocksCodec "github.com/eko/gocache/test/mocks/codec"
-	mocksStore "github.com/eko/gocache/test/mocks/store"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewLoadable(t *testing.T) {
 	// Given
-	cache1 := &mocksCache.SetterCacheInterface{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "test data loaded", nil
@@ -31,14 +34,17 @@ func TestNewLoadable(t *testing.T) {
 
 func TestLoadableGetWhenAlreadyInCache(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	cacheValue := &struct {
 		Hello string
 	}{
 		Hello: "world",
 	}
 
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Get", "my-key").Return(cacheValue, nil)
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Get("my-key").Return(cacheValue, nil)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return nil, errors.New("Should not be called")
@@ -56,16 +62,12 @@ func TestLoadableGetWhenAlreadyInCache(t *testing.T) {
 
 func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	// Cache
-	store1 := &mocksStore.StoreInterface{}
-	store1.On("GetType").Return("store1")
-
-	codec1 := &mocksCodec.CodecInterface{}
-	codec1.On("GetStore").Return(store1)
-
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("GetCodec").Return(codec1)
-	cache1.On("Get", "my-key").Return(nil, errors.New("Unable to find in cache 1"))
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Get("my-key").Return(nil, errors.New("Unable to find in cache 1"))
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return nil, errors.New("An error has occurred while loading data from custom source")
@@ -83,6 +85,9 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 
 func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	cacheValue := &struct {
 		Hello string
 	}{
@@ -90,16 +95,9 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	}
 
 	// Cache 1
-	store1 := &mocksStore.StoreInterface{}
-	store1.On("GetType").Return("store1")
-
-	codec1 := &mocksCodec.CodecInterface{}
-	codec1.On("GetStore").Return(store1)
-
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("GetCodec").Return(codec1)
-	cache1.On("Get", "my-key").Return(nil, errors.New("Unable to find in cache 1"))
-	cache1.On("Set", "my-key", cacheValue, (*store.Options)(nil)).Return(nil)
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Get("my-key").Return(nil, errors.New("Unable to find in cache 1"))
+	cache1.EXPECT().Set("my-key", cacheValue, (*store.Options)(nil)).AnyTimes().Return(nil)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return cacheValue, nil
@@ -110,6 +108,11 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	// When
 	value, err := cache.Get("my-key")
 
+	// Wait for data to be processed
+	for len(cache.setChannel) > 0 {
+		time.Sleep(1 * time.Millisecond)
+	}
+
 	// Then
 	assert.Nil(t, err)
 	assert.Equal(t, cacheValue, value)
@@ -117,8 +120,11 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 
 func TestLoadableDelete(t *testing.T) {
 	// Given
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Delete", "my-key").Return(nil)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Delete("my-key").Return(nil)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "a value", nil
@@ -135,10 +141,13 @@ func TestLoadableDelete(t *testing.T) {
 
 func TestLoadableDeleteWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	expectedErr := errors.New("Unable to delete key")
 
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Delete", "my-key").Return(expectedErr)
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Delete("my-key").Return(expectedErr)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "a value", nil
@@ -155,12 +164,15 @@ func TestLoadableDeleteWhenError(t *testing.T) {
 
 func TestLoadableInvalidate(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
 
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Invalidate", options).Return(nil)
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Invalidate(options).Return(nil)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "a value", nil
@@ -177,14 +189,17 @@ func TestLoadableInvalidate(t *testing.T) {
 
 func TestLoadableInvalidateWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
 
 	expectedErr := errors.New("Unexpected error when invalidating data")
 
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Invalidate", options).Return(expectedErr)
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Invalidate(options).Return(expectedErr)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "a value", nil
@@ -201,8 +216,11 @@ func TestLoadableInvalidateWhenError(t *testing.T) {
 
 func TestLoadableClear(t *testing.T) {
 	// Given
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Clear").Return(nil)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Clear().Return(nil)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "a value", nil
@@ -219,10 +237,13 @@ func TestLoadableClear(t *testing.T) {
 
 func TestLoadableClearWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	expectedErr := errors.New("Unexpected error when invalidating data")
 
-	cache1 := &mocksCache.SetterCacheInterface{}
-	cache1.On("Clear").Return(expectedErr)
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1.EXPECT().Clear().Return(expectedErr)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "a value", nil
@@ -239,7 +260,10 @@ func TestLoadableClearWhenError(t *testing.T) {
 
 func TestLoadableGetType(t *testing.T) {
 	// Given
-	cache1 := &mocksCache.SetterCacheInterface{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
 	loadFunc := func(key interface{}) (interface{}, error) {
 		return "test data loaded", nil

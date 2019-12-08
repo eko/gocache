@@ -11,19 +11,36 @@ const (
 	LoadableType = "loadable"
 )
 
+type loadableKeyValue struct {
+	key   interface{}
+	value interface{}
+}
+
 type loadFunction func(key interface{}) (interface{}, error)
 
 // LoadableCache represents a cache that uses a function to load data
 type LoadableCache struct {
-	loadFunc loadFunction
-	cache    CacheInterface
+	loadFunc   loadFunction
+	cache      CacheInterface
+	setChannel chan *loadableKeyValue
 }
 
 // NewLoadable instanciates a new cache that uses a function to load data
 func NewLoadable(loadFunc loadFunction, cache CacheInterface) *LoadableCache {
-	return &LoadableCache{
-		loadFunc: loadFunc,
-		cache:    cache,
+	loadable := &LoadableCache{
+		loadFunc:   loadFunc,
+		cache:      cache,
+		setChannel: make(chan *loadableKeyValue, 10000),
+	}
+
+	go loadable.setter()
+
+	return loadable
+}
+
+func (c *LoadableCache) setter() {
+	for item := range c.setChannel {
+		c.Set(item.key, item.value, nil)
 	}
 }
 
@@ -44,7 +61,7 @@ func (c *LoadableCache) Get(key interface{}) (interface{}, error) {
 	}
 
 	// Then, put it back in cache
-	go c.Set(key, object, nil)
+	c.setChannel <- &loadableKeyValue{key, object}
 
 	return object, err
 }
