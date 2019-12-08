@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis/v7"
+	redis "github.com/go-redis/redis/v7"
 )
 
 // RedisClientInterface represents a go-redis/redis client

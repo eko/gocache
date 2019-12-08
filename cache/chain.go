@@ -12,15 +12,40 @@ const (
 	ChainType = "chain"
 )
 
+type chainKeyValue struct {
+	key       interface{}
+	value     interface{}
+	storeType *string
+}
+
 // ChainCache represents the configuration needed by a cache aggregator
 type ChainCache struct {
-	caches []SetterCacheInterface
+	caches     []SetterCacheInterface
+	setChannel chan *chainKeyValue
 }
 
 // NewChain instanciates a new cache aggregator
 func NewChain(caches ...SetterCacheInterface) *ChainCache {
-	return &ChainCache{
-		caches: caches,
+	chain := &ChainCache{
+		caches:     caches,
+		setChannel: make(chan *chainKeyValue, 10000),
+	}
+
+	go chain.setter()
+
+	return chain
+}
+
+// setter sets a value in available caches, until a given cache layer
+func (c *ChainCache) setter() {
+	for item := range c.setChannel {
+		for _, cache := range c.caches {
+			if item.storeType != nil && *item.storeType == cache.GetCodec().GetStore().GetType() {
+				break
+			}
+
+			cache.Set(item.key, item.value, nil)
+		}
 	}
 }
 
@@ -34,7 +59,7 @@ func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 		object, err = cache.Get(key)
 		if err == nil {
 			// Set the value back until this cache layer
-			go c.setUntil(key, object, &storeType)
+			c.setChannel <- &chainKeyValue{key, object, &storeType}
 			return object, nil
 		}
 
@@ -82,17 +107,6 @@ func (c *ChainCache) Clear() error {
 	}
 
 	return nil
-}
-
-// setUntil sets a value in available caches, eventually until a given cache layer
-func (c *ChainCache) setUntil(key, object interface{}, until *string) {
-	for _, cache := range c.caches {
-		if until != nil && *until == cache.GetCodec().GetStore().GetType() {
-			break
-		}
-
-		cache.Set(key, object, nil)
-	}
 }
 
 // GetCaches returns all Chaind caches

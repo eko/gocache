@@ -8,13 +8,17 @@ import (
 	"github.com/eko/gocache/codec"
 	"github.com/eko/gocache/store"
 	mocksStore "github.com/eko/gocache/test/mocks/store"
+	"github.com/golang/mock/gomock"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {
 	// Given
-	store := &mocksStore.StoreInterface{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
 
 	// When
 	cache := New(store)
@@ -28,6 +32,9 @@ func TestNew(t *testing.T) {
 
 func TestCacheSet(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := &store.Options{
 		Expiration: 5 * time.Second,
 	}
@@ -38,9 +45,8 @@ func TestCacheSet(t *testing.T) {
 		Hello: "world",
 	}
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Set", "9b1ac8a6e8ca8ca9477c0a252eb37756", value, options).
-		Return(nil)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Set("9b1ac8a6e8ca8ca9477c0a252eb37756", value, options).Return(nil)
 
 	cache := New(store)
 
@@ -51,6 +57,9 @@ func TestCacheSet(t *testing.T) {
 
 func TestCacheSetWhenErrorOccurs(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := &store.Options{
 		Expiration: 5 * time.Second,
 	}
@@ -63,9 +72,8 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 
 	storeErr := errors.New("An error has occurred while inserting data into store")
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Set", "9b1ac8a6e8ca8ca9477c0a252eb37756", value, options).
-		Return(storeErr)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Set("9b1ac8a6e8ca8ca9477c0a252eb37756", value, options).Return(storeErr)
 
 	cache := New(store)
 
@@ -76,14 +84,17 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 
 func TestCacheGet(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	cacheValue := &struct {
 		Hello string
 	}{
 		Hello: "world",
 	}
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Get", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(cacheValue, nil)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Get("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(cacheValue, nil)
 
 	cache := New(store)
 
@@ -97,10 +108,13 @@ func TestCacheGet(t *testing.T) {
 
 func TestCacheGetWhenNotFound(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	returnedErr := errors.New("Unable to find item in store")
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Get", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil, returnedErr)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Get("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil, returnedErr)
 
 	cache := New(store)
 
@@ -114,7 +128,10 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 
 func TestCacheGetCodec(t *testing.T) {
 	// Given
-	store := &mocksStore.StoreInterface{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
 
 	cache := New(store)
 
@@ -128,7 +145,10 @@ func TestCacheGetCodec(t *testing.T) {
 
 func TestCacheGetType(t *testing.T) {
 	// Given
-	store := &mocksStore.StoreInterface{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
 
 	cache := New(store)
 
@@ -138,8 +158,11 @@ func TestCacheGetType(t *testing.T) {
 
 func TestCacheDelete(t *testing.T) {
 	// Given
-	store := &mocksStore.StoreInterface{}
-	store.On("Delete", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Delete("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil)
 
 	cache := New(store)
 
@@ -152,12 +175,15 @@ func TestCacheDelete(t *testing.T) {
 
 func TestCacheInvalidate(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Invalidate", options).Return(nil)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Invalidate(options).Return(nil)
 
 	cache := New(store)
 
@@ -170,14 +196,17 @@ func TestCacheInvalidate(t *testing.T) {
 
 func TestCacheInvalidateWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
 
 	expectedErr := errors.New("Unexpected error during invalidation")
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Invalidate", options).Return(expectedErr)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Invalidate(options).Return(expectedErr)
 
 	cache := New(store)
 
@@ -190,8 +219,11 @@ func TestCacheInvalidateWhenError(t *testing.T) {
 
 func TestCacheClear(t *testing.T) {
 	// Given
-	store := &mocksStore.StoreInterface{}
-	store.On("Clear").Return(nil)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Clear().Return(nil)
 
 	cache := New(store)
 
@@ -204,10 +236,13 @@ func TestCacheClear(t *testing.T) {
 
 func TestCacheClearWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	expectedErr := errors.New("Unexpected error during invalidation")
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Clear").Return(expectedErr)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Clear().Return(expectedErr)
 
 	cache := New(store)
 
@@ -220,10 +255,13 @@ func TestCacheClearWhenError(t *testing.T) {
 
 func TestCacheDeleteWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	expectedErr := errors.New("Unable to delete key")
 
-	store := &mocksStore.StoreInterface{}
-	store.On("Delete", "9b1ac8a6e8ca8ca9477c0a252eb37756").Return(expectedErr)
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().Delete("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(expectedErr)
 
 	cache := New(store)
 

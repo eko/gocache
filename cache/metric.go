@@ -62,7 +62,7 @@ func (c *MetricCache) updateMetrics(cache CacheInterface) {
 		}
 
 	case SetterCacheInterface:
-		go c.metrics.RecordFromCodec(current.GetCodec())
+		c.metrics.RecordFromCodec(current.GetCodec())
 	}
 }
 

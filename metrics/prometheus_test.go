@@ -2,10 +2,12 @@ package metrics
 
 import (
 	"testing"
+	"time"
 
 	"github.com/eko/gocache/codec"
 	mocksCodec "github.com/eko/gocache/test/mocks/codec"
 	mocksStore "github.com/eko/gocache/test/mocks/store"
+	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +23,7 @@ func TestNewPrometheus(t *testing.T) {
 	// Then
 	assert.IsType(t, new(Prometheus), metrics)
 
-	assert.Equal(t, serviceName, metrics.name)
+	assert.Equal(t, serviceName, metrics.service)
 	assert.IsType(t, new(prometheus.GaugeVec), metrics.collector)
 }
 
@@ -30,7 +32,7 @@ func TestRecord(t *testing.T) {
 	metrics := NewPrometheus("my-test-service-name")
 
 	// When
-	metrics.Record("redis", "hit_count", 6)
+	metrics.record("redis", "hit_count", 6)
 
 	// Then
 	metric, err := metrics.collector.GetMetricWithLabelValues("my-test-service-name", "redis", "hit_count")
@@ -44,8 +46,11 @@ func TestRecord(t *testing.T) {
 
 func TestRecordFromCodec(t *testing.T) {
 	// Given
-	redisStore := &mocksStore.StoreInterface{}
-	redisStore.On("GetType").Return("redis")
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	redisStore := mocksStore.NewMockStoreInterface(ctrl)
+	redisStore.EXPECT().GetType().Return("redis")
 
 	stats := &codec.Stats{
 		Hits:              4,
@@ -58,14 +63,19 @@ func TestRecordFromCodec(t *testing.T) {
 		InvalidateError:   1,
 	}
 
-	testCodec := &mocksCodec.CodecInterface{}
-	testCodec.On("GetStats").Return(stats)
-	testCodec.On("GetStore").Return(redisStore)
+	testCodec := mocksCodec.NewMockCodecInterface(ctrl)
+	testCodec.EXPECT().GetStats().Return(stats)
+	testCodec.EXPECT().GetStore().Return(redisStore)
 
 	metrics := NewPrometheus("my-test-service-name")
 
 	// When
 	metrics.RecordFromCodec(testCodec)
+
+	// Wait for data to be processed
+	for len(metrics.codecChannel) > 0 {
+		time.Sleep(1 * time.Millisecond)
+	}
 
 	// Then
 	testCases := []struct {

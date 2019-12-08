@@ -7,13 +7,16 @@ import (
 
 	"github.com/bradfitz/gomemcache/memcache"
 	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	mock "github.com/stretchr/testify/mock"
 )
 
 func TestNewMemcache(t *testing.T) {
 	// Given
-	client := &mocksStore.MemcacheClientInterface{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	options := &Options{Expiration: 3 * time.Second}
 
 	// When
@@ -27,13 +30,16 @@ func TestNewMemcache(t *testing.T) {
 
 func TestMemcacheGet(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Get", cacheKey).Return(&memcache.Item{
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(&memcache.Item{
 		Value: cacheValue,
 	}, nil)
 
@@ -49,14 +55,17 @@ func TestMemcacheGet(t *testing.T) {
 
 func TestMemcacheGetWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 
 	expectedErr := errors.New("An unexpected error occurred")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Get", cacheKey).Return(nil, expectedErr)
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, expectedErr)
 
 	store := NewMemcache(client, options)
 
@@ -70,13 +79,16 @@ func TestMemcacheGetWhenError(t *testing.T) {
 
 func TestMemcacheSet(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Set", &memcache.Item{
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Set(&memcache.Item{
 		Key:        cacheKey,
 		Value:      cacheValue,
 		Expiration: int32(5),
@@ -95,13 +107,16 @@ func TestMemcacheSet(t *testing.T) {
 
 func TestMemcacheSetWhenNoOptionsGiven(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Set", &memcache.Item{
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Set(&memcache.Item{
 		Key:        cacheKey,
 		Value:      cacheValue,
 		Expiration: int32(3),
@@ -118,6 +133,9 @@ func TestMemcacheSetWhenNoOptionsGiven(t *testing.T) {
 
 func TestMemcacheSetWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
@@ -125,8 +143,8 @@ func TestMemcacheSetWhenError(t *testing.T) {
 
 	expectedErr := errors.New("An unexpected error occurred")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Set", &memcache.Item{
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Set(&memcache.Item{
 		Key:        cacheKey,
 		Value:      cacheValue,
 		Expiration: int32(3),
@@ -143,12 +161,15 @@ func TestMemcacheSetWhenError(t *testing.T) {
 
 func TestMemcacheSetWithTags(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Set", mock.Anything).Return(nil)
-	client.On("Get", "gocache_tag_tag1").Return(nil, nil)
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Set(gomock.Any()).AnyTimes().Return(nil)
+	client.EXPECT().Get("gocache_tag_tag1").Return(nil, nil)
 
 	store := NewMemcache(client, nil)
 
@@ -157,17 +178,19 @@ func TestMemcacheSetWithTags(t *testing.T) {
 
 	// Then
 	assert.Nil(t, err)
-	client.AssertNumberOfCalls(t, "Set", 2)
 }
 
 func TestMemcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Set", mock.Anything).Return(nil)
-	client.On("Get", "gocache_tag_tag1").Return(&memcache.Item{
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Set(gomock.Any()).AnyTimes().Return(nil)
+	client.EXPECT().Get("gocache_tag_tag1").Return(&memcache.Item{
 		Value: []byte("my-key,a-second-key"),
 	}, nil)
 
@@ -178,15 +201,17 @@ func TestMemcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 
 	// Then
 	assert.Nil(t, err)
-	client.AssertNumberOfCalls(t, "Set", 2)
 }
 
 func TestMemcacheDelete(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	cacheKey := "my-key"
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Delete", cacheKey).Return(nil)
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Delete(cacheKey).Return(nil)
 
 	store := NewMemcache(client, nil)
 
@@ -199,12 +224,15 @@ func TestMemcacheDelete(t *testing.T) {
 
 func TestMemcacheDeleteWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	expectedErr := errors.New("Unable to delete key")
 
 	cacheKey := "my-key"
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Delete", cacheKey).Return(expectedErr)
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Delete(cacheKey).Return(expectedErr)
 
 	store := NewMemcache(client, nil)
 
@@ -217,6 +245,9 @@ func TestMemcacheDeleteWhenError(t *testing.T) {
 
 func TestMemcacheInvalidate(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
@@ -225,10 +256,10 @@ func TestMemcacheInvalidate(t *testing.T) {
 		Value: []byte("a23fdf987h2svc23,jHG2372x38hf74"),
 	}
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
-	client.On("Delete", "a23fdf987h2svc23").Return(nil)
-	client.On("Delete", "jHG2372x38hf74").Return(nil)
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, nil)
+	client.EXPECT().Delete("a23fdf987h2svc23").Return(nil)
+	client.EXPECT().Delete("jHG2372x38hf74").Return(nil)
 
 	store := NewMemcache(client, nil)
 
@@ -241,6 +272,9 @@ func TestMemcacheInvalidate(t *testing.T) {
 
 func TestMemcacheInvalidateWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
@@ -249,10 +283,10 @@ func TestMemcacheInvalidateWhenError(t *testing.T) {
 		Value: []byte("a23fdf987h2svc23,jHG2372x38hf74"),
 	}
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("Get", "gocache_tag_tag1").Return(cacheKeys, nil)
-	client.On("Delete", "a23fdf987h2svc23").Return(errors.New("Unexpected error"))
-	client.On("Delete", "jHG2372x38hf74").Return(nil)
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, nil)
+	client.EXPECT().Delete("a23fdf987h2svc23").Return(errors.New("Unexpected error"))
+	client.EXPECT().Delete("jHG2372x38hf74").Return(nil)
 
 	store := NewMemcache(client, nil)
 
@@ -265,8 +299,11 @@ func TestMemcacheInvalidateWhenError(t *testing.T) {
 
 func TestMemcacheClear(t *testing.T) {
 	// Given
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("FlushAll").Return(nil)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().FlushAll().Return(nil)
 
 	store := NewMemcache(client, nil)
 
@@ -279,10 +316,13 @@ func TestMemcacheClear(t *testing.T) {
 
 func TestMemcacheClearWhenError(t *testing.T) {
 	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	expectedErr := errors.New("An unexpected error occurred")
 
-	client := &mocksStore.MemcacheClientInterface{}
-	client.On("FlushAll").Return(expectedErr)
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().FlushAll().Return(expectedErr)
 
 	store := NewMemcache(client, nil)
 
@@ -295,7 +335,10 @@ func TestMemcacheClearWhenError(t *testing.T) {
 
 func TestMemcacheGetType(t *testing.T) {
 	// Given
-	client := &mocksStore.MemcacheClientInterface{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 
 	store := NewMemcache(client, nil)
 
