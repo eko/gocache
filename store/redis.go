@@ -67,13 +67,7 @@ func (s *RedisStore) Set(key interface{}, value interface{}, options *Options) e
 func (s *RedisStore) setTags(key interface{}, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(RedisTagPattern, tag)
-		var cacheKeys = []string{}
-
-		if result, err := s.Get(tagKey); err == nil {
-			if bytes, ok := result.([]byte); ok {
-				cacheKeys = strings.Split(string(bytes), ",")
-			}
-		}
+		var cacheKeys = s.getCacheKeysForTag(tagKey)
 
 		var alreadyInserted = false
 		for _, cacheKey := range cacheKeys {
@@ -87,10 +81,20 @@ func (s *RedisStore) setTags(key interface{}, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
+		s.Set(tagKey, strings.Join(cacheKeys, ","), &Options{
 			Expiration: 720 * time.Hour,
 		})
 	}
+}
+
+func (s *RedisStore) getCacheKeysForTag(tagKey string) []string {
+	var cacheKeys = []string{}
+	if result, err := s.Get(tagKey); err == nil && result != "" {
+		if str, ok := result.(string); ok {
+			cacheKeys = strings.Split(str, ",")
+		}
+	}
+	return cacheKeys
 }
 
 // Delete removes data from Redis for given key identifier
@@ -104,19 +108,13 @@ func (s *RedisStore) Invalidate(options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(RedisTagPattern, tag)
-			result, err := s.Get(tagKey)
-			if err != nil {
-				return nil
-			}
-
-			var cacheKeys = []string{}
-			if bytes, ok := result.([]byte); ok {
-				cacheKeys = strings.Split(string(bytes), ",")
-			}
+			var cacheKeys = s.getCacheKeysForTag(tagKey)
 
 			for _, cacheKey := range cacheKeys {
 				s.Delete(cacheKey)
 			}
+
+			s.Delete(tagKey)
 		}
 	}
 
