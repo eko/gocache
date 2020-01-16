@@ -50,7 +50,7 @@ memcacheStore := store.NewMemcache(
 )
 
 cacheManager := cache.New(memcacheStore)
-err := cacheManager.Set("my-key", []byte("my-value), &cache.Options{
+err := cacheManager.Set("my-key", []byte("my-value"), &cache.Options{
 	Expiration: 15*time.Second, // Override default value of 10 seconds defined in the store
 })
 if err != nil {
