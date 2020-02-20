@@ -10,7 +10,7 @@ require (
 	github.com/golang/mock v1.4.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/prometheus/client_golang v1.4.1
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
