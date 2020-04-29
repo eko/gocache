@@ -7,6 +7,7 @@ package mocks
 import (
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+	time "time"
 )
 
 // MockRistrettoClientInterface is a mock of RistrettoClientInterface interface
@@ -47,18 +48,18 @@ func (mr *MockRistrettoClientInterfaceMockRecorder) Get(key interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRistrettoClientInterface)(nil).Get), key)
 }
 
-// Set mocks base method
-func (m *MockRistrettoClientInterface) Set(key, value interface{}, cost int64) bool {
+// SetWithTTL mocks base method
+func (m *MockRistrettoClientInterface) SetWithTTL(key, value interface{}, cost int64, ttl time.Duration) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", key, value, cost)
+	ret := m.ctrl.Call(m, "SetWithTTL", key, value, cost, ttl)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// Set indicates an expected call of Set
-func (mr *MockRistrettoClientInterfaceMockRecorder) Set(key, value, cost interface{}) *gomock.Call {
+// SetWithTTL indicates an expected call of SetWithTTL
+func (mr *MockRistrettoClientInterfaceMockRecorder) SetWithTTL(key, value, cost, ttl interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockRistrettoClientInterface)(nil).Set), key, value, cost)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetWithTTL", reflect.TypeOf((*MockRistrettoClientInterface)(nil).SetWithTTL), key, value, cost, ttl)
 }
 
 // Del mocks base method
