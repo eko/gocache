@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
 	"github.com/golang/mock/gomock"
@@ -82,7 +83,7 @@ func TestRistrettoSet(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(4)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(4), 0*time.Second).Return(true)
 
 	store := NewRistretto(client, options)
 
@@ -107,7 +108,7 @@ func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(7)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(true)
 
 	store := NewRistretto(client, options)
 
@@ -130,7 +131,7 @@ func TestRistrettoSetWhenError(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(7)).Return(false)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(false)
 
 	store := NewRistretto(client, options)
 
@@ -150,9 +151,9 @@ func TestRistrettoSetWithTags(t *testing.T) {
 	cacheValue := []byte("my-cache-value")
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(0)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(0), 0*time.Second).Return(true)
 	client.EXPECT().Get("gocache_tag_tag1").Return(nil, true)
-	client.EXPECT().Set("gocache_tag_tag1", []byte("my-key"), int64(0)).Return(true)
+	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte("my-key"), int64(0), 720*time.Hour).Return(true)
 
 	store := NewRistretto(client, nil)
 
@@ -172,9 +173,9 @@ func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	cacheValue := []byte("my-cache-value")
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(0)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(0), 0*time.Second).Return(true)
 	client.EXPECT().Get("gocache_tag_tag1").Return([]byte("my-key,a-second-key"), true)
-	client.EXPECT().Set("gocache_tag_tag1", []byte("my-key,a-second-key"), int64(0)).Return(true)
+	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte("my-key,a-second-key"), int64(0), 720*time.Hour).Return(true)
 
 	store := NewRistretto(client, nil)
 

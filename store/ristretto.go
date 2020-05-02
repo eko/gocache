@@ -17,7 +17,7 @@ const (
 // RistrettoClientInterface represents a dgraph-io/ristretto client
 type RistrettoClientInterface interface {
 	Get(key interface{}) (interface{}, bool)
-	Set(key, value interface{}, cost int64) bool
+	SetWithTTL(key, value interface{}, cost int64, ttl time.Duration) bool
 	Del(key interface{})
 	Clear()
 }
@@ -60,7 +60,7 @@ func (s *RistrettoStore) Set(key interface{}, value interface{}, options *Option
 		options = s.options
 	}
 
-	if set := s.client.Set(key, value, options.CostValue()); !set {
+	if set := s.client.SetWithTTL(key, value, options.CostValue(), options.ExpirationValue()); !set {
 		err = fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", value, key)
 	}
 
