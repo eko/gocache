@@ -11,6 +11,7 @@ import (
 // RedisClientInterface represents a go-redis/redis client
 type RedisClientInterface interface {
 	Get(key string) *redis.StringCmd
+	TTL(key string) *redis.DurationCmd
 	Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Del(keys ...string) *redis.IntCmd
 	FlushAll() *redis.StatusCmd
@@ -44,6 +45,21 @@ func NewRedis(client RedisClientInterface, options *Options) *RedisStore {
 // Get returns data stored from a given key
 func (s *RedisStore) Get(key interface{}) (interface{}, error) {
 	return s.client.Get(key.(string)).Result()
+}
+
+// GetWithTTL returns data stored from a given key and the TTL associated
+func (s *RedisStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+	object, err := s.client.Get(key.(string)).Result()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	ttl, err := s.client.TTL(key.(string)).Result()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return object, ttl, err
 }
 
 // Set defines data in Redis for given key identifier

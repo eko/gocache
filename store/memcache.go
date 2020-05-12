@@ -55,6 +55,19 @@ func (s *MemcacheStore) Get(key interface{}) (interface{}, error) {
 	return item.Value, err
 }
 
+// Get returns data stored from a given key
+func (s *MemcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+	item, err := s.client.Get(key.(string))
+	if err != nil {
+		return nil, 0, err
+	}
+	if item == nil {
+		return nil, 0, errors.New("Unable to retrieve data from memcache")
+	}
+
+	return item.Value, time.Duration(item.Expiration), err
+}
+
 // Set defines data in Memcache for given key identifier
 func (s *MemcacheStore) Set(key interface{}, value interface{}, options *Options) error {
 	if options == nil {
