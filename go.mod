@@ -1,6 +1,6 @@
 module github.com/eko/gocache
 
-go 1.14
+go 1.13
 
 require (
 	github.com/allegro/bigcache v1.2.1
