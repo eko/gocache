@@ -71,7 +71,7 @@ bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute
 bigcacheStore := store.NewBigcache(bigcacheClient, nil) // No otions provided (as second argument)
 
 cacheManager := cache.New(bigcacheStore)
-err := cacheManager.Set("my-key", "my-value", nil)
+err := cacheManager.Set("my-key", []byte("my-value"), nil)
 if err != nil {
     panic(err)
 }
