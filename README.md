@@ -50,7 +50,7 @@ memcacheStore := store.NewMemcache(
 )
 
 cacheManager := cache.New(memcacheStore)
-err := cacheManager.Set("my-key", []byte("my-value"), &cache.Options{
+err := cacheManager.Set("my-key", []byte("my-value"), &store.Options{
 	Expiration: 15*time.Second, // Override default value of 10 seconds defined in the store
 })
 if err != nil {
@@ -93,7 +93,7 @@ if err != nil {
 ristrettoStore := store.NewRistretto(ristrettoCache, nil)
 
 cacheManager := cache.New(ristrettoStore)
-err := cacheManager.Set("my-key", "my-value", &cache.Options{Cost: 2})
+err := cacheManager.Set("my-key", "my-value", &store.Options{Cost: 2})
 if err != nil {
     panic(err)
 }
@@ -111,7 +111,7 @@ redisStore := store.NewRedis(redis.NewClient(&redis.Options{
 }), nil)
 
 cacheManager := cache.New(redisStore)
-err := cacheManager.Set("my-key", "my-value", &cache.Options{Expiration: 15*time.Second})
+err := cacheManager.Set("my-key", "my-value", &store.Options{Expiration: 15*time.Second})
 if err != nil {
     panic(err)
 }
@@ -134,7 +134,7 @@ redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 
 // Initialize stores
 ristrettoStore := store.NewRistretto(ristrettoCache, nil)
-redisStore := store.NewRedis(redisClient, &cache.Options{Expiration: 5*time.Second})
+redisStore := store.NewRedis(redisClient, &store.Options{Expiration: 5*time.Second})
 
 // Initialize chained cache
 cacheManager := cache.NewChain(
