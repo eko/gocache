@@ -36,7 +36,6 @@ func (m *MockRedisClientInterface) EXPECT() *MockRedisClientInterfaceMockRecorde
 
 // Get mocks base method
 func (m *MockRedisClientInterface) Get(key string) *v7.StringCmd {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
 	ret0, _ := ret[0].(*v7.StringCmd)
 	return ret0
@@ -44,13 +43,11 @@ func (m *MockRedisClientInterface) Get(key string) *v7.StringCmd {
 
 // Get indicates an expected call of Get
 func (mr *MockRedisClientInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRedisClientInterface)(nil).Get), key)
 }
 
 // Set mocks base method
 func (m *MockRedisClientInterface) Set(key string, value interface{}, expiration time.Duration) *v7.StatusCmd {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", key, value, expiration)
 	ret0, _ := ret[0].(*v7.StatusCmd)
 	return ret0
@@ -58,13 +55,11 @@ func (m *MockRedisClientInterface) Set(key string, value interface{}, expiration
 
 // Set indicates an expected call of Set
 func (mr *MockRedisClientInterfaceMockRecorder) Set(key, value, expiration interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockRedisClientInterface)(nil).Set), key, value, expiration)
 }
 
 // Del mocks base method
 func (m *MockRedisClientInterface) Del(keys ...string) *v7.IntCmd {
-	m.ctrl.T.Helper()
 	varargs := []interface{}{}
 	for _, a := range keys {
 		varargs = append(varargs, a)
@@ -76,13 +71,11 @@ func (m *MockRedisClientInterface) Del(keys ...string) *v7.IntCmd {
 
 // Del indicates an expected call of Del
 func (mr *MockRedisClientInterfaceMockRecorder) Del(keys ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Del", reflect.TypeOf((*MockRedisClientInterface)(nil).Del), keys...)
 }
 
 // FlushAll mocks base method
 func (m *MockRedisClientInterface) FlushAll() *v7.StatusCmd {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FlushAll")
 	ret0, _ := ret[0].(*v7.StatusCmd)
 	return ret0
@@ -90,6 +83,5 @@ func (m *MockRedisClientInterface) FlushAll() *v7.StatusCmd {
 
 // FlushAll indicates an expected call of FlushAll
 func (mr *MockRedisClientInterfaceMockRecorder) FlushAll() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushAll", reflect.TypeOf((*MockRedisClientInterface)(nil).FlushAll))
 }

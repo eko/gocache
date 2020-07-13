@@ -35,7 +35,6 @@ func (m *MockMemcacheClientInterface) EXPECT() *MockMemcacheClientInterfaceMockR
 
 // Get mocks base method
 func (m *MockMemcacheClientInterface) Get(key string) (*memcache.Item, error) {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
 	ret0, _ := ret[0].(*memcache.Item)
 	ret1, _ := ret[1].(error)
@@ -44,13 +43,11 @@ func (m *MockMemcacheClientInterface) Get(key string) (*memcache.Item, error) {
 
 // Get indicates an expected call of Get
 func (mr *MockMemcacheClientInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMemcacheClientInterface)(nil).Get), key)
 }
 
 // Set mocks base method
 func (m *MockMemcacheClientInterface) Set(item *memcache.Item) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", item)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -58,13 +55,11 @@ func (m *MockMemcacheClientInterface) Set(item *memcache.Item) error {
 
 // Set indicates an expected call of Set
 func (mr *MockMemcacheClientInterfaceMockRecorder) Set(item interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockMemcacheClientInterface)(nil).Set), item)
 }
 
 // Delete mocks base method
 func (m *MockMemcacheClientInterface) Delete(item string) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", item)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -72,13 +67,11 @@ func (m *MockMemcacheClientInterface) Delete(item string) error {
 
 // Delete indicates an expected call of Delete
 func (mr *MockMemcacheClientInterfaceMockRecorder) Delete(item interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMemcacheClientInterface)(nil).Delete), item)
 }
 
 // FlushAll mocks base method
 func (m *MockMemcacheClientInterface) FlushAll() error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FlushAll")
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -86,6 +79,5 @@ func (m *MockMemcacheClientInterface) FlushAll() error {
 
 // FlushAll indicates an expected call of FlushAll
 func (mr *MockMemcacheClientInterfaceMockRecorder) FlushAll() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushAll", reflect.TypeOf((*MockMemcacheClientInterface)(nil).FlushAll))
 }

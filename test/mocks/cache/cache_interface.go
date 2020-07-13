@@ -5,238 +5,117 @@
 package mocks
 
 import (
-	codec "github.com/eko/gocache/codec"
-	store "github.com/eko/gocache/store"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	x "github.com/yeqown/gocache/cache"
+	store "github.com/yeqown/gocache/store"
 )
 
-// MockCacheInterface is a mock of CacheInterface interface
-type MockCacheInterface struct {
+// MockICache is a mock of ICache interface
+type MockICache struct {
 	ctrl     *gomock.Controller
-	recorder *MockCacheInterfaceMockRecorder
+	recorder *MockICacheMockRecorder
 }
 
-// MockCacheInterfaceMockRecorder is the mock recorder for MockCacheInterface
-type MockCacheInterfaceMockRecorder struct {
-	mock *MockCacheInterface
+// MockICacheMockRecorder is the mock recorder for MockICache
+type MockICacheMockRecorder struct {
+	mock *MockICache
 }
 
-// NewMockCacheInterface creates a new mock instance
-func NewMockCacheInterface(ctrl *gomock.Controller) *MockCacheInterface {
-	mock := &MockCacheInterface{ctrl: ctrl}
-	mock.recorder = &MockCacheInterfaceMockRecorder{mock}
+// NewMockICache creates a new mock instance
+func NewMockICache(ctrl *gomock.Controller) *MockICache {
+	mock := &MockICache{ctrl: ctrl}
+	mock.recorder = &MockICacheMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockCacheInterface) EXPECT() *MockCacheInterfaceMockRecorder {
+func (m *MockICache) EXPECT() *MockICacheMockRecorder {
 	return m.recorder
 }
 
 // Get mocks base method
-func (m *MockCacheInterface) Get(key interface{}) (interface{}, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", key)
+func (m *MockICache) Get(key, returnObj interface{}) (interface{}, error) {
+	ret := m.ctrl.Call(m, "Get", key, returnObj)
 	ret0, _ := ret[0].(interface{})
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get
-func (mr *MockCacheInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCacheInterface)(nil).Get), key)
+func (mr *MockICacheMockRecorder) Get(key, returnObj interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockICache)(nil).Get), key, returnObj)
 }
 
 // Set mocks base method
-func (m *MockCacheInterface) Set(key, object interface{}, options *store.Options) error {
-	m.ctrl.T.Helper()
+func (m *MockICache) Set(key, object interface{}, options *store.Options) error {
 	ret := m.ctrl.Call(m, "Set", key, object, options)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Set indicates an expected call of Set
-func (mr *MockCacheInterfaceMockRecorder) Set(key, object, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCacheInterface)(nil).Set), key, object, options)
+func (mr *MockICacheMockRecorder) Set(key, object, options interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockICache)(nil).Set), key, object, options)
 }
 
 // Delete mocks base method
-func (m *MockCacheInterface) Delete(key interface{}) error {
-	m.ctrl.T.Helper()
+func (m *MockICache) Delete(key interface{}) error {
 	ret := m.ctrl.Call(m, "Delete", key)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete
-func (mr *MockCacheInterfaceMockRecorder) Delete(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockCacheInterface)(nil).Delete), key)
+func (mr *MockICacheMockRecorder) Delete(key interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockICache)(nil).Delete), key)
 }
 
 // Invalidate mocks base method
-func (m *MockCacheInterface) Invalidate(options store.InvalidateOptions) error {
-	m.ctrl.T.Helper()
+func (m *MockICache) Invalidate(options store.InvalidateOptions) error {
 	ret := m.ctrl.Call(m, "Invalidate", options)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Invalidate indicates an expected call of Invalidate
-func (mr *MockCacheInterfaceMockRecorder) Invalidate(options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockCacheInterface)(nil).Invalidate), options)
+func (mr *MockICacheMockRecorder) Invalidate(options interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockICache)(nil).Invalidate), options)
 }
 
 // Clear mocks base method
-func (m *MockCacheInterface) Clear() error {
-	m.ctrl.T.Helper()
+func (m *MockICache) Clear() error {
 	ret := m.ctrl.Call(m, "Clear")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Clear indicates an expected call of Clear
-func (mr *MockCacheInterfaceMockRecorder) Clear() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clear", reflect.TypeOf((*MockCacheInterface)(nil).Clear))
+func (mr *MockICacheMockRecorder) Clear() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clear", reflect.TypeOf((*MockICache)(nil).Clear))
 }
 
 // GetType mocks base method
-func (m *MockCacheInterface) GetType() string {
-	m.ctrl.T.Helper()
+func (m *MockICache) GetType() string {
 	ret := m.ctrl.Call(m, "GetType")
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // GetType indicates an expected call of GetType
-func (mr *MockCacheInterfaceMockRecorder) GetType() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetType", reflect.TypeOf((*MockCacheInterface)(nil).GetType))
+func (mr *MockICacheMockRecorder) GetType() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetType", reflect.TypeOf((*MockICache)(nil).GetType))
 }
 
-// MockSetterCacheInterface is a mock of SetterCacheInterface interface
-type MockSetterCacheInterface struct {
-	ctrl     *gomock.Controller
-	recorder *MockSetterCacheInterfaceMockRecorder
-}
-
-// MockSetterCacheInterfaceMockRecorder is the mock recorder for MockSetterCacheInterface
-type MockSetterCacheInterfaceMockRecorder struct {
-	mock *MockSetterCacheInterface
-}
-
-// NewMockSetterCacheInterface creates a new mock instance
-func NewMockSetterCacheInterface(ctrl *gomock.Controller) *MockSetterCacheInterface {
-	mock := &MockSetterCacheInterface{ctrl: ctrl}
-	mock.recorder = &MockSetterCacheInterfaceMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockSetterCacheInterface) EXPECT() *MockSetterCacheInterfaceMockRecorder {
-	return m.recorder
-}
-
-// Get mocks base method
-func (m *MockSetterCacheInterface) Get(key interface{}) (interface{}, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(interface{})
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Get indicates an expected call of Get
-func (mr *MockSetterCacheInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSetterCacheInterface)(nil).Get), key)
-}
-
-// Set mocks base method
-func (m *MockSetterCacheInterface) Set(key, object interface{}, options *store.Options) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", key, object, options)
-	ret0, _ := ret[0].(error)
+// GetStats mocks base method
+func (m *MockICache) GetStats() *x.Stats {
+	ret := m.ctrl.Call(m, "GetStats")
+	ret0, _ := ret[0].(*x.Stats)
 	return ret0
 }
 
-// Set indicates an expected call of Set
-func (mr *MockSetterCacheInterfaceMockRecorder) Set(key, object, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockSetterCacheInterface)(nil).Set), key, object, options)
-}
-
-// Delete mocks base method
-func (m *MockSetterCacheInterface) Delete(key interface{}) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", key)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete
-func (mr *MockSetterCacheInterfaceMockRecorder) Delete(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSetterCacheInterface)(nil).Delete), key)
-}
-
-// Invalidate mocks base method
-func (m *MockSetterCacheInterface) Invalidate(options store.InvalidateOptions) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Invalidate", options)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Invalidate indicates an expected call of Invalidate
-func (mr *MockSetterCacheInterfaceMockRecorder) Invalidate(options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockSetterCacheInterface)(nil).Invalidate), options)
-}
-
-// Clear mocks base method
-func (m *MockSetterCacheInterface) Clear() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Clear")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Clear indicates an expected call of Clear
-func (mr *MockSetterCacheInterfaceMockRecorder) Clear() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clear", reflect.TypeOf((*MockSetterCacheInterface)(nil).Clear))
-}
-
-// GetType mocks base method
-func (m *MockSetterCacheInterface) GetType() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetType")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// GetType indicates an expected call of GetType
-func (mr *MockSetterCacheInterfaceMockRecorder) GetType() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetType", reflect.TypeOf((*MockSetterCacheInterface)(nil).GetType))
-}
-
-// GetCodec mocks base method
-func (m *MockSetterCacheInterface) GetCodec() codec.CodecInterface {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCodec")
-	ret0, _ := ret[0].(codec.CodecInterface)
-	return ret0
-}
-
-// GetCodec indicates an expected call of GetCodec
-func (mr *MockSetterCacheInterfaceMockRecorder) GetCodec() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCodec", reflect.TypeOf((*MockSetterCacheInterface)(nil).GetCodec))
+// GetStats indicates an expected call of GetStats
+func (mr *MockICacheMockRecorder) GetStats() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStats", reflect.TypeOf((*MockICache)(nil).GetStats))
 }

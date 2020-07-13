@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/store"
-	mocksCache "github.com/eko/gocache/test/mocks/cache"
-	mocksCodec "github.com/eko/gocache/test/mocks/codec"
-	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/yeqown/gocache/store"
+
+	mocksCache "github.com/yeqown/gocache/test/mocks/cache"
+	mocksStore "github.com/yeqown/gocache/test/mocks/store"
 )
 
 func TestNewChain(t *testing.T) {

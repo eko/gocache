@@ -34,7 +34,6 @@ func (m *MockBigcacheClientInterface) EXPECT() *MockBigcacheClientInterfaceMockR
 
 // Get mocks base method
 func (m *MockBigcacheClientInterface) Get(key string) ([]byte, error) {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
@@ -43,13 +42,11 @@ func (m *MockBigcacheClientInterface) Get(key string) ([]byte, error) {
 
 // Get indicates an expected call of Get
 func (mr *MockBigcacheClientInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockBigcacheClientInterface)(nil).Get), key)
 }
 
 // Set mocks base method
 func (m *MockBigcacheClientInterface) Set(key string, entry []byte) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", key, entry)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -57,13 +54,11 @@ func (m *MockBigcacheClientInterface) Set(key string, entry []byte) error {
 
 // Set indicates an expected call of Set
 func (mr *MockBigcacheClientInterfaceMockRecorder) Set(key, entry interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockBigcacheClientInterface)(nil).Set), key, entry)
 }
 
 // Delete mocks base method
 func (m *MockBigcacheClientInterface) Delete(key string) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", key)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -71,13 +66,11 @@ func (m *MockBigcacheClientInterface) Delete(key string) error {
 
 // Delete indicates an expected call of Delete
 func (mr *MockBigcacheClientInterfaceMockRecorder) Delete(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockBigcacheClientInterface)(nil).Delete), key)
 }
 
 // Reset mocks base method
 func (m *MockBigcacheClientInterface) Reset() error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Reset")
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -85,6 +78,5 @@ func (m *MockBigcacheClientInterface) Reset() error {
 
 // Reset indicates an expected call of Reset
 func (mr *MockBigcacheClientInterfaceMockRecorder) Reset() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockBigcacheClientInterface)(nil).Reset))
 }

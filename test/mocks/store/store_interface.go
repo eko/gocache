@@ -5,9 +5,10 @@
 package mocks
 
 import (
-	store "github.com/eko/gocache/store"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	x "github.com/yeqown/gocache/store"
 )
 
 // MockStoreInterface is a mock of StoreInterface interface
@@ -35,7 +36,6 @@ func (m *MockStoreInterface) EXPECT() *MockStoreInterfaceMockRecorder {
 
 // Get mocks base method
 func (m *MockStoreInterface) Get(key interface{}) (interface{}, error) {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
 	ret0, _ := ret[0].(interface{})
 	ret1, _ := ret[1].(error)
@@ -44,13 +44,11 @@ func (m *MockStoreInterface) Get(key interface{}) (interface{}, error) {
 
 // Get indicates an expected call of Get
 func (mr *MockStoreInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStoreInterface)(nil).Get), key)
 }
 
 // Set mocks base method
-func (m *MockStoreInterface) Set(key, value interface{}, options *store.Options) error {
-	m.ctrl.T.Helper()
+func (m *MockStoreInterface) Set(key, value interface{}, options *x.Options) error {
 	ret := m.ctrl.Call(m, "Set", key, value, options)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -58,13 +56,11 @@ func (m *MockStoreInterface) Set(key, value interface{}, options *store.Options)
 
 // Set indicates an expected call of Set
 func (mr *MockStoreInterfaceMockRecorder) Set(key, value, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockStoreInterface)(nil).Set), key, value, options)
 }
 
 // Delete mocks base method
 func (m *MockStoreInterface) Delete(key interface{}) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", key)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -72,13 +68,11 @@ func (m *MockStoreInterface) Delete(key interface{}) error {
 
 // Delete indicates an expected call of Delete
 func (mr *MockStoreInterfaceMockRecorder) Delete(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStoreInterface)(nil).Delete), key)
 }
 
 // Invalidate mocks base method
-func (m *MockStoreInterface) Invalidate(options store.InvalidateOptions) error {
-	m.ctrl.T.Helper()
+func (m *MockStoreInterface) Invalidate(options x.InvalidateOptions) error {
 	ret := m.ctrl.Call(m, "Invalidate", options)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -86,13 +80,11 @@ func (m *MockStoreInterface) Invalidate(options store.InvalidateOptions) error {
 
 // Invalidate indicates an expected call of Invalidate
 func (mr *MockStoreInterfaceMockRecorder) Invalidate(options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockStoreInterface)(nil).Invalidate), options)
 }
 
 // Clear mocks base method
 func (m *MockStoreInterface) Clear() error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Clear")
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -100,13 +92,11 @@ func (m *MockStoreInterface) Clear() error {
 
 // Clear indicates an expected call of Clear
 func (mr *MockStoreInterfaceMockRecorder) Clear() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clear", reflect.TypeOf((*MockStoreInterface)(nil).Clear))
 }
 
 // GetType mocks base method
 func (m *MockStoreInterface) GetType() string {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetType")
 	ret0, _ := ret[0].(string)
 	return ret0
@@ -114,6 +104,5 @@ func (m *MockStoreInterface) GetType() string {
 
 // GetType indicates an expected call of GetType
 func (mr *MockStoreInterfaceMockRecorder) GetType() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetType", reflect.TypeOf((*MockStoreInterface)(nil).GetType))
 }

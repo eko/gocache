@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/codec"
-	"github.com/eko/gocache/store"
-	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/golang/mock/gomock"
+	"github.com/yeqown/gocache/store"
+	mocksStore "github.com/yeqown/gocache/test/mocks/store"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -23,11 +22,11 @@ func TestNew(t *testing.T) {
 	// When
 	cache := New(store)
 
-	// Then
+	//// Then
 	assert.IsType(t, new(Cache), cache)
-	assert.IsType(t, new(codec.Codec), cache.codec)
-
-	assert.Equal(t, store, cache.codec.GetStore())
+	//assert.IsType(t, new(codec.Codec), cache.codec)
+	//
+	//assert.Equal(t, store, cache.codec.GetStore())
 }
 
 func TestCacheSet(t *testing.T) {
@@ -99,7 +98,7 @@ func TestCacheGet(t *testing.T) {
 	cache := New(store)
 
 	// When
-	value, err := cache.Get("my-key")
+	value, err := cache.Get("my-key", nil)
 
 	// Then
 	assert.Nil(t, err)
@@ -119,29 +118,30 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 	cache := New(store)
 
 	// When
-	value, err := cache.Get("my-key")
+	value, err := cache.Get("my-key", nil)
 
 	// Then
 	assert.Nil(t, value)
 	assert.Equal(t, returnedErr, err)
 }
 
-func TestCacheGetCodec(t *testing.T) {
-	// Given
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	store := mocksStore.NewMockStoreInterface(ctrl)
-
-	cache := New(store)
-
-	// When
-	value := cache.GetCodec()
-
-	// Then
-	assert.IsType(t, new(codec.Codec), value)
-	assert.Equal(t, store, value.GetStore())
-}
+//
+//func TestCacheGetCodec(t *testing.T) {
+//	// Given
+//	ctrl := gomock.NewController(t)
+//	defer ctrl.Finish()
+//
+//	store := mocksStore.NewMockStoreInterface(ctrl)
+//
+//	cache := New(store)
+//
+//	// When
+//	value := cache.GetCodec()
+//
+//	// Then
+//	assert.IsType(t, new(codec.Codec), value)
+//	assert.Equal(t, store, value.GetStore())
+//}
 
 func TestCacheGetType(t *testing.T) {
 	// Given

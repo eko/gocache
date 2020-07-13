@@ -6,8 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/eko/gocache/codec"
-	"github.com/eko/gocache/store"
+	"github.com/yeqown/gocache/store"
 )
 
 const (
@@ -15,54 +14,57 @@ const (
 	CacheType = "cache"
 )
 
+var (
+	_ ICache = &Cache{}
+)
+
 // Cache represents the configuration needed by a cache
 type Cache struct {
-	codec codec.CodecInterface
+	store store.StoreInterface
 }
 
-// New instanciates a new cache entry
-func New(store store.StoreInterface) *Cache {
+// New instantiate a new cache entry
+func New(store store.StoreInterface) ICache {
 	return &Cache{
-		codec: codec.New(store),
+		store: store,
 	}
 }
 
 // Get returns the object stored in cache if it exists
-func (c *Cache) Get(key interface{}) (interface{}, error) {
+func (c *Cache) Get(key interface{}, returnObj interface{}) (interface{}, error) {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Get(cacheKey)
+	return c.store.Get(cacheKey)
 }
 
 // Set populates the cache item using the given key
 func (c *Cache) Set(key, object interface{}, options *store.Options) error {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Set(cacheKey, object, options)
+	return c.store.Set(cacheKey, object, options)
 }
 
 // Delete removes the cache item using the given key
 func (c *Cache) Delete(key interface{}) error {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Delete(cacheKey)
+	return c.store.Delete(cacheKey)
 }
 
 // Invalidate invalidates cache item from given options
 func (c *Cache) Invalidate(options store.InvalidateOptions) error {
-	return c.codec.Invalidate(options)
+	return c.store.Invalidate(options)
 }
 
 // Clear resets all cache data
 func (c *Cache) Clear() error {
-	return c.codec.Clear()
-}
-
-// GetCodec returns the current codec
-func (c *Cache) GetCodec() codec.CodecInterface {
-	return c.codec
+	return c.store.Clear()
 }
 
 // GetType returns the cache type
 func (c *Cache) GetType() string {
 	return CacheType
+}
+
+func (c *Cache) GetStats() *Stats {
+	panic("implement me")
 }
 
 // getCacheKey returns the cache key for the given key object by computing a

@@ -58,7 +58,6 @@ func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options
 	if options == nil {
 		options = s.options
 	}
-
 	err := s.client.Set(key.(string), value.([]byte))
 	if err != nil {
 		return err

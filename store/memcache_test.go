@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
-	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
+	mocksStore "github.com/yeqown/gocache/test/mocks/store/clients"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

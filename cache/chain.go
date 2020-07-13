@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/eko/gocache/store"
+	"github.com/yeqown/gocache/store"
 )
 
 const (
@@ -12,6 +12,11 @@ const (
 	ChainType = "chain"
 )
 
+var (
+	_ ICache = &ChainCache{}
+)
+
+// TODO: 针对链式缓存组件，设计一个错误类型
 type chainKeyValue struct {
 	key       interface{}
 	value     interface{}
@@ -20,12 +25,22 @@ type chainKeyValue struct {
 
 // ChainCache represents the configuration needed by a cache aggregator
 type ChainCache struct {
-	caches     []SetterCacheInterface
+	caches     []ICache
 	setChannel chan *chainKeyValue
 }
 
+func (c *ChainCache) GetStats() *Stats {
+	for _, c := range c.caches {
+		if stat := c.GetStats(); stat != nil {
+			return stat
+		}
+	}
+
+	return nil
+}
+
 // NewChain instanciates a new cache aggregator
-func NewChain(caches ...SetterCacheInterface) *ChainCache {
+func NewChain(caches ...ICache) *ChainCache {
 	chain := &ChainCache{
 		caches:     caches,
 		setChannel: make(chan *chainKeyValue, 10000),
@@ -40,7 +55,7 @@ func NewChain(caches ...SetterCacheInterface) *ChainCache {
 func (c *ChainCache) setter() {
 	for item := range c.setChannel {
 		for _, cache := range c.caches {
-			if item.storeType != nil && *item.storeType == cache.GetCodec().GetStore().GetType() {
+			if item.storeType != nil && *item.storeType == cache.GetType() {
 				break
 			}
 
@@ -50,13 +65,13 @@ func (c *ChainCache) setter() {
 }
 
 // Get returns the object stored in cache if it exists
-func (c *ChainCache) Get(key interface{}) (interface{}, error) {
+func (c *ChainCache) Get(key interface{}, returnObj interface{}) (interface{}, error) {
 	var object interface{}
 	var err error
 
 	for _, cache := range c.caches {
-		storeType := cache.GetCodec().GetStore().GetType()
-		object, err = cache.Get(key)
+		storeType := cache.GetType()
+		object, err = cache.Get(key, returnObj)
 		if err == nil {
 			// Set the value back until this cache layer
 			c.setChannel <- &chainKeyValue{key, object, &storeType}
@@ -74,8 +89,8 @@ func (c *ChainCache) Set(key, object interface{}, options *store.Options) error 
 	for _, cache := range c.caches {
 		err := cache.Set(key, object, options)
 		if err != nil {
-			storeType := cache.GetCodec().GetStore().GetType()
-			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)
+			storeType := cache.GetType()
+			return fmt.Errorf("Unable to set item into cache with store %s:%v", storeType, err)
 		}
 	}
 
@@ -110,7 +125,7 @@ func (c *ChainCache) Clear() error {
 }
 
 // GetCaches returns all Chaind caches
-func (c *ChainCache) GetCaches() []SetterCacheInterface {
+func (c *ChainCache) GetCaches() []ICache {
 	return c.caches
 }
 
