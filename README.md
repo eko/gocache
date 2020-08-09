@@ -27,6 +27,7 @@ Here is what it brings in detail:
 * [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis/v7) (go-redis/redis)
+* [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 * More to come soon
 
 ## Built-in metrics providers
@@ -114,6 +115,22 @@ cacheManager := cache.New(redisStore)
 err := cacheManager.Set("my-key", "my-value", &store.Options{Expiration: 15*time.Second})
 if err != nil {
     panic(err)
+}
+
+value := cacheManager.Get("my-key")
+```
+
+#### Freecache
+
+```go
+freecacheStore := store.NewFreecache(freecache.NewCache(1000), &Options{
+	Expiration: 10 * time.Second,
+})
+
+cacheManager := cache.New(freecacheStore)
+err := cacheManager.Set("by-key", []byte("my-value"), opts)
+if err != nil {
+	panic(err)
 }
 
 value := cacheManager.Get("my-key")
@@ -230,7 +247,47 @@ if err != nil {
 marshal.Delete("my-key")
 ```
 
-The only thing you have to do is to specify the struct in which you want your value to be unmarshalled as a second argument when calling the `.Get()` method.
+The only thing you have to do is to specify the struct in which you want your value to be un-marshalled as a second argument when calling the `.Get()` method.
+
+This wrapper also supports marshaling of protobuf messages is the same fashion. Instead of providing the struct you want your value to be un-marshalled, provide the protobuf definition. 
+
+#### Sample Protobuf Marshal/Un-Marshal 
+
+```go
+// Initialize Redis client and store
+redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
+redisStore := store.NewRedis(redisClient, nil)
+
+// Initialize chained cache
+cacheManager := cache.NewMetric(
+	promMetrics,
+	cache.New(redisStore),
+)
+
+// Initializes marshaler
+marshal := marshaler.New(cacheManager)
+
+// Sample protobuf message taken from here, 
+// https://github.com/grpc/grpc-go/blob/master/examples/helloworld/helloworld/helloworld.pb.go
+key := HelloRequest{Name: "gocache"}
+value := HelloReply{Message : "Hello gocache"}
+
+err = marshal.Set(key, value)
+if err != nil {
+    panic(err)
+}
+
+returnedValue, err := marshal.Get(key, new(Book))
+if err != nil {
+    panic(err)
+}
+
+// Then, do what you want with the  value
+
+marshal.Delete("my-key")
+```
+***Note:*** For protobuf marshalling gocache uses `proto.Unmarshal()/proto.Marshal()` provided by [gogo/protobuf](https://github.com/gogo/protobuf).
+
 
 ### Cache invalidation using tags
 

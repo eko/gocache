@@ -3,6 +3,7 @@ package marshaler
 import (
 	"github.com/eko/gocache/cache"
 	"github.com/eko/gocache/store"
+	"github.com/gogo/protobuf/proto"
 	"github.com/vmihailenco/msgpack"
 )
 
@@ -25,12 +26,21 @@ func (c *Marshaler) Get(key interface{}, returnObj interface{}) (interface{}, er
 		return nil, err
 	}
 
-	switch result.(type) {
+	switch res := result.(type) {
 	case []byte:
-		err = msgpack.Unmarshal(result.([]byte), returnObj)
-
+		switch v := returnObj.(type) {
+		case proto.Message:
+			err = proto.Unmarshal(result.([]byte), v)
+		default:
+			err = msgpack.Unmarshal(res, returnObj)
+		}
 	case string:
-		err = msgpack.Unmarshal([]byte(result.(string)), returnObj)
+		switch v := returnObj.(type) {
+		case proto.Message:
+			err = proto.Unmarshal(result.([]byte), v)
+		default:
+			err = msgpack.Unmarshal([]byte(res), returnObj)
+		}
 	}
 
 	if err != nil {
@@ -42,7 +52,15 @@ func (c *Marshaler) Get(key interface{}, returnObj interface{}) (interface{}, er
 
 // Set sets a value in cache by marshaling value
 func (c *Marshaler) Set(key, object interface{}, options *store.Options) error {
-	bytes, err := msgpack.Marshal(object)
+	var bytes []byte
+	var err error
+
+	switch obj := object.(type) {
+	case proto.Message:
+		bytes, err = proto.Marshal(obj)
+	default:
+		bytes, err = msgpack.Marshal(object)
+	}
 	if err != nil {
 		return err
 	}

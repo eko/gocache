@@ -9,7 +9,6 @@ import (
 	"github.com/eko/gocache/store"
 	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/golang/mock/gomock"
-
 	"github.com/stretchr/testify/assert"
 )
 
