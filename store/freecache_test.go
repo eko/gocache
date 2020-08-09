@@ -107,7 +107,7 @@ func TestFreecacheSet(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
-	client.EXPECT().Set([]byte(cacheKey), cacheValue, 0).Return(nil)
+	client.EXPECT().Set([]byte(cacheKey), cacheValue, 6).Return(nil)
 
 	s := NewFreecache(client, options)
 	err := s.Set(cacheKey, cacheValue, options)
