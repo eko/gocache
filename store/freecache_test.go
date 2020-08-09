@@ -30,6 +30,22 @@ func TestNewFreecache(t *testing.T) {
 	assert.Equal(t, options, store.options)
 }
 
+func TestNewFreecacheDefaultOptions(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+
+	// When
+	store := NewFreecache(client, nil)
+
+	// Then
+	assert.IsType(t, new(FreecacheStore), store)
+	assert.Equal(t, client, store.client)
+	assert.Equal(t, &Options{}, store.options)
+}
+
 func TestFreecacheGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
@@ -65,6 +81,20 @@ func TestFreecacheGetNotFound(t *testing.T) {
 	assert.Nil(t, value)
 }
 
+func TestFreecacheGetInvalidKey(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+
+	s := NewFreecache(client, nil)
+
+	_, err := s.Get([]byte("key1"))
+	assert.Error(t, err, "key type not supported by Freecache store")
+
+}
+
 func TestFreecacheSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
@@ -77,10 +107,26 @@ func TestFreecacheSet(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
-	client.EXPECT().Set([]byte(cacheKey), cacheValue, 6).Return(nil)
+	client.EXPECT().Set([]byte(cacheKey), cacheValue, 0).Return(nil)
 
 	s := NewFreecache(client, options)
 	err := s.Set(cacheKey, cacheValue, options)
+	assert.Nil(t, err)
+}
+
+func TestFreecacheSetWithDefaultOptions(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+	client.EXPECT().Set([]byte(cacheKey), cacheValue, 0).Return(nil)
+
+	s := NewFreecache(client, nil)
+	err := s.Set(cacheKey, cacheValue, nil)
 	assert.Nil(t, err)
 }
 
@@ -337,6 +383,35 @@ func TestFreecacheFailedInvalidateMultipleKeys(t *testing.T) {
 
 	// Then
 	assert.EqualError(t, err, "failed to delete key my-key")
+}
+
+func TestFreecacheFailedInvalidatePattern(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	options := InvalidateOptions{
+		Tags: []string{"tag1"},
+	}
+
+	cacheKeys := []byte("my-key,key1,key2")
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+	client.EXPECT().Get([]byte("freecache_tag_tag1")).Return(cacheKeys, nil)
+	client.EXPECT().Del([]byte("my-key")).Return(true)
+	client.EXPECT().Del([]byte("key1")).Return(true)
+	client.EXPECT().Del([]byte("key2")).Return(true)
+	client.EXPECT().Del([]byte("freecache_tag_tag1")).Return(false)
+
+	s := NewFreecache(client, &Options{
+		Expiration: 6 * time.Second,
+	})
+
+	// When
+	err := s.Invalidate(options)
+
+	// Then
+	assert.EqualError(t, err, "failed to delete key freecache_tag_tag1")
 }
 
 func TestFreecacheClearAll(t *testing.T) {
