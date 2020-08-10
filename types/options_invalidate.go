@@ -1,4 +1,4 @@
-package store
+package types
 
 // InvalidateOptions represents the cache invalidation available options
 type InvalidateOptions struct {

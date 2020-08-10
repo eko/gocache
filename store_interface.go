@@ -1,4 +1,4 @@
-package xcache
+package gocache
 
 import "github.com/yeqown/gocache/types"
 
@@ -27,6 +27,6 @@ const (
 	_tagPrefix = "gocache_tag_"
 )
 
-func genTagKey(tag string) string {
+func GenTagKey(tag string) string {
 	return _tagPrefix + tag
 }

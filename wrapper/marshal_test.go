@@ -1,4 +1,4 @@
-package extension
+package wrapper
 
 import (
 	"testing"
@@ -38,7 +38,7 @@ func Test_Marshal_GetAndSet(t *testing.T) {
 
 	c := mocksCache.NewMockICache(ctrl)
 	c.EXPECT().Set(key, data, nil).Return(nil)
-	c.EXPECT().Get(key, nil).Return(data, nil)
+	c.EXPECT().Get(key).Return(data, nil)
 
 	marshalCache := WrapWithMarshal(c)
 	assert.IsType(t, new(marshalWrapper), marshalCache)
@@ -46,7 +46,7 @@ func Test_Marshal_GetAndSet(t *testing.T) {
 	err = marshalCache.Set(key, value, nil)
 	assert.Nil(t, err)
 
-	out, err := marshalCache.Get(key, new(testStruct))
+	out, err := marshalCache.Get(key)
 	assert.Nil(t, err)
-	assert.Equal(t, value, out)
+	assert.Equal(t, data, out)
 }

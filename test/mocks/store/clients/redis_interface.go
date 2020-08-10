@@ -11,55 +11,55 @@ import (
 	time "time"
 )
 
-// MockRedisClientInterface is a mock of RedisClientInterface interface
-type MockRedisClientInterface struct {
+// MockredisClientInterface is a mock of redisClientInterface interface
+type MockredisClientInterface struct {
 	ctrl     *gomock.Controller
-	recorder *MockRedisClientInterfaceMockRecorder
+	recorder *MockredisClientInterfaceMockRecorder
 }
 
-// MockRedisClientInterfaceMockRecorder is the mock recorder for MockRedisClientInterface
-type MockRedisClientInterfaceMockRecorder struct {
-	mock *MockRedisClientInterface
+// MockredisClientInterfaceMockRecorder is the mock recorder for MockredisClientInterface
+type MockredisClientInterfaceMockRecorder struct {
+	mock *MockredisClientInterface
 }
 
-// NewMockRedisClientInterface creates a new mock instance
-func NewMockRedisClientInterface(ctrl *gomock.Controller) *MockRedisClientInterface {
-	mock := &MockRedisClientInterface{ctrl: ctrl}
-	mock.recorder = &MockRedisClientInterfaceMockRecorder{mock}
+// NewMockredisClientInterface creates a new mock instance
+func NewMockredisClientInterface(ctrl *gomock.Controller) *MockredisClientInterface {
+	mock := &MockredisClientInterface{ctrl: ctrl}
+	mock.recorder = &MockredisClientInterfaceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockRedisClientInterface) EXPECT() *MockRedisClientInterfaceMockRecorder {
+func (m *MockredisClientInterface) EXPECT() *MockredisClientInterfaceMockRecorder {
 	return m.recorder
 }
 
 // Get mocks base method
-func (m *MockRedisClientInterface) Get(key string) *v7.StringCmd {
+func (m *MockredisClientInterface) Get(key string) *v7.StringCmd {
 	ret := m.ctrl.Call(m, "Get", key)
 	ret0, _ := ret[0].(*v7.StringCmd)
 	return ret0
 }
 
 // Get indicates an expected call of Get
-func (mr *MockRedisClientInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRedisClientInterface)(nil).Get), key)
+func (mr *MockredisClientInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockredisClientInterface)(nil).Get), key)
 }
 
 // Set mocks base method
-func (m *MockRedisClientInterface) Set(key string, value interface{}, expiration time.Duration) *v7.StatusCmd {
+func (m *MockredisClientInterface) Set(key string, value interface{}, expiration time.Duration) *v7.StatusCmd {
 	ret := m.ctrl.Call(m, "Set", key, value, expiration)
 	ret0, _ := ret[0].(*v7.StatusCmd)
 	return ret0
 }
 
 // Set indicates an expected call of Set
-func (mr *MockRedisClientInterfaceMockRecorder) Set(key, value, expiration interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockRedisClientInterface)(nil).Set), key, value, expiration)
+func (mr *MockredisClientInterfaceMockRecorder) Set(key, value, expiration interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockredisClientInterface)(nil).Set), key, value, expiration)
 }
 
 // Del mocks base method
-func (m *MockRedisClientInterface) Del(keys ...string) *v7.IntCmd {
+func (m *MockredisClientInterface) Del(keys ...string) *v7.IntCmd {
 	varargs := []interface{}{}
 	for _, a := range keys {
 		varargs = append(varargs, a)
@@ -70,18 +70,18 @@ func (m *MockRedisClientInterface) Del(keys ...string) *v7.IntCmd {
 }
 
 // Del indicates an expected call of Del
-func (mr *MockRedisClientInterfaceMockRecorder) Del(keys ...interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Del", reflect.TypeOf((*MockRedisClientInterface)(nil).Del), keys...)
+func (mr *MockredisClientInterfaceMockRecorder) Del(keys ...interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Del", reflect.TypeOf((*MockredisClientInterface)(nil).Del), keys...)
 }
 
 // FlushAll mocks base method
-func (m *MockRedisClientInterface) FlushAll() *v7.StatusCmd {
+func (m *MockredisClientInterface) FlushAll() *v7.StatusCmd {
 	ret := m.ctrl.Call(m, "FlushAll")
 	ret0, _ := ret[0].(*v7.StatusCmd)
 	return ret0
 }
 
 // FlushAll indicates an expected call of FlushAll
-func (mr *MockRedisClientInterfaceMockRecorder) FlushAll() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushAll", reflect.TypeOf((*MockRedisClientInterface)(nil).FlushAll))
+func (mr *MockredisClientInterfaceMockRecorder) FlushAll() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushAll", reflect.TypeOf((*MockredisClientInterface)(nil).FlushAll))
 }
