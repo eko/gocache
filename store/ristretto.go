@@ -58,7 +58,6 @@ func (s *RistrettoStore) GetWithTTL(key interface{}) (interface{}, time.Duration
 	return item, 0, err
 }
 
-
 // Set defines data in Ristretto memoey cache for given key identifier
 func (s *RistrettoStore) Set(key interface{}, value interface{}, options *Options) error {
 	var err error
