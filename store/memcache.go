@@ -55,7 +55,7 @@ func (s *MemcacheStore) Get(key interface{}) (interface{}, error) {
 	return item.Value, err
 }
 
-// Get returns data stored from a given key
+// GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *MemcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {

@@ -47,7 +47,7 @@ func (s *RedisStore) Get(key interface{}) (interface{}, error) {
 	return s.client.Get(key.(string)).Result()
 }
 
-// GetWithTTL returns data stored from a given key and the TTL associated
+// GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *RedisStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
 	object, err := s.client.Get(key.(string)).Result()
 	if err != nil {

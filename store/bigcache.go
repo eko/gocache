@@ -53,7 +53,7 @@ func (s *BigcacheStore) Get(key interface{}) (interface{}, error) {
 	return item, err
 }
 
-// GetWithTTL returns data stored from a given key
+// GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *BigcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
 	item, err := s.Get(key)
 	return item, 0, err

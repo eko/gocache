@@ -52,7 +52,7 @@ func (s *RistrettoStore) Get(key interface{}) (interface{}, error) {
 	return value, err
 }
 
-// GetWithTTL returns data stored from a given key
+// GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *RistrettoStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
 	value, err := s.Get(key)
 	return value, 0, err
