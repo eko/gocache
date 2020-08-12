@@ -334,7 +334,7 @@ Please feel free to contribute on this library and do not hesitate to open an is
 
 Generate mocks:
 ```bash
-$ GO111MODULE=on go get github.com/golang/mock/mockgen
+$ go get github.com/golang/mock/mockgen
 $ make mocks
 ```
 
