@@ -65,7 +65,7 @@ func (s *MemcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration,
 		return nil, 0, errors.New("Unable to retrieve data from memcache")
 	}
 
-	return item.Value, time.Duration(item.Expiration), err
+	return item.Value, time.Duration(item.Expiration) * time.Second, err
 }
 
 // Set defines data in Memcache for given key identifier

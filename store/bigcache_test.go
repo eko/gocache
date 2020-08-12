@@ -3,6 +3,7 @@ package store
 import (
 	"errors"
 	"testing"
+	"time"
 
 	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
 	"github.com/golang/mock/gomock"
@@ -66,6 +67,51 @@ func TestBigcacheGetWhenError(t *testing.T) {
 	// Then
 	assert.Equal(t, expectedErr, err)
 	assert.Nil(t, value)
+}
+
+func TestBigcacheGetWithTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(cacheValue, nil)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
+func TestBigcacheGetWithTTLWhenError(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+
+	expectedErr := errors.New("An unexpected error occurred")
+
+	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, expectedErr)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
 }
 
 func TestBigcacheSet(t *testing.T) {

@@ -71,6 +71,49 @@ func TestRistrettoGetWhenError(t *testing.T) {
 	assert.Equal(t, errors.New("Value not found in Ristretto store"), err)
 }
 
+func TestRistrettoGetWithTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+
+	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(cacheValue, true)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
+func TestRistrettoGetWithTTLWhenError(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+
+	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, false)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Nil(t, value)
+	assert.Equal(t, errors.New("Value not found in Ristretto store"), err)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
 func TestRistrettoSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)

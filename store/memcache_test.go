@@ -77,6 +77,58 @@ func TestMemcacheGetWhenError(t *testing.T) {
 	assert.Nil(t, value)
 }
 
+func TestMemcacheGetWithTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	options := &Options{Expiration: 3 * time.Second}
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(&memcache.Item{
+		Value:      cacheValue,
+		Expiration: int32(5),
+	}, nil)
+
+	store := NewMemcache(client, options)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, 5*time.Second, ttl)
+}
+
+func TestMemcacheGetWithTTLWhenError(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	options := &Options{Expiration: 3 * time.Second}
+
+	cacheKey := "my-key"
+
+	expectedErr := errors.New("An unexpected error occurred")
+
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, expectedErr)
+
+	store := NewMemcache(client, options)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
 func TestMemcacheSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
