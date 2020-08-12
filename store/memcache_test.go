@@ -104,6 +104,28 @@ func TestMemcacheGetWithTTL(t *testing.T) {
 	assert.Equal(t, 5*time.Second, ttl)
 }
 
+func TestMemcacheGetWithTTLWhenMissingItem(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+
+	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, nil)
+
+	options := &Options{Expiration: 3 * time.Second}
+	store := NewMemcache(client, options)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.NotNil(t, err)
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
 func TestMemcacheGetWithTTLWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
