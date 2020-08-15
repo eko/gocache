@@ -53,6 +53,12 @@ func (s *BigcacheStore) Get(key interface{}) (interface{}, error) {
 	return item, err
 }
 
+// GetWithTTL returns data stored from a given key and its corresponding TTL
+func (s *BigcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+	item, err := s.Get(key)
+	return item, 0, err
+}
+
 // Set defines data in Redis for given key identifier
 func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options) error {
 	if options == nil {

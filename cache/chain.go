@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/eko/gocache/store"
 )
@@ -15,6 +16,7 @@ const (
 type chainKeyValue struct {
 	key       interface{}
 	value     interface{}
+	ttl       time.Duration
 	storeType *string
 }
 
@@ -44,7 +46,7 @@ func (c *ChainCache) setter() {
 				break
 			}
 
-			cache.Set(item.key, item.value, nil)
+			cache.Set(item.key, item.value, &store.Options{Expiration: item.ttl})
 		}
 	}
 }
@@ -53,13 +55,14 @@ func (c *ChainCache) setter() {
 func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 	var object interface{}
 	var err error
+	var ttl time.Duration
 
 	for _, cache := range c.caches {
 		storeType := cache.GetCodec().GetStore().GetType()
-		object, err = cache.Get(key)
+		object, ttl, err = cache.GetWithTTL(key)
 		if err == nil {
 			// Set the value back until this cache layer
-			c.setChannel <- &chainKeyValue{key, object, &storeType}
+			c.setChannel <- &chainKeyValue{key, object, ttl, &storeType}
 			return object, nil
 		}
 

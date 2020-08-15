@@ -332,6 +332,12 @@ Please feel free to contribute on this library and do not hesitate to open an is
 
 ## Run tests
 
+Generate mocks:
+```bash
+$ go get github.com/golang/mock/mockgen
+$ make mocks
+```
+
 Test suite can be run with:
 
 ```bash

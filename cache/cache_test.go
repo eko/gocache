@@ -126,6 +126,56 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 	assert.Equal(t, returnedErr, err)
 }
 
+func TestCacheGetWithTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheValue := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+	expiration := 1 * time.Second
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().GetWithTTL("9b1ac8a6e8ca8ca9477c0a252eb37756").
+		Return(cacheValue, expiration, nil)
+
+	cache := New(store)
+
+	// When
+	value, ttl, err := cache.GetWithTTL("my-key")
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, expiration, ttl)
+}
+
+func TestCacheGetWithTTLWhenNotFound(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	returnedErr := errors.New("Unable to find item in store")
+	expiration := 0 * time.Second
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().GetWithTTL("9b1ac8a6e8ca8ca9477c0a252eb37756").
+		Return(nil, expiration, returnedErr)
+
+	cache := New(store)
+
+	// When
+	value, ttl, err := cache.GetWithTTL("my-key")
+
+	// Then
+	assert.Nil(t, value)
+	assert.Equal(t, returnedErr, err)
+	assert.Equal(t, expiration, ttl)
+}
+
 func TestCacheGetCodec(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
