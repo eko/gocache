@@ -27,6 +27,7 @@ Here is what it brings in detail:
 * [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis/v7) (go-redis/redis)
+* [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 * More to come soon
 
 ## Built-in metrics providers
@@ -114,6 +115,22 @@ cacheManager := cache.New(redisStore)
 err := cacheManager.Set("my-key", "my-value", &store.Options{Expiration: 15*time.Second})
 if err != nil {
     panic(err)
+}
+
+value := cacheManager.Get("my-key")
+```
+
+#### Freecache
+
+```go
+freecacheStore := store.NewFreecache(freecache.NewCache(1000), &Options{
+	Expiration: 10 * time.Second,
+})
+
+cacheManager := cache.New(freecacheStore)
+err := cacheManager.Set("by-key", []byte("my-value"), opts)
+if err != nil {
+	panic(err)
 }
 
 value := cacheManager.Get("my-key")
@@ -230,7 +247,8 @@ if err != nil {
 marshal.Delete("my-key")
 ```
 
-The only thing you have to do is to specify the struct in which you want your value to be unmarshalled as a second argument when calling the `.Get()` method.
+The only thing you have to do is to specify the struct in which you want your value to be un-marshalled as a second argument when calling the `.Get()` method.
+
 
 ### Cache invalidation using tags
 
