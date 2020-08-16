@@ -9,6 +9,7 @@ import (
 	store "github.com/eko/gocache/store"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+	time "time"
 )
 
 // MockCodecInterface is a mock of CodecInterface interface
@@ -47,6 +48,22 @@ func (m *MockCodecInterface) Get(key interface{}) (interface{}, error) {
 func (mr *MockCodecInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCodecInterface)(nil).Get), key)
+}
+
+// GetWithTTL mocks base method
+func (m *MockCodecInterface) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWithTTL", key)
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(time.Duration)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetWithTTL indicates an expected call of GetWithTTL
+func (mr *MockCodecInterfaceMockRecorder) GetWithTTL(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithTTL", reflect.TypeOf((*MockCodecInterface)(nil).GetWithTTL), key)
 }
 
 // Set mocks base method

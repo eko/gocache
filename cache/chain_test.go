@@ -71,7 +71,8 @@ func TestChainGetWhenAvailableInFirstCache(t *testing.T) {
 
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
-	cache1.EXPECT().Get("my-key").Return(cacheValue, nil)
+	cache1.EXPECT().GetWithTTL("my-key").Return(cacheValue,
+		0*time.Second, nil)
 
 	// Cache 2
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
@@ -102,6 +103,8 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 		Hello: "world",
 	}
 
+	options := &store.Options{Expiration: 0 * time.Second}
+
 	// Cache 1
 	store1 := mocksStore.NewMockStoreInterface(ctrl)
 	store1.EXPECT().GetType().AnyTimes().Return("store1")
@@ -111,8 +114,9 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
-	cache1.EXPECT().Get("my-key").Return(nil, errors.New("Unable to find in cache 1"))
-	cache1.EXPECT().Set("my-key", cacheValue, nil).AnyTimes().Return(nil)
+	cache1.EXPECT().GetWithTTL("my-key").Return(nil, 0*time.Second,
+		errors.New("Unable to find in cache 1"))
+	cache1.EXPECT().Set("my-key", cacheValue, options).AnyTimes().Return(nil)
 
 	// Cache 2
 	store2 := mocksStore.NewMockStoreInterface(ctrl)
@@ -123,7 +127,8 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().GetCodec().AnyTimes().Return(codec2)
-	cache2.EXPECT().Get("my-key").Return(cacheValue, nil)
+	cache2.EXPECT().GetWithTTL("my-key").Return(cacheValue,
+		0*time.Second, nil)
 
 	cache := NewChain(cache1, cache2)
 
@@ -154,7 +159,8 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().GetCodec().Return(codec1)
-	cache1.EXPECT().Get("my-key").Return(nil, errors.New("Unable to find in cache 1"))
+	cache1.EXPECT().GetWithTTL("my-key").Return(nil, 0*time.Second,
+		errors.New("Unable to find in cache 1"))
 
 	// Cache 2
 	store2 := mocksStore.NewMockStoreInterface(ctrl)
@@ -165,7 +171,8 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().GetCodec().Return(codec2)
-	cache2.EXPECT().Get("my-key").Return(nil, errors.New("Unable to find in cache 2"))
+	cache2.EXPECT().GetWithTTL("my-key").Return(nil, 0*time.Second,
+		errors.New("Unable to find in cache 2"))
 
 	cache := NewChain(cache1, cache2)
 

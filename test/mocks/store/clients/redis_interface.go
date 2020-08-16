@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	v7 "github.com/go-redis/redis/v7"
+	redis "github.com/go-redis/redis/v7"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 	time "time"
@@ -35,10 +35,10 @@ func (m *MockRedisClientInterface) EXPECT() *MockRedisClientInterfaceMockRecorde
 }
 
 // Get mocks base method
-func (m *MockRedisClientInterface) Get(key string) *v7.StringCmd {
+func (m *MockRedisClientInterface) Get(key string) *redis.StringCmd {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(*v7.StringCmd)
+	ret0, _ := ret[0].(*redis.StringCmd)
 	return ret0
 }
 
@@ -48,11 +48,25 @@ func (mr *MockRedisClientInterfaceMockRecorder) Get(key interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRedisClientInterface)(nil).Get), key)
 }
 
+// TTL mocks base method
+func (m *MockRedisClientInterface) TTL(key string) *redis.DurationCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TTL", key)
+	ret0, _ := ret[0].(*redis.DurationCmd)
+	return ret0
+}
+
+// TTL indicates an expected call of TTL
+func (mr *MockRedisClientInterfaceMockRecorder) TTL(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TTL", reflect.TypeOf((*MockRedisClientInterface)(nil).TTL), key)
+}
+
 // Set mocks base method
-func (m *MockRedisClientInterface) Set(key string, value interface{}, expiration time.Duration) *v7.StatusCmd {
+func (m *MockRedisClientInterface) Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", key, value, expiration)
-	ret0, _ := ret[0].(*v7.StatusCmd)
+	ret0, _ := ret[0].(*redis.StatusCmd)
 	return ret0
 }
 
@@ -63,14 +77,14 @@ func (mr *MockRedisClientInterfaceMockRecorder) Set(key, value, expiration inter
 }
 
 // Del mocks base method
-func (m *MockRedisClientInterface) Del(keys ...string) *v7.IntCmd {
+func (m *MockRedisClientInterface) Del(keys ...string) *redis.IntCmd {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
 	for _, a := range keys {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Del", varargs...)
-	ret0, _ := ret[0].(*v7.IntCmd)
+	ret0, _ := ret[0].(*redis.IntCmd)
 	return ret0
 }
 
@@ -81,10 +95,10 @@ func (mr *MockRedisClientInterfaceMockRecorder) Del(keys ...interface{}) *gomock
 }
 
 // FlushAll mocks base method
-func (m *MockRedisClientInterface) FlushAll() *v7.StatusCmd {
+func (m *MockRedisClientInterface) FlushAll() *redis.StatusCmd {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FlushAll")
-	ret0, _ := ret[0].(*v7.StatusCmd)
+	ret0, _ := ret[0].(*redis.StatusCmd)
 	return ret0
 }
 

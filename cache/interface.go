@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"time"
+	
 	"github.com/eko/gocache/codec"
 	"github.com/eko/gocache/store"
 )
@@ -19,6 +21,7 @@ type CacheInterface interface {
 // storage (for instance: memory, redis, ...)
 type SetterCacheInterface interface {
 	CacheInterface
+	GetWithTTL(key interface{}) (interface{}, time.Duration, error)
 
 	GetCodec() codec.CodecInterface
 }

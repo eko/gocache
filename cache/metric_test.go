@@ -81,7 +81,8 @@ func TestMetricGetWhenChainCache(t *testing.T) {
 	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
 
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
-	cache1.EXPECT().Get("my-key").Return(cacheValue, nil)
+	cache1.EXPECT().GetWithTTL("my-key").Return(cacheValue,
+		0*time.Second, nil)
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
 
 	chainCache := NewChain(cache1)
