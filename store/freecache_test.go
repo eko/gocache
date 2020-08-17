@@ -81,7 +81,7 @@ func TestFreecacheGetNotFound(t *testing.T) {
 	assert.Nil(t, value)
 }
 
-func TestFreecacheGetInvalidKey(t *testing.T) {
+func TestFreecacheGetWithInvalidKey(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -90,8 +90,9 @@ func TestFreecacheGetInvalidKey(t *testing.T) {
 
 	s := NewFreecache(client, nil)
 
-	_, err := s.Get([]byte("key1"))
+	value, err := s.Get([]byte("key1"))
 	assert.Error(t, err, "key type not supported by Freecache store")
+	assert.Nil(t, value)
 }
 
 func TestFreecacheGetWithTTL(t *testing.T) {
@@ -162,6 +163,21 @@ func TestFreecacheGetWithTTLWhenErrorAtTTL(t *testing.T) {
 
 	// Then
 	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
+func TestFreecacheGetWithTTLWhenInvalidKey(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+
+	s := NewFreecache(client, nil)
+
+	value, ttl, err := s.GetWithTTL([]byte("key1"))
+	assert.Error(t, err, "key type not supported by Freecache store")
 	assert.Nil(t, value)
 	assert.Equal(t, 0*time.Second, ttl)
 }
