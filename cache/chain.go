@@ -2,7 +2,6 @@ package cache
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/eko/gocache/store"
@@ -65,8 +64,6 @@ func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 			c.setChannel <- &chainKeyValue{key, object, ttl, &storeType}
 			return object, nil
 		}
-
-		log.Printf("Unable to retrieve item from cache with store '%s': %v\n", storeType, err)
 	}
 
 	return object, err

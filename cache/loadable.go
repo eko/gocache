@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"log"
-
 	"github.com/eko/gocache/store"
 )
 
@@ -56,7 +54,6 @@ func (c *LoadableCache) Get(key interface{}) (interface{}, error) {
 	// Unable to find in cache, try to load it from load function
 	object, err = c.loadFunc(key)
 	if err != nil {
-		log.Printf("An error has occurred while trying to load item from load function: %v\n", err)
 		return object, err
 	}
 
