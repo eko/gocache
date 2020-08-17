@@ -62,6 +62,21 @@ func (mr *MockFreecacheClientInterfaceMockRecorder) GetInt(key interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInt", reflect.TypeOf((*MockFreecacheClientInterface)(nil).GetInt), key)
 }
 
+// TTL mocks base method
+func (m *MockFreecacheClientInterface) TTL(key []byte) (uint32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TTL", key)
+	ret0, _ := ret[0].(uint32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TTL indicates an expected call of TTL
+func (mr *MockFreecacheClientInterfaceMockRecorder) TTL(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TTL", reflect.TypeOf((*MockFreecacheClientInterface)(nil).TTL), key)
+}
+
 // Set mocks base method
 func (m *MockFreecacheClientInterface) Set(key, value []byte, expireSeconds int) error {
 	m.ctrl.T.Helper()

@@ -26,7 +26,7 @@ type ChainCache struct {
 	setChannel chan *chainKeyValue
 }
 
-// NewChain instanciates a new cache aggregator
+// NewChain instantiates a new cache aggregator
 func NewChain(caches ...SetterCacheInterface) *ChainCache {
 	chain := &ChainCache{
 		caches:     caches,
@@ -112,7 +112,7 @@ func (c *ChainCache) Clear() error {
 	return nil
 }
 
-// GetCaches returns all Chaind caches
+// GetCaches returns all Chained caches
 func (c *ChainCache) GetCaches() []SetterCacheInterface {
 	return c.caches
 }

@@ -92,7 +92,78 @@ func TestFreecacheGetInvalidKey(t *testing.T) {
 
 	_, err := s.Get([]byte("key1"))
 	assert.Error(t, err, "key type not supported by Freecache store")
+}
 
+func TestFreecacheGetWithTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+	client.EXPECT().Get([]byte(cacheKey)).Return(cacheValue, nil)
+	client.EXPECT().TTL([]byte(cacheKey)).Return(uint32(5), nil)
+
+	options := &Options{Expiration: 3 * time.Second}
+	store := NewFreecache(client, options)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, 5*time.Second, ttl)
+}
+
+func TestFreecacheGetWithTTLWhenMissingItem(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+	expectedErr := errors.New("value not found in Freecache store")
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+	client.EXPECT().Get([]byte(cacheKey)).Return(nil, expectedErr)
+
+	options := &Options{Expiration: 3 * time.Second}
+	store := NewFreecache(client, options)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
+func TestFreecacheGetWithTTLWhenErrorAtTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+	expectedErr := errors.New("value not found in Freecache store")
+
+	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
+	client.EXPECT().Get([]byte(cacheKey)).Return(cacheValue, nil)
+	client.EXPECT().TTL([]byte(cacheKey)).Return(uint32(0), expectedErr)
+
+	options := &Options{Expiration: 3 * time.Second}
+	store := NewFreecache(client, options)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
 }
 
 func TestFreecacheSet(t *testing.T) {

@@ -18,6 +18,7 @@ const (
 type FreecacheClientInterface interface {
 	Get(key []byte) (value []byte, err error)
 	GetInt(key int64) (value []byte, err error)
+	TTL(key []byte) (timeLeft uint32, err error)
 	Set(key, value []byte, expireSeconds int) (err error)
 	SetInt(key int64, value []byte, expireSeconds int) (err error)
 	Del(key []byte) (affected bool)
@@ -56,7 +57,25 @@ func (f *FreecacheStore) Get(key interface{}) (interface{}, error) {
 	}
 
 	return nil, errors.New("key type not supported by Freecache store")
+}
 
+// GetWithTTL returns data stored from a given key and its corresponding TTL
+func (f *FreecacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+	if k, ok := key.(string); ok {
+		result, err := f.client.Get([]byte(k))
+		if err != nil {
+			return nil, 0, errors.New("value not found in Freecache store")
+		}
+
+		ttl, err := f.client.TTL([]byte(k))
+		if err != nil {
+			return nil, 0, errors.New("value not found in Freecache store")
+		}
+
+		return result, time.Duration(ttl) * time.Second, err
+	}
+
+	return nil, 0, errors.New("key type not supported by Freecache store")
 }
 
 // Set sets a key, value and expiration for a cache entry and stores it in the cache.
