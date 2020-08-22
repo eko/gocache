@@ -72,10 +72,16 @@ func (c *Cache) GetType() string {
 	return CacheType
 }
 
-// getCacheKey returns the cache key for the given key object by computing a
-// checksum of key struct
+// getCacheKey returns the cache key for the given key object by returning
+// the key if type is string or by computing a checksum of key structure
+// if its type is other than string
 func (c *Cache) getCacheKey(key interface{}) string {
-	return strings.ToLower(checksum(key))
+	switch key.(type) {
+	case string:
+		return strings.ToLower(key.(string))
+	default:
+		return strings.ToLower(checksum(key))
+	}
 }
 
 // checksum hashes a given object into a string
