@@ -4,7 +4,6 @@ import (
 	"crypto"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/eko/gocache/codec"
@@ -78,9 +77,9 @@ func (c *Cache) GetType() string {
 func (c *Cache) getCacheKey(key interface{}) string {
 	switch key.(type) {
 	case string:
-		return strings.ToLower(key.(string))
+		return key.(string)
 	default:
-		return strings.ToLower(checksum(key))
+		return checksum(key)
 	}
 }
 

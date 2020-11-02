@@ -218,7 +218,7 @@ func TestCacheGetCacheKeyWhenKeyIsString(t *testing.T) {
 	computedKey := cache.getCacheKey("my-Key")
 
 	// Then
-	assert.Equal(t, "my-key", computedKey)
+	assert.Equal(t, "my-Key", computedKey)
 }
 
 func TestCacheGetCacheKeyWhenKeyIsStruct(t *testing.T) {
