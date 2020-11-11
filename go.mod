@@ -1,6 +1,6 @@
 module github.com/eko/gocache
 
-go 1.14
+go 1.15
 
 require (
 	github.com/allegro/bigcache v1.2.1
@@ -12,5 +12,5 @@ require (
 	github.com/prometheus/client_golang v1.8.0
 	github.com/stretchr/testify v1.6.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	google.golang.org/appengine v1.6.1 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
 )
