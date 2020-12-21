@@ -2,7 +2,7 @@ package cache
 
 import (
 	"fmt"
-	"log"
+	"time"
 
 	"github.com/eko/gocache/store"
 )
@@ -15,6 +15,7 @@ const (
 type chainKeyValue struct {
 	key       interface{}
 	value     interface{}
+	ttl       time.Duration
 	storeType *string
 }
 
@@ -24,7 +25,7 @@ type ChainCache struct {
 	setChannel chan *chainKeyValue
 }
 
-// NewChain instanciates a new cache aggregator
+// NewChain instantiates a new cache aggregator
 func NewChain(caches ...SetterCacheInterface) *ChainCache {
 	chain := &ChainCache{
 		caches:     caches,
@@ -44,7 +45,7 @@ func (c *ChainCache) setter() {
 				break
 			}
 
-			cache.Set(item.key, item.value, nil)
+			cache.Set(item.key, item.value, &store.Options{Expiration: item.ttl})
 		}
 	}
 }
@@ -53,17 +54,16 @@ func (c *ChainCache) setter() {
 func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 	var object interface{}
 	var err error
+	var ttl time.Duration
 
 	for _, cache := range c.caches {
 		storeType := cache.GetCodec().GetStore().GetType()
-		object, err = cache.Get(key)
+		object, ttl, err = cache.GetWithTTL(key)
 		if err == nil {
 			// Set the value back until this cache layer
-			c.setChannel <- &chainKeyValue{key, object, &storeType}
+			c.setChannel <- &chainKeyValue{key, object, ttl, &storeType}
 			return object, nil
 		}
-
-		log.Printf("Unable to retrieve item from cache with store '%s': %v\n", storeType, err)
 	}
 
 	return object, err
@@ -109,7 +109,7 @@ func (c *ChainCache) Clear() error {
 	return nil
 }
 
-// GetCaches returns all Chaind caches
+// GetCaches returns all Chained caches
 func (c *ChainCache) GetCaches() []SetterCacheInterface {
 	return c.caches
 }

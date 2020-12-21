@@ -46,7 +46,7 @@ func NewPrometheus(service string) *Prometheus {
 	return prometheus
 }
 
-// Record records a metric in prometheus by specyfing the store name, metric name and value
+// Record records a metric in prometheus by specifying the store name, metric name and value
 func (m *Prometheus) record(store, metric string, value float64) {
 	m.collector.WithLabelValues(m.service, store, metric).Set(value)
 }

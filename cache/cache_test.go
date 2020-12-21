@@ -9,7 +9,6 @@ import (
 	"github.com/eko/gocache/store"
 	mocksStore "github.com/eko/gocache/test/mocks/store"
 	"github.com/golang/mock/gomock"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +45,7 @@ func TestCacheSet(t *testing.T) {
 	}
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Set("9b1ac8a6e8ca8ca9477c0a252eb37756", value, options).Return(nil)
+	store.EXPECT().Set("my-key", value, options).Return(nil)
 
 	cache := New(store)
 
@@ -73,7 +72,7 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 	storeErr := errors.New("An error has occurred while inserting data into store")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Set("9b1ac8a6e8ca8ca9477c0a252eb37756", value, options).Return(storeErr)
+	store.EXPECT().Set("my-key", value, options).Return(storeErr)
 
 	cache := New(store)
 
@@ -94,7 +93,7 @@ func TestCacheGet(t *testing.T) {
 	}
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Get("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(cacheValue, nil)
+	store.EXPECT().Get("my-key").Return(cacheValue, nil)
 
 	cache := New(store)
 
@@ -114,7 +113,7 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 	returnedErr := errors.New("Unable to find item in store")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Get("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil, returnedErr)
+	store.EXPECT().Get("my-key").Return(nil, returnedErr)
 
 	cache := New(store)
 
@@ -124,6 +123,56 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 	// Then
 	assert.Nil(t, value)
 	assert.Equal(t, returnedErr, err)
+}
+
+func TestCacheGetWithTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheValue := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+	expiration := 1 * time.Second
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().GetWithTTL("my-key").
+		Return(cacheValue, expiration, nil)
+
+	cache := New(store)
+
+	// When
+	value, ttl, err := cache.GetWithTTL("my-key")
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, expiration, ttl)
+}
+
+func TestCacheGetWithTTLWhenNotFound(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	returnedErr := errors.New("Unable to find item in store")
+	expiration := 0 * time.Second
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().GetWithTTL("my-key").
+		Return(nil, expiration, returnedErr)
+
+	cache := New(store)
+
+	// When
+	value, ttl, err := cache.GetWithTTL("my-key")
+
+	// Then
+	assert.Nil(t, value)
+	assert.Equal(t, returnedErr, err)
+	assert.Equal(t, expiration, ttl)
 }
 
 func TestCacheGetCodec(t *testing.T) {
@@ -156,13 +205,51 @@ func TestCacheGetType(t *testing.T) {
 	assert.Equal(t, CacheType, cache.GetType())
 }
 
+func TestCacheGetCacheKeyWhenKeyIsString(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+
+	cache := New(store)
+
+	// When
+	computedKey := cache.getCacheKey("my-Key")
+
+	// Then
+	assert.Equal(t, "my-Key", computedKey)
+}
+
+func TestCacheGetCacheKeyWhenKeyIsStruct(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+
+	cache := New(store)
+
+	// When
+	key := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+
+	computedKey := cache.getCacheKey(key)
+
+	// Then
+	assert.Equal(t, "8144fe5310cf0e62ac83fd79c113aad2", computedKey)
+}
+
 func TestCacheDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Delete("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(nil)
+	store.EXPECT().Delete("my-key").Return(nil)
 
 	cache := New(store)
 
@@ -261,7 +348,7 @@ func TestCacheDeleteWhenError(t *testing.T) {
 	expectedErr := errors.New("Unable to delete key")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Delete("9b1ac8a6e8ca8ca9477c0a252eb37756").Return(expectedErr)
+	store.EXPECT().Delete("my-key").Return(expectedErr)
 
 	cache := New(store)
 

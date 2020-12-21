@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"fmt"
 	"reflect"
-	"strings"
+	"time"
 
 	"github.com/eko/gocache/codec"
 	"github.com/eko/gocache/store"
@@ -20,7 +20,7 @@ type Cache struct {
 	codec codec.CodecInterface
 }
 
-// New instanciates a new cache entry
+// New instantiates a new cache entry
 func New(store store.StoreInterface) *Cache {
 	return &Cache{
 		codec: codec.New(store),
@@ -31,6 +31,12 @@ func New(store store.StoreInterface) *Cache {
 func (c *Cache) Get(key interface{}) (interface{}, error) {
 	cacheKey := c.getCacheKey(key)
 	return c.codec.Get(cacheKey)
+}
+
+// GetWithTTL returns the object stored in cache and its corresponding TTL
+func (c *Cache) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+	cacheKey := c.getCacheKey(key)
+	return c.codec.GetWithTTL(cacheKey)
 }
 
 // Set populates the cache item using the given key
@@ -65,10 +71,16 @@ func (c *Cache) GetType() string {
 	return CacheType
 }
 
-// getCacheKey returns the cache key for the given key object by computing a
-// checksum of key struct
+// getCacheKey returns the cache key for the given key object by returning
+// the key if type is string or by computing a checksum of key structure
+// if its type is other than string
 func (c *Cache) getCacheKey(key interface{}) string {
-	return strings.ToLower(checksum(key))
+	switch key.(type) {
+	case string:
+		return key.(string)
+	default:
+		return checksum(key)
+	}
 }
 
 // checksum hashes a given object into a string

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
 	"github.com/golang/mock/gomock"
@@ -70,6 +71,49 @@ func TestRistrettoGetWhenError(t *testing.T) {
 	assert.Equal(t, errors.New("Value not found in Ristretto store"), err)
 }
 
+func TestRistrettoGetWithTTL(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+
+	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(cacheValue, true)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
+func TestRistrettoGetWithTTLWhenError(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+
+	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, false)
+
+	store := NewRistretto(client, nil)
+
+	// When
+	value, ttl, err := store.GetWithTTL(cacheKey)
+
+	// Then
+	assert.Nil(t, value)
+	assert.Equal(t, errors.New("Value not found in Ristretto store"), err)
+	assert.Equal(t, 0*time.Second, ttl)
+}
+
 func TestRistrettoSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
@@ -82,7 +126,7 @@ func TestRistrettoSet(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(4)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(4), 0*time.Second).Return(true)
 
 	store := NewRistretto(client, options)
 
@@ -107,7 +151,7 @@ func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(7)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(true)
 
 	store := NewRistretto(client, options)
 
@@ -130,7 +174,7 @@ func TestRistrettoSetWhenError(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(7)).Return(false)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(false)
 
 	store := NewRistretto(client, options)
 
@@ -150,9 +194,9 @@ func TestRistrettoSetWithTags(t *testing.T) {
 	cacheValue := []byte("my-cache-value")
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(0)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(0), 0*time.Second).Return(true)
 	client.EXPECT().Get("gocache_tag_tag1").Return(nil, true)
-	client.EXPECT().Set("gocache_tag_tag1", []byte("my-key"), int64(0)).Return(true)
+	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte("my-key"), int64(0), 720*time.Hour).Return(true)
 
 	store := NewRistretto(client, nil)
 
@@ -172,9 +216,9 @@ func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	cacheValue := []byte("my-cache-value")
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
-	client.EXPECT().Set(cacheKey, cacheValue, int64(0)).Return(true)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(0), 0*time.Second).Return(true)
 	client.EXPECT().Get("gocache_tag_tag1").Return([]byte("my-key,a-second-key"), true)
-	client.EXPECT().Set("gocache_tag_tag1", []byte("my-key,a-second-key"), int64(0)).Return(true)
+	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte("my-key,a-second-key"), int64(0), 720*time.Hour).Return(true)
 
 	store := NewRistretto(client, nil)
 

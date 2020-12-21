@@ -1,6 +1,8 @@
 package codec
 
 import (
+	"time"
+
 	"github.com/eko/gocache/store"
 )
 
@@ -43,6 +45,19 @@ func (c *Codec) Get(key interface{}) (interface{}, error) {
 	}
 
 	return val, err
+}
+
+// GetWithTTL allows to retrieve the value from a given key identifier and its corresponding TTL
+func (c *Codec) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+	val, ttl, err := c.store.GetWithTTL(key)
+
+	if err == nil {
+		c.stats.Hits++
+	} else {
+		c.stats.Miss++
+	}
+
+	return val, ttl, err
 }
 
 // Set allows to set a value for a given key identifier and also allows to specify

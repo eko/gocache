@@ -27,6 +27,7 @@ Here is what it brings in detail:
 * [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis/v7) (go-redis/redis)
+* [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 * More to come soon
 
 ## Built-in metrics providers
@@ -50,7 +51,7 @@ memcacheStore := store.NewMemcache(
 )
 
 cacheManager := cache.New(memcacheStore)
-err := cacheManager.Set("my-key", []byte("my-value), &cache.Options{
+err := cacheManager.Set("my-key", []byte("my-value"), &store.Options{
 	Expiration: 15*time.Second, // Override default value of 10 seconds defined in the store
 })
 if err != nil {
@@ -71,7 +72,7 @@ bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute
 bigcacheStore := store.NewBigcache(bigcacheClient, nil) // No otions provided (as second argument)
 
 cacheManager := cache.New(bigcacheStore)
-err := cacheManager.Set("my-key", "my-value", nil)
+err := cacheManager.Set("my-key", []byte("my-value"), nil)
 if err != nil {
     panic(err)
 }
@@ -93,7 +94,7 @@ if err != nil {
 ristrettoStore := store.NewRistretto(ristrettoCache, nil)
 
 cacheManager := cache.New(ristrettoStore)
-err := cacheManager.Set("my-key", "my-value", &cache.Options{Cost: 2})
+err := cacheManager.Set("my-key", "my-value", &store.Options{Cost: 2})
 if err != nil {
     panic(err)
 }
@@ -111,9 +112,25 @@ redisStore := store.NewRedis(redis.NewClient(&redis.Options{
 }), nil)
 
 cacheManager := cache.New(redisStore)
-err := cacheManager.Set("my-key", "my-value", &cache.Options{Expiration: 15*time.Second})
+err := cacheManager.Set("my-key", "my-value", &store.Options{Expiration: 15*time.Second})
 if err != nil {
     panic(err)
+}
+
+value := cacheManager.Get("my-key")
+```
+
+#### Freecache
+
+```go
+freecacheStore := store.NewFreecache(freecache.NewCache(1000), &Options{
+	Expiration: 10 * time.Second,
+})
+
+cacheManager := cache.New(freecacheStore)
+err := cacheManager.Set("by-key", []byte("my-value"), opts)
+if err != nil {
+	panic(err)
 }
 
 value := cacheManager.Get("my-key")
@@ -134,7 +151,7 @@ redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 
 // Initialize stores
 ristrettoStore := store.NewRistretto(ristrettoCache, nil)
-redisStore := store.NewRedis(redisClient, &cache.Options{Expiration: 5*time.Second})
+redisStore := store.NewRedis(redisClient, &store.Options{Expiration: 5*time.Second})
 
 // Initialize chained cache
 cacheManager := cache.NewChain(
@@ -230,7 +247,8 @@ if err != nil {
 marshal.Delete("my-key")
 ```
 
-The only thing you have to do is to specify the struct in which you want your value to be unmarshalled as a second argument when calling the `.Get()` method.
+The only thing you have to do is to specify the struct in which you want your value to be un-marshalled as a second argument when calling the `.Get()` method.
+
 
 ### Cache invalidation using tags
 
@@ -331,6 +349,12 @@ Of course, I suggest you to have a look at current caches or stores to implement
 Please feel free to contribute on this library and do not hesitate to open an issue if you want to discuss about a feature.
 
 ## Run tests
+
+Generate mocks:
+```bash
+$ go get github.com/golang/mock/mockgen
+$ make mocks
+```
 
 Test suite can be run with:
 

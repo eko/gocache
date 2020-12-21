@@ -60,6 +60,74 @@ func TestGetWhenHit(t *testing.T) {
 	assert.Equal(t, 0, codec.GetStats().ClearError)
 }
 
+func TestGetWithTTLWhenHit(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheValue := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().GetWithTTL("my-key").Return(cacheValue, 1*time.Second, nil)
+
+	codec := New(store)
+
+	// When
+	value, ttl, err := codec.GetWithTTL("my-key")
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, 1*time.Second, ttl)
+
+	assert.Equal(t, 1, codec.GetStats().Hits)
+	assert.Equal(t, 0, codec.GetStats().Miss)
+	assert.Equal(t, 0, codec.GetStats().SetSuccess)
+	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
+	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
+	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
+}
+
+func TestGetWithTTLWhenMiss(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	expectedErr := errors.New("Unable to find in store")
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+	store.EXPECT().GetWithTTL("my-key").Return(nil, 0*time.Second, expectedErr)
+
+	codec := New(store)
+
+	// When
+	value, ttl, err := codec.GetWithTTL("my-key")
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
+
+	assert.Equal(t, 0, codec.GetStats().Hits)
+	assert.Equal(t, 1, codec.GetStats().Miss)
+	assert.Equal(t, 0, codec.GetStats().SetSuccess)
+	assert.Equal(t, 0, codec.GetStats().SetError)
+	assert.Equal(t, 0, codec.GetStats().DeleteSuccess)
+	assert.Equal(t, 0, codec.GetStats().DeleteError)
+	assert.Equal(t, 0, codec.GetStats().InvalidateSuccess)
+	assert.Equal(t, 0, codec.GetStats().InvalidateError)
+	assert.Equal(t, 0, codec.GetStats().ClearSuccess)
+	assert.Equal(t, 0, codec.GetStats().ClearError)
+}
+
 func TestGetWhenMiss(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
