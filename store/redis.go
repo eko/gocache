@@ -2,7 +2,6 @@ package store
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	redis "github.com/go-redis/redis/v7"
@@ -11,8 +10,11 @@ import (
 // RedisClientInterface represents a go-redis/redis client
 type RedisClientInterface interface {
 	Get(key string) *redis.StringCmd
+	HGetAll(key string) *redis.StringStringMapCmd
 	TTL(key string) *redis.DurationCmd
-	Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Expire(key string, expiration time.Duration) *redis.BoolCmd
+	Set(key string, values interface{}, expiration time.Duration) *redis.StatusCmd
+	HSet(key string, values ...interface{}) *redis.IntCmd
 	Del(keys ...string) *redis.IntCmd
 	FlushAll() *redis.StatusCmd
 }
@@ -22,6 +24,8 @@ const (
 	RedisType = "redis"
 	// RedisTagPattern represents the tag pattern to be used as a key in specified storage
 	RedisTagPattern = "gocache_tag_%s"
+	// RedisEmptyValue represents an empty value to be used in hsets when the content is not used
+	RedisEmptyValue = 0
 )
 
 // RedisStore is a store for Redis
@@ -82,35 +86,10 @@ func (s *RedisStore) Set(key interface{}, value interface{}, options *Options) e
 
 func (s *RedisStore) setTags(key interface{}, tags []string) {
 	for _, tag := range tags {
-		var tagKey = fmt.Sprintf(RedisTagPattern, tag)
-		var cacheKeys = s.getCacheKeysForTag(tagKey)
-
-		var alreadyInserted = false
-		for _, cacheKey := range cacheKeys {
-			if cacheKey == key.(string) {
-				alreadyInserted = true
-				break
-			}
-		}
-
-		if !alreadyInserted {
-			cacheKeys = append(cacheKeys, key.(string))
-		}
-
-		s.Set(tagKey, strings.Join(cacheKeys, ","), &Options{
-			Expiration: 720 * time.Hour,
-		})
+		tagKey := fmt.Sprintf(RedisTagPattern, tag)
+		s.client.HSet(tagKey, key.(string), RedisEmptyValue)
+		s.client.Expire(tagKey, 720*time.Hour)
 	}
-}
-
-func (s *RedisStore) getCacheKeysForTag(tagKey string) []string {
-	var cacheKeys = []string{}
-	if result, err := s.Get(tagKey); err == nil && result != "" {
-		if str, ok := result.(string); ok {
-			cacheKeys = strings.Split(str, ",")
-		}
-	}
-	return cacheKeys
 }
 
 // Delete removes data from Redis for given key identifier
@@ -123,10 +102,13 @@ func (s *RedisStore) Delete(key interface{}) error {
 func (s *RedisStore) Invalidate(options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
-			var tagKey = fmt.Sprintf(RedisTagPattern, tag)
-			var cacheKeys = s.getCacheKeysForTag(tagKey)
+			tagKey := fmt.Sprintf(RedisTagPattern, tag)
+			cacheKeys, err := s.client.HGetAll(tagKey).Result()
+			if err != nil {
+				continue
+			}
 
-			for _, cacheKey := range cacheKeys {
+			for cacheKey := range cacheKeys {
 				s.Delete(cacheKey)
 			}
 
