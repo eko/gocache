@@ -10,13 +10,13 @@ import (
 // RedisClientInterface represents a go-redis/redis client
 type RedisClientInterface interface {
 	Get(key string) *redis.StringCmd
-	HGetAll(key string) *redis.StringStringMapCmd
 	TTL(key string) *redis.DurationCmd
 	Expire(key string, expiration time.Duration) *redis.BoolCmd
 	Set(key string, values interface{}, expiration time.Duration) *redis.StatusCmd
-	HSet(key string, values ...interface{}) *redis.IntCmd
 	Del(keys ...string) *redis.IntCmd
 	FlushAll() *redis.StatusCmd
+	SAdd(key string, members ...interface{}) *redis.IntCmd
+	SMembers(key string) *redis.StringSliceCmd
 }
 
 const (
@@ -24,8 +24,6 @@ const (
 	RedisType = "redis"
 	// RedisTagPattern represents the tag pattern to be used as a key in specified storage
 	RedisTagPattern = "gocache_tag_%s"
-	// RedisEmptyValue represents an empty value to be used in hsets when the content is not used
-	RedisEmptyValue = 0
 )
 
 // RedisStore is a store for Redis
@@ -87,7 +85,7 @@ func (s *RedisStore) Set(key interface{}, value interface{}, options *Options) e
 func (s *RedisStore) setTags(key interface{}, tags []string) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(RedisTagPattern, tag)
-		s.client.HSet(tagKey, key.(string), RedisEmptyValue)
+		s.client.SAdd(tagKey, key.(string))
 		s.client.Expire(tagKey, 720*time.Hour)
 	}
 }
@@ -103,12 +101,12 @@ func (s *RedisStore) Invalidate(options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RedisTagPattern, tag)
-			cacheKeys, err := s.client.HGetAll(tagKey).Result()
+			cacheKeys, err := s.client.SMembers(tagKey).Result()
 			if err != nil {
 				continue
 			}
 
-			for cacheKey := range cacheKeys {
+			for _, cacheKey := range cacheKeys {
 				s.Delete(cacheKey)
 			}
 

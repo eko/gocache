@@ -48,20 +48,6 @@ func (mr *MockRedisClientInterfaceMockRecorder) Get(key interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRedisClientInterface)(nil).Get), key)
 }
 
-// HGetAll mocks base method
-func (m *MockRedisClientInterface) HGetAll(key string) *redis.StringStringMapCmd {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HGetAll", key)
-	ret0, _ := ret[0].(*redis.StringStringMapCmd)
-	return ret0
-}
-
-// HGetAll indicates an expected call of HGetAll
-func (mr *MockRedisClientInterfaceMockRecorder) HGetAll(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HGetAll", reflect.TypeOf((*MockRedisClientInterface)(nil).HGetAll), key)
-}
-
 // TTL mocks base method
 func (m *MockRedisClientInterface) TTL(key string) *redis.DurationCmd {
 	m.ctrl.T.Helper()
@@ -104,25 +90,6 @@ func (mr *MockRedisClientInterfaceMockRecorder) Set(key, values, expiration inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockRedisClientInterface)(nil).Set), key, values, expiration)
 }
 
-// HSet mocks base method
-func (m *MockRedisClientInterface) HSet(key string, values ...interface{}) *redis.IntCmd {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{key}
-	for _, a := range values {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "HSet", varargs...)
-	ret0, _ := ret[0].(*redis.IntCmd)
-	return ret0
-}
-
-// HSet indicates an expected call of HSet
-func (mr *MockRedisClientInterfaceMockRecorder) HSet(key interface{}, values ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{key}, values...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HSet", reflect.TypeOf((*MockRedisClientInterface)(nil).HSet), varargs...)
-}
-
 // Del mocks base method
 func (m *MockRedisClientInterface) Del(keys ...string) *redis.IntCmd {
 	m.ctrl.T.Helper()
@@ -153,4 +120,37 @@ func (m *MockRedisClientInterface) FlushAll() *redis.StatusCmd {
 func (mr *MockRedisClientInterfaceMockRecorder) FlushAll() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushAll", reflect.TypeOf((*MockRedisClientInterface)(nil).FlushAll))
+}
+
+// SAdd mocks base method
+func (m *MockRedisClientInterface) SAdd(key string, members ...interface{}) *redis.IntCmd {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{key}
+	for _, a := range members {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SAdd", varargs...)
+	ret0, _ := ret[0].(*redis.IntCmd)
+	return ret0
+}
+
+// SAdd indicates an expected call of SAdd
+func (mr *MockRedisClientInterfaceMockRecorder) SAdd(key interface{}, members ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{key}, members...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SAdd", reflect.TypeOf((*MockRedisClientInterface)(nil).SAdd), varargs...)
+}
+
+// SMembers mocks base method
+func (m *MockRedisClientInterface) SMembers(key string) *redis.StringSliceCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SMembers", key)
+	ret0, _ := ret[0].(*redis.StringSliceCmd)
+	return ret0
+}
+
+// SMembers indicates an expected call of SMembers
+func (mr *MockRedisClientInterfaceMockRecorder) SMembers(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockRedisClientInterface)(nil).SMembers), key)
 }
