@@ -105,8 +105,8 @@ func TestRedisSetWithTags(t *testing.T) {
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
 	client.EXPECT().Set(cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
-	client.EXPECT().Get("gocache_tag_tag1").Return(&redis.StringCmd{})
-	client.EXPECT().Set("gocache_tag_tag1", "my-key", 720*time.Hour).Return(&redis.StatusCmd{})
+	client.EXPECT().SAdd("gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
+	client.EXPECT().Expire("gocache_tag_tag1", 720*time.Hour).Return(&redis.BoolCmd{})
 
 	store := NewRedis(client, nil)
 
@@ -145,10 +145,10 @@ func TestRedisInvalidate(t *testing.T) {
 		Tags: []string{"tag1"},
 	}
 
-	cacheKeys := &redis.StringCmd{}
+	cacheKeys := &redis.StringSliceCmd{}
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys)
+	client.EXPECT().SMembers("gocache_tag_tag1").Return(cacheKeys)
 	client.EXPECT().Del("gocache_tag_tag1").Return(&redis.IntCmd{})
 
 	store := NewRedis(client, nil)
