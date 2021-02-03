@@ -6,7 +6,7 @@ import (
 	"testing"
 	time "time"
 
-	"github.com/allegro/bigcache"
+	"github.com/allegro/bigcache/v2"
 )
 
 func BenchmarkBigcacheSet(b *testing.B) {

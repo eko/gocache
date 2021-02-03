@@ -3,7 +3,7 @@ module github.com/eko/gocache
 go 1.15
 
 require (
-	github.com/allegro/bigcache v1.2.1
+	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/coocood/freecache v1.1.1
 	github.com/dgraph-io/ristretto v0.0.3
