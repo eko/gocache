@@ -8,7 +8,7 @@ require (
 	github.com/coocood/freecache v1.1.1
 	github.com/dgraph-io/ristretto v0.0.3
 	github.com/go-redis/redis/v7 v7.4.0
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
 	github.com/prometheus/client_golang v1.9.0
 	github.com/stretchr/testify v1.7.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
