@@ -25,12 +25,11 @@ func (c *Marshaler) Get(key interface{}, returnObj interface{}) (interface{}, er
 		return nil, err
 	}
 
-	switch result.(type) {
+	switch v := result.(type) {
 	case []byte:
-		err = msgpack.Unmarshal(result.([]byte), returnObj)
-
+		err = msgpack.Unmarshal(v, returnObj)
 	case string:
-		err = msgpack.Unmarshal([]byte(result.(string)), returnObj)
+		err = msgpack.Unmarshal([]byte(v), returnObj)
 	}
 
 	if err != nil {

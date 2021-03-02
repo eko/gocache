@@ -22,7 +22,7 @@ const (
 	BigcacheTagPattern = "gocache_tag_%s"
 )
 
-// BigcacheStore is a store for Redis
+// BigcacheStore is a store for Bigcache
 type BigcacheStore struct {
 	client  BigcacheClientInterface
 	options *Options
@@ -59,13 +59,24 @@ func (s *BigcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration,
 	return item, 0, err
 }
 
-// Set defines data in Redis for given key identifier
+// Set defines data in Bigcache for given key identifier
 func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options) error {
 	if options == nil {
 		options = s.options
 	}
 
-	err := s.client.Set(key.(string), value.([]byte))
+	var val []byte
+	switch v := value.(type) {
+	case string:
+		val = []byte(v)
+	case []byte:
+		val = v
+	default:
+		// this convert may cause panic
+		val = value.([]byte)
+	}
+
+	err := s.client.Set(key.(string), val)
 	if err != nil {
 		return err
 	}
@@ -106,12 +117,12 @@ func (s *BigcacheStore) setTags(key interface{}, tags []string) {
 	}
 }
 
-// Delete removes data from Redis for given key identifier
+// Delete removes data from Bigcache for given key identifier
 func (s *BigcacheStore) Delete(key interface{}) error {
 	return s.client.Delete(key.(string))
 }
 
-// Invalidate invalidates some cache data in Redis for given options
+// Invalidate invalidates some cache data in Bigcache for given options
 func (s *BigcacheStore) Invalidate(options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
