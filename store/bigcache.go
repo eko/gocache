@@ -72,8 +72,7 @@ func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options
 	case []byte:
 		val = v
 	default:
-		// this convert may cause panic
-		val = value.([]byte)
+		return errors.New("value type not supported by Bigcache store")
 	}
 
 	err := s.client.Set(key.(string), val)
