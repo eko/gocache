@@ -136,6 +136,30 @@ func TestBigcacheSet(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestBigcacheSetString(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cacheKey := "my-key"
+
+	// The value is string when failback from Redis
+	cacheValue := "my-cache-value"
+
+	options := &Options{}
+
+	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
+	client.EXPECT().Set(cacheKey, []byte(cacheValue)).Return(nil)
+
+	store := NewBigcache(client, nil)
+
+	// When
+	err := store.Set(cacheKey, cacheValue, options)
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestBigcacheSetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
