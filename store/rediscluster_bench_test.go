@@ -3,14 +3,17 @@ package store
 import (
 	"fmt"
 	"math"
+	"strings"
 	"testing"
 
 	redis "github.com/go-redis/redis/v8"
 )
 
-func BenchmarkRedisSet(b *testing.B) {
-	store := NewRedis(redis.NewClient(&redis.Options{
-		Addr: "redis:6379",
+// should be configured to connect to real Redis Cluster
+func BenchmarkRedisClusterSet(b *testing.B) {
+	addr := strings.Split("redis:6379", ",")
+	store := NewRedisCluster(redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs: addr,
 	}), nil)
 
 	for k := 0.; k <= 10; k++ {
@@ -28,9 +31,10 @@ func BenchmarkRedisSet(b *testing.B) {
 	}
 }
 
-func BenchmarkRedisGet(b *testing.B) {
-	store := NewRedis(redis.NewClient(&redis.Options{
-		Addr: "redis:6379",
+func BenchmarkRedisClusterGet(b *testing.B) {
+	addr := strings.Split("redis:6379", ",")
+	store := NewRedisCluster(redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs: addr,
 	}), nil)
 
 	key := "test"
