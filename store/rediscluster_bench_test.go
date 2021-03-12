@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -23,7 +24,7 @@ func BenchmarkRedisClusterSet(b *testing.B) {
 				key := fmt.Sprintf("test-%d", n)
 				value := []byte(fmt.Sprintf("value-%d", n))
 
-				store.Set(key, value, &Options{
+				store.Set(context.TODO(), key, value, &Options{
 					Tags: []string{fmt.Sprintf("tag-%d", n)},
 				})
 			}
@@ -40,13 +41,13 @@ func BenchmarkRedisClusterGet(b *testing.B) {
 	key := "test"
 	value := []byte("value")
 
-	store.Set(key, value, nil)
+	store.Set(context.TODO(), key, value, nil)
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
 		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 			for i := 0; i < b.N*n; i++ {
-				_, _ = store.Get(key)
+				_, _ = store.Get(context.TODO(), key)
 			}
 		})
 	}
