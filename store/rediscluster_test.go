@@ -188,5 +188,5 @@ func TestRedisClusterGetType(t *testing.T) {
 	store := NewRedisCluster(client, nil)
 
 	// When - Then
-	assert.Equal(t, RedisType, store.GetType())
+	assert.Equal(t, RedisClusterType, store.GetType())
 }
