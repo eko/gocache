@@ -37,7 +37,7 @@ func TestRedisClusterGet(t *testing.T) {
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
 	client.EXPECT().Get(ctx, "my-key").Return(&redis.StringCmd{})
 
-	store := NewRedis(client, nil)
+	store := NewRedisCluster(client, nil)
 
 	// When
 	value, err := store.Get("my-key")
@@ -61,7 +61,7 @@ func TestRedisClusterSet(t *testing.T) {
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
 	client.EXPECT().Set(ctx, "my-key", cacheValue, 5*time.Second).Return(&redis.StatusCmd{})
 
-	store := NewRedis(client, options)
+	store := NewRedisCluster(client, options)
 
 	// When
 	err := store.Set(cacheKey, cacheValue, &Options{
@@ -86,7 +86,7 @@ func TestRedisClusterSetWhenNoOptionsGiven(t *testing.T) {
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
 	client.EXPECT().Set(ctx, "my-key", cacheValue, 6*time.Second).Return(&redis.StatusCmd{})
 
-	store := NewRedis(client, options)
+	store := NewRedisCluster(client, options)
 
 	// When
 	err := store.Set(cacheKey, cacheValue, nil)
@@ -108,7 +108,7 @@ func TestRedisClusterSetWithTags(t *testing.T) {
 	client.EXPECT().SAdd(ctx, "gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
 	client.EXPECT().Expire(ctx, "gocache_tag_tag1", 720*time.Hour).Return(&redis.BoolCmd{})
 
-	store := NewRedis(client, nil)
+	store := NewRedisCluster(client, nil)
 
 	// When
 	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
