@@ -8,5 +8,6 @@ mocks:
 	mockgen -source=store/bigcache.go -destination=test/mocks/store/clients/bigcache_interface.go -package=mocks
 	mockgen -source=store/memcache.go -destination=test/mocks/store/clients/memcache_interface.go -package=mocks
 	mockgen -source=store/redis.go -destination=test/mocks/store/clients/redis_interface.go -package=mocks
+	mockgen -source=store/rediscluster.go -destination=test/mocks/store/clients/rediscluster_interface.go -package=mocks
 	mockgen -source=store/ristretto.go -destination=test/mocks/store/clients/ristretto_interface.go -package=mocks
 	mockgen -source=store/freecache.go -destination=test/mocks/store/clients/freecache_interface.go -package=mocks

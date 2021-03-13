@@ -8,8 +8,8 @@ import (
 	redis "github.com/go-redis/redis/v8"
 )
 
-// RedisClientInterface represents a go-redis/redis client
-type RedisClientInterface interface {
+// RedisClusterClientInterface represents a go-redis/redis clusclient
+type RedisClusterClientInterface interface {
 	Get(ctx context.Context, key string) *redis.StringCmd
 	TTL(ctx context.Context, key string) *redis.DurationCmd
 	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
@@ -22,42 +22,42 @@ type RedisClientInterface interface {
 
 const (
 	// RedisType represents the storage type as a string value
-	RedisType = "redis"
+	RedisClusterType = "rediscluster"
 	// RedisTagPattern represents the tag pattern to be used as a key in specified storage
-	RedisTagPattern = "gocache_tag_%s"
+	RedisClusterTagPattern = "gocache_tag_%s"
 )
 
 // RedisStore is a store for Redis
-type RedisStore struct {
-	client  RedisClientInterface
-	options *Options
+type RedisClusterStore struct {
+	clusclient RedisClusterClientInterface
+	options    *Options
 }
 
 // NewRedis creates a new store to Redis instance(s)
-func NewRedis(client RedisClientInterface, options *Options) *RedisStore {
+func NewRedisCluster(client RedisClusterClientInterface, options *Options) *RedisClusterStore {
 	if options == nil {
 		options = &Options{}
 	}
 
-	return &RedisStore{
-		client:  client,
-		options: options,
+	return &RedisClusterStore{
+		clusclient: client,
+		options:    options,
 	}
 }
 
 // Get returns data stored from a given key
-func (s *RedisStore) Get(ctx context.Context, key interface{}) (interface{}, error) {
-	return s.client.Get(ctx, key.(string)).Result()
+func (s *RedisClusterStore) Get(ctx context.Context, key interface{}) (interface{}, error) {
+	return s.clusclient.Get(ctx, key.(string)).Result()
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *RedisStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
-	object, err := s.client.Get(ctx, key.(string)).Result()
+func (s *RedisClusterStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+	object, err := s.clusclient.Get(ctx, key.(string)).Result()
 	if err != nil {
 		return nil, 0, err
 	}
 
-	ttl, err := s.client.TTL(ctx, key.(string)).Result()
+	ttl, err := s.clusclient.TTL(ctx, key.(string)).Result()
 	if err != nil {
 		return nil, 0, err
 	}
@@ -66,12 +66,12 @@ func (s *RedisStore) GetWithTTL(ctx context.Context, key interface{}) (interface
 }
 
 // Set defines data in Redis for given key identifier
-func (s *RedisStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
+func (s *RedisClusterStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
 	if options == nil {
 		options = s.options
 	}
 
-	err := s.client.Set(ctx, key.(string), value, options.ExpirationValue()).Err()
+	err := s.clusclient.Set(ctx, key.(string), value, options.ExpirationValue()).Err()
 	if err != nil {
 		return err
 	}
@@ -83,26 +83,26 @@ func (s *RedisStore) Set(ctx context.Context, key interface{}, value interface{}
 	return nil
 }
 
-func (s *RedisStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (s *RedisClusterStore) setTags(ctx context.Context, key interface{}, tags []string) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(RedisTagPattern, tag)
-		s.client.SAdd(ctx, tagKey, key.(string))
-		s.client.Expire(ctx, tagKey, 720*time.Hour)
+		s.clusclient.SAdd(ctx, tagKey, key.(string))
+		s.clusclient.Expire(ctx, tagKey, 720*time.Hour)
 	}
 }
 
 // Delete removes data from Redis for given key identifier
-func (s *RedisStore) Delete(ctx context.Context, key interface{}) error {
-	_, err := s.client.Del(ctx, key.(string)).Result()
+func (s *RedisClusterStore) Delete(ctx context.Context, key interface{}) error {
+	_, err := s.clusclient.Del(ctx, key.(string)).Result()
 	return err
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *RedisStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
+func (s *RedisClusterStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RedisTagPattern, tag)
-			cacheKeys, err := s.client.SMembers(ctx, tagKey).Result()
+			cacheKeys, err := s.clusclient.SMembers(ctx, tagKey).Result()
 			if err != nil {
 				continue
 			}
@@ -119,13 +119,13 @@ func (s *RedisStore) Invalidate(ctx context.Context, options InvalidateOptions) 
 }
 
 // GetType returns the store type
-func (s *RedisStore) GetType() string {
-	return RedisType
+func (s *RedisClusterStore) GetType() string {
+	return RedisClusterType
 }
 
 // Clear resets all data in the store
-func (s *RedisStore) Clear(ctx context.Context) error {
-	if err := s.client.FlushAll(ctx).Err(); err != nil {
+func (s *RedisClusterStore) Clear(ctx context.Context) error {
+	if err := s.clusclient.FlushAll(ctx).Err(); err != nil {
 		return err
 	}
 
