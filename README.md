@@ -26,7 +26,7 @@ Here is what it brings in detail:
 * [Memory (bigcache)](https://github.com/allegro/bigcache) (allegro/bigcache)
 * [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
-* [Redis](https://github.com/go-redis/redis/v7) (go-redis/redis)
+* [Redis](https://github.com/go-redis/redis/v8) (go-redis/redis)
 * [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 * More to come soon
 
