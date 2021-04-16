@@ -11,3 +11,4 @@ mocks:
 	mockgen -source=store/rediscluster.go -destination=test/mocks/store/clients/rediscluster_interface.go -package=mocks
 	mockgen -source=store/ristretto.go -destination=test/mocks/store/clients/ristretto_interface.go -package=mocks
 	mockgen -source=store/freecache.go -destination=test/mocks/store/clients/freecache_interface.go -package=mocks
+	mockgen -source=store/go_cache.go -destination=test/mocks/store/clients/go_cache_interface.go -package=mocks
