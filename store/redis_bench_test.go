@@ -1,12 +1,11 @@
 package store
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"testing"
 
-	redis "github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v8"
 )
 
 func BenchmarkRedisSet(b *testing.B) {
@@ -21,7 +20,7 @@ func BenchmarkRedisSet(b *testing.B) {
 				key := fmt.Sprintf("test-%d", n)
 				value := []byte(fmt.Sprintf("value-%d", n))
 
-				store.Set(context.TODO(), key, value, &Options{
+				store.Set(key, value, &Options{
 					Tags: []string{fmt.Sprintf("tag-%d", n)},
 				})
 			}
@@ -37,13 +36,13 @@ func BenchmarkRedisGet(b *testing.B) {
 	key := "test"
 	value := []byte("value")
 
-	store.Set(context.TODO(), key, value, nil)
+	store.Set(key, value, nil)
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
 		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 			for i := 0; i < b.N*n; i++ {
-				_, _ = store.Get(context.TODO(), key)
+				_, _ = store.Get(key)
 			}
 		})
 	}

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	time "time"
+	"time"
 )
 
 const (
