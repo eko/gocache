@@ -1,0 +1,27 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go_version: [ '1.14', '1.15', '1.16' ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go_version }}
+
+      - name: Install go dependencies
+        run: go get -t -v ./...
+
+      - name: Run go tests
+        run: go test -v -race -cover -coverprofile=coverage.txt -covermode=atomic ./...
