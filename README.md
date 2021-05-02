@@ -28,6 +28,7 @@ Here is what it brings in detail:
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis/v8) (go-redis/redis)
 * [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
+* [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
 * More to come soon
 
 ## Built-in metrics providers
@@ -142,6 +143,29 @@ if err != nil {
 }
 
 value := cacheManager.Get("my-key")
+```
+
+#### Pegasus
+
+```go
+pegasusStore, err := store.NewPegasus(&store.OptionsPegasus{
+    MetaServers: []string{"127.0.0.1:34601", "127.0.0.1:34602", "127.0.0.1:34603"},
+})
+
+if err != nil{
+    fmt.Println(err)
+    return
+}
+
+cacheManager := cache.New(pegasusStore)
+err = cacheManager.Set("my-key", "my-value"), store.Options{
+    Expiration: 10 * time.Second,
+})
+if err != nil {
+panic(err)
+}
+
+value, _ := cacheManager.Get("my-key")
 ```
 
 ### A chained cache
@@ -367,5 +391,6 @@ $ make mocks
 Test suite can be run with:
 
 ```bash
-$ go test -v ./...
+$ make test # run unit test
+$ make benchmark-store # run benchmark test
 ```
