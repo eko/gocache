@@ -139,7 +139,7 @@ freecacheStore := store.NewFreecache(freecache.NewCache(1000), &Options{
 cacheManager := cache.New(freecacheStore)
 err := cacheManager.Set("by-key", []byte("my-value"), opts)
 if err != nil {
-	panic(err)
+    panic(err)
 }
 
 value := cacheManager.Get("my-key")
@@ -152,17 +152,17 @@ pegasusStore, err := store.NewPegasus(&store.OptionsPegasus{
     MetaServers: []string{"127.0.0.1:34601", "127.0.0.1:34602", "127.0.0.1:34603"},
 })
 
-if err != nil{
+if err != nil {
     fmt.Println(err)
     return
 }
 
 cacheManager := cache.New(pegasusStore)
-err = cacheManager.Set("my-key", "my-value"), store.Options{
+    err = cacheManager.Set("my-key", "my-value", &store.Options{
     Expiration: 10 * time.Second,
 })
 if err != nil {
-panic(err)
+    panic(err)
 }
 
 value, _ := cacheManager.Get("my-key")
