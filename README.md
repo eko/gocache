@@ -158,7 +158,7 @@ if err != nil {
 }
 
 cacheManager := cache.New(pegasusStore)
-    err = cacheManager.Set("my-key", "my-value", &store.Options{
+err = cacheManager.Set("my-key", "my-value", &store.Options{
     Expiration: 10 * time.Second,
 })
 if err != nil {
