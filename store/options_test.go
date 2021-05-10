@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -35,4 +36,14 @@ func TestOptionsTagsValue(t *testing.T) {
 
 	// When - Then
 	assert.Equal(t, []string{"tag1", "tag2", "tag3"}, options.TagsValue())
+}
+
+func TestOptions_CtxValue(t *testing.T) {
+	// Given
+	options := Options{
+		Ctx: context.Background(),
+	}
+
+	// When - Then
+	assert.Equal(t, context.Background(), options.Ctx)
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 	"testing"
-	time "time"
+	"time"
 
 	"github.com/allegro/bigcache/v2"
 )

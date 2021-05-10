@@ -1,4 +1,4 @@
-[![TravisBuildStatus](https://api.travis-ci.org/eko/gocache.svg?branch=master)](https://travis-ci.org/eko/gocache)
+[![Test](https://github.com/eko/gocache/actions/workflows/all.yml/badge.svg?branch=master)](https://github.com/eko/gocache/actions/workflows/all.yml)
 [![GoDoc](https://godoc.org/github.com/eko/gocache?status.png)](https://godoc.org/github.com/eko/gocache)
 [![GoReportCard](https://goreportcard.com/badge/github.com/eko/gocache)](https://goreportcard.com/report/github.com/eko/gocache)
 [![codecov](https://codecov.io/gh/eko/gocache/branch/master/graph/badge.svg)](https://codecov.io/gh/eko/gocache)
@@ -28,6 +28,7 @@ Here is what it brings in detail:
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis/v8) (go-redis/redis)
 * [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
+* [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
 * More to come soon
 
 ## Built-in metrics providers
@@ -117,7 +118,15 @@ if err != nil {
     panic(err)
 }
 
-value := cacheManager.Get("my-key")
+value, err := cacheManager.Get("my-key")
+switch err {
+	case nil:
+		fmt.Printf("Get the key '%s' from the redis cache. Result: %s", "my-key", value)
+	case redis.Nil:
+		fmt.Printf("Failed to find the key '%s' from the redis cache.", "my-key")
+	default:
+	    fmt.Printf("Failed to get the value from the redis cache with key '%s': %v", "my-key", err)
+}
 ```
 
 #### Freecache
@@ -130,10 +139,33 @@ freecacheStore := store.NewFreecache(freecache.NewCache(1000), &Options{
 cacheManager := cache.New(freecacheStore)
 err := cacheManager.Set("by-key", []byte("my-value"), opts)
 if err != nil {
-	panic(err)
+    panic(err)
 }
 
 value := cacheManager.Get("my-key")
+```
+
+#### Pegasus
+
+```go
+pegasusStore, err := store.NewPegasus(&store.OptionsPegasus{
+    MetaServers: []string{"127.0.0.1:34601", "127.0.0.1:34602", "127.0.0.1:34603"},
+})
+
+if err != nil {
+    fmt.Println(err)
+    return
+}
+
+cacheManager := cache.New(pegasusStore)
+    err = cacheManager.Set("my-key", "my-value", &store.Options{
+    Expiration: 10 * time.Second,
+})
+if err != nil {
+    panic(err)
+}
+
+value, _ := cacheManager.Get("my-key")
 ```
 
 ### A chained cache
@@ -359,5 +391,6 @@ $ make mocks
 Test suite can be run with:
 
 ```bash
-$ go test -v ./...
+$ make test # run unit test
+$ make benchmark-store # run benchmark test
 ```

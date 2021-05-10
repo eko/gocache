@@ -36,12 +36,12 @@ func TestRedisGet(t *testing.T) {
 	defer ctrl.Finish()
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().Get(context.TODO(), "my-key").Return(&redis.StringCmd{})
+	client.EXPECT().Get(context.Background(), "my-key").Return(&redis.StringCmd{})
 
 	store := NewRedis(client, nil)
 
 	// When
-	value, err := store.Get(context.TODO(), "my-key")
+	value, err := store.Get("my-key")
 
 	// Then
 	assert.Nil(t, err)
@@ -60,12 +60,12 @@ func TestRedisSet(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().Set(context.TODO(), "my-key", cacheValue, 5*time.Second).Return(&redis.StatusCmd{})
+	client.EXPECT().Set(context.Background(), "my-key", cacheValue, 5*time.Second).Return(&redis.StatusCmd{})
 
 	store := NewRedis(client, options)
 
 	// When
-	err := store.Set(context.TODO(), cacheKey, cacheValue, &Options{
+	err := store.Set(cacheKey, cacheValue, &Options{
 		Expiration: 5 * time.Second,
 	})
 
@@ -85,12 +85,12 @@ func TestRedisSetWhenNoOptionsGiven(t *testing.T) {
 	}
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().Set(context.TODO(), "my-key", cacheValue, 6*time.Second).Return(&redis.StatusCmd{})
+	client.EXPECT().Set(context.Background(), "my-key", cacheValue, 6*time.Second).Return(&redis.StatusCmd{})
 
 	store := NewRedis(client, options)
 
 	// When
-	err := store.Set(context.TODO(), cacheKey, cacheValue, nil)
+	err := store.Set(cacheKey, cacheValue, nil)
 
 	// Then
 	assert.Nil(t, err)
@@ -105,14 +105,14 @@ func TestRedisSetWithTags(t *testing.T) {
 	cacheValue := "my-cache-value"
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().Set(context.TODO(), cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
-	client.EXPECT().SAdd(context.TODO(), "gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
-	client.EXPECT().Expire(context.TODO(), "gocache_tag_tag1", 720*time.Hour).Return(&redis.BoolCmd{})
+	client.EXPECT().Set(context.Background(), cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
+	client.EXPECT().SAdd(context.Background(), "gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
+	client.EXPECT().Expire(context.Background(), "gocache_tag_tag1", 720*time.Hour).Return(&redis.BoolCmd{})
 
 	store := NewRedis(client, nil)
 
 	// When
-	err := store.Set(context.TODO(), cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
 
 	// Then
 	assert.Nil(t, err)
@@ -126,12 +126,12 @@ func TestRedisDelete(t *testing.T) {
 	cacheKey := "my-key"
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().Del(context.TODO(), "my-key").Return(&redis.IntCmd{})
+	client.EXPECT().Del(context.Background(), "my-key").Return(&redis.IntCmd{})
 
 	store := NewRedis(client, nil)
 
 	// When
-	err := store.Delete(context.TODO(), cacheKey)
+	err := store.Delete(cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -149,13 +149,13 @@ func TestRedisInvalidate(t *testing.T) {
 	cacheKeys := &redis.StringSliceCmd{}
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().SMembers(context.TODO(), "gocache_tag_tag1").Return(cacheKeys)
-	client.EXPECT().Del(context.TODO(), "gocache_tag_tag1").Return(&redis.IntCmd{})
+	client.EXPECT().SMembers(context.Background(), "gocache_tag_tag1").Return(cacheKeys)
+	client.EXPECT().Del(context.Background(), "gocache_tag_tag1").Return(&redis.IntCmd{})
 
 	store := NewRedis(client, nil)
 
 	// When
-	err := store.Invalidate(context.TODO(), options)
+	err := store.Invalidate(options)
 
 	// Then
 	assert.Nil(t, err)
@@ -167,12 +167,12 @@ func TestRedisClear(t *testing.T) {
 	defer ctrl.Finish()
 
 	client := mocksStore.NewMockRedisClientInterface(ctrl)
-	client.EXPECT().FlushAll(context.TODO()).Return(&redis.StatusCmd{})
+	client.EXPECT().FlushAll(context.Background()).Return(&redis.StatusCmd{})
 
 	store := NewRedis(client, nil)
 
 	// When
-	err := store.Clear(context.TODO())
+	err := store.Clear()
 
 	// Then
 	assert.Nil(t, err)
