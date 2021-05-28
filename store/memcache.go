@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -43,7 +44,7 @@ func NewMemcache(client MemcacheClientInterface, options *Options) *MemcacheStor
 }
 
 // Get returns data stored from a given key
-func (s *MemcacheStore) Get(key interface{}) (interface{}, error) {
+func (s *MemcacheStore) Get(_ context.Context, key interface{}) (interface{}, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
 		return nil, err
@@ -56,7 +57,7 @@ func (s *MemcacheStore) Get(key interface{}) (interface{}, error) {
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *MemcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+func (s *MemcacheStore) GetWithTTL(_ context.Context, key interface{}) (interface{}, time.Duration, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
 		return nil, 0, err
@@ -69,7 +70,7 @@ func (s *MemcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration,
 }
 
 // Set defines data in Memcache for given key identifier
-func (s *MemcacheStore) Set(key interface{}, value interface{}, options *Options) error {
+func (s *MemcacheStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
 	if options == nil {
 		options = s.options
 	}
@@ -86,18 +87,18 @@ func (s *MemcacheStore) Set(key interface{}, value interface{}, options *Options
 	}
 
 	if tags := options.TagsValue(); len(tags) > 0 {
-		s.setTags(key, tags)
+		s.setTags(ctx, key, tags)
 	}
 
 	return nil
 }
 
-func (s *MemcacheStore) setTags(key interface{}, tags []string) {
+func (s *MemcacheStore) setTags(ctx context.Context, key interface{}, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(MemcacheTagPattern, tag)
 		var cacheKeys = []string{}
 
-		if result, err := s.Get(tagKey); err == nil {
+		if result, err := s.Get(ctx, tagKey); err == nil {
 			if bytes, ok := result.([]byte); ok {
 				cacheKeys = strings.Split(string(bytes), ",")
 			}
@@ -115,23 +116,23 @@ func (s *MemcacheStore) setTags(key interface{}, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
+		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
 			Expiration: 720 * time.Hour,
 		})
 	}
 }
 
 // Delete removes data from Memcache for given key identifier
-func (s *MemcacheStore) Delete(key interface{}) error {
+func (s *MemcacheStore) Delete(_ context.Context, key interface{}) error {
 	return s.client.Delete(key.(string))
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *MemcacheStore) Invalidate(options InvalidateOptions) error {
+func (s *MemcacheStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(MemcacheTagPattern, tag)
-			result, err := s.Get(tagKey)
+			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
@@ -142,7 +143,7 @@ func (s *MemcacheStore) Invalidate(options InvalidateOptions) error {
 			}
 
 			for _, cacheKey := range cacheKeys {
-				s.Delete(cacheKey)
+				s.Delete(ctx, cacheKey)
 			}
 		}
 	}
@@ -151,7 +152,7 @@ func (s *MemcacheStore) Invalidate(options InvalidateOptions) error {
 }
 
 // Clear resets all data in the store
-func (s *MemcacheStore) Clear() error {
+func (s *MemcacheStore) Clear(_ context.Context) error {
 	return s.client.FlushAll()
 }
 

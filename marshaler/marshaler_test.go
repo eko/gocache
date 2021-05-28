@@ -1,6 +1,7 @@
 package marshaler
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -19,7 +20,6 @@ type testCacheValue struct {
 func TestNew(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 
@@ -34,7 +34,8 @@ func TestNew(t *testing.T) {
 func TestGetWhenStoreReturnsSliceOfBytes(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheValue := &testCacheValue{
 		Hello: "world",
@@ -46,12 +47,12 @@ func TestGetWhenStoreReturnsSliceOfBytes(t *testing.T) {
 	}
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Get("my-key").Return(cacheValueBytes, nil)
+	cache.EXPECT().Get(ctx, "my-key").Return(cacheValueBytes, nil)
 
 	marshaler := New(cache)
 
 	// When
-	value, err := marshaler.Get("my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
 
 	// Then
 	assert.Nil(t, err)
@@ -61,7 +62,8 @@ func TestGetWhenStoreReturnsSliceOfBytes(t *testing.T) {
 func TestGetWhenStoreReturnsString(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheValue := &testCacheValue{
 		Hello: "world",
@@ -73,12 +75,12 @@ func TestGetWhenStoreReturnsString(t *testing.T) {
 	}
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Get("my-key").Return(string(cacheValueBytes), nil)
+	cache.EXPECT().Get(ctx, "my-key").Return(string(cacheValueBytes), nil)
 
 	marshaler := New(cache)
 
 	// When
-	value, err := marshaler.Get("my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
 
 	// Then
 	assert.Nil(t, err)
@@ -88,15 +90,16 @@ func TestGetWhenStoreReturnsString(t *testing.T) {
 func TestGetWhenUnmarshalingError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Get("my-key").Return("unknown-string", nil)
+	cache.EXPECT().Get(ctx, "my-key").Return("unknown-string", nil)
 
 	marshaler := New(cache)
 
 	// When
-	value, err := marshaler.Get("my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
 
 	// Then
 	assert.NotNil(t, err)
@@ -106,17 +109,18 @@ func TestGetWhenUnmarshalingError(t *testing.T) {
 func TestGetWhenNotFoundInStore(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	expectedErr := errors.New("Unable to find item in store")
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Get("my-key").Return(nil, expectedErr)
+	cache.EXPECT().Get(ctx, "my-key").Return(nil, expectedErr)
 
 	marshaler := New(cache)
 
 	// When
-	value, err := marshaler.Get("my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -126,7 +130,8 @@ func TestGetWhenNotFoundInStore(t *testing.T) {
 func TestSetWhenStruct(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheValue := &testCacheValue{
 		Hello: "world",
@@ -137,12 +142,12 @@ func TestSetWhenStruct(t *testing.T) {
 	}
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Set("my-key", []byte{0x81, 0xa5, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0xa5, 0x77, 0x6f, 0x72, 0x6c, 0x64}, options).Return(nil)
+	cache.EXPECT().Set(ctx, "my-key", []byte{0x81, 0xa5, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0xa5, 0x77, 0x6f, 0x72, 0x6c, 0x64}, options).Return(nil)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Set("my-key", cacheValue, options)
+	err := marshaler.Set(ctx, "my-key", cacheValue, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -151,7 +156,8 @@ func TestSetWhenStruct(t *testing.T) {
 func TestSetWhenString(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheValue := "test"
 
@@ -160,12 +166,12 @@ func TestSetWhenString(t *testing.T) {
 	}
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Set("my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(nil)
+	cache.EXPECT().Set(ctx, "my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(nil)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Set("my-key", cacheValue, options)
+	err := marshaler.Set(ctx, "my-key", cacheValue, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -174,7 +180,8 @@ func TestSetWhenString(t *testing.T) {
 func TestSetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheValue := "test"
 
@@ -185,12 +192,12 @@ func TestSetWhenError(t *testing.T) {
 	expectedErr := errors.New("An unexpected error occurred")
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Set("my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(expectedErr)
+	cache.EXPECT().Set(ctx, "my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(expectedErr)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Set("my-key", cacheValue, options)
+	err := marshaler.Set(ctx, "my-key", cacheValue, options)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -199,15 +206,16 @@ func TestSetWhenError(t *testing.T) {
 func TestDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Delete("my-key").Return(nil)
+	cache.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Delete("my-key")
+	err := marshaler.Delete(ctx, "my-key")
 
 	// Then
 	assert.Nil(t, err)
@@ -216,17 +224,18 @@ func TestDelete(t *testing.T) {
 func TestDeleteWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	expectedErr := errors.New("Unable to delete key")
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Delete("my-key").Return(expectedErr)
+	cache.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Delete("my-key")
+	err := marshaler.Delete(ctx, "my-key")
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -235,19 +244,20 @@ func TestDeleteWhenError(t *testing.T) {
 func TestInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Invalidate(options).Return(nil)
+	cache.EXPECT().Invalidate(ctx, options).Return(nil)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Invalidate(options)
+	err := marshaler.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -256,7 +266,8 @@ func TestInvalidate(t *testing.T) {
 func TestInvalidatingWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -265,12 +276,12 @@ func TestInvalidatingWhenError(t *testing.T) {
 	expectedErr := errors.New("Unexpected error when invalidating data")
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Invalidate(options).Return(expectedErr)
+	cache.EXPECT().Invalidate(ctx, options).Return(expectedErr)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Invalidate(options)
+	err := marshaler.Invalidate(ctx, options)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -279,15 +290,16 @@ func TestInvalidatingWhenError(t *testing.T) {
 func TestClear(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Clear().Return(nil)
+	cache.EXPECT().Clear(ctx).Return(nil)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Clear()
+	err := marshaler.Clear(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -296,17 +308,18 @@ func TestClear(t *testing.T) {
 func TestClearWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	expectedErr := errors.New("An unexpected error occurred")
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Clear().Return(expectedErr)
+	cache.EXPECT().Clear(ctx).Return(expectedErr)
 
 	marshaler := New(cache)
 
 	// When
-	err := marshaler.Clear()
+	err := marshaler.Clear(ctx)
 
 	// Then
 	assert.Equal(t, expectedErr, err)

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -13,7 +14,6 @@ import (
 func TestNewBigcache(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 
@@ -29,7 +29,8 @@ func TestNewBigcache(t *testing.T) {
 func TestBigcacheGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -40,7 +41,7 @@ func TestBigcacheGet(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	value, err := store.Get(cacheKey)
+	value, err := store.Get(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -50,7 +51,8 @@ func TestBigcacheGet(t *testing.T) {
 func TestBigcacheGetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -62,7 +64,7 @@ func TestBigcacheGetWhenError(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	value, err := store.Get(cacheKey)
+	value, err := store.Get(ctx, cacheKey)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -72,7 +74,8 @@ func TestBigcacheGetWhenError(t *testing.T) {
 func TestBigcacheGetWithTTL(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -83,7 +86,7 @@ func TestBigcacheGetWithTTL(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -94,7 +97,8 @@ func TestBigcacheGetWithTTL(t *testing.T) {
 func TestBigcacheGetWithTTLWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -106,7 +110,7 @@ func TestBigcacheGetWithTTLWhenError(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -117,7 +121,8 @@ func TestBigcacheGetWithTTLWhenError(t *testing.T) {
 func TestBigcacheSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -130,7 +135,7 @@ func TestBigcacheSet(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, options)
+	err := store.Set(ctx, cacheKey, cacheValue, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -139,7 +144,8 @@ func TestBigcacheSet(t *testing.T) {
 func TestBigcacheSetString(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -154,7 +160,7 @@ func TestBigcacheSetString(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, options)
+	err := store.Set(ctx, cacheKey, cacheValue, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -163,7 +169,8 @@ func TestBigcacheSetString(t *testing.T) {
 func TestBigcacheSetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -178,7 +185,7 @@ func TestBigcacheSetWhenError(t *testing.T) {
 	store := NewBigcache(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue, nil)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -187,7 +194,8 @@ func TestBigcacheSetWhenError(t *testing.T) {
 func TestBigcacheSetWithTags(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -200,7 +208,7 @@ func TestBigcacheSetWithTags(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
 
 	// Then
 	assert.Nil(t, err)
@@ -209,7 +217,8 @@ func TestBigcacheSetWithTags(t *testing.T) {
 func TestBigcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -222,7 +231,7 @@ func TestBigcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
 
 	// Then
 	assert.Nil(t, err)
@@ -231,7 +240,8 @@ func TestBigcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 func TestBigcacheDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -241,7 +251,7 @@ func TestBigcacheDelete(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Delete(cacheKey)
+	err := store.Delete(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -250,7 +260,8 @@ func TestBigcacheDelete(t *testing.T) {
 func TestBigcacheDeleteWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	expectedErr := errors.New("Unable to delete key")
 
@@ -262,7 +273,7 @@ func TestBigcacheDeleteWhenError(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Delete(cacheKey)
+	err := store.Delete(ctx, cacheKey)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -271,7 +282,8 @@ func TestBigcacheDeleteWhenError(t *testing.T) {
 func TestBigcacheInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -287,7 +299,7 @@ func TestBigcacheInvalidate(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Invalidate(options)
+	err := store.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -296,7 +308,8 @@ func TestBigcacheInvalidate(t *testing.T) {
 func TestBigcacheInvalidateWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -312,7 +325,7 @@ func TestBigcacheInvalidateWhenError(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Invalidate(options)
+	err := store.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -321,7 +334,8 @@ func TestBigcacheInvalidateWhenError(t *testing.T) {
 func TestBigcacheClear(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 	client.EXPECT().Reset().Return(nil)
@@ -329,7 +343,7 @@ func TestBigcacheClear(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Clear()
+	err := store.Clear(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -338,7 +352,8 @@ func TestBigcacheClear(t *testing.T) {
 func TestBigcacheClearWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	expectedErr := errors.New("An unexpected error occurred")
 
@@ -348,7 +363,7 @@ func TestBigcacheClearWhenError(t *testing.T) {
 	store := NewBigcache(client, nil)
 
 	// When
-	err := store.Clear()
+	err := store.Clear(ctx)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -357,7 +372,6 @@ func TestBigcacheClearWhenError(t *testing.T) {
 func TestBigcacheGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 

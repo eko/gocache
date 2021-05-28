@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"context"
 	"time"
 
 	"github.com/eko/gocache/store"
@@ -35,8 +36,8 @@ func New(store store.StoreInterface) *Codec {
 }
 
 // Get allows to retrieve the value from a given key identifier
-func (c *Codec) Get(key interface{}) (interface{}, error) {
-	val, err := c.store.Get(key)
+func (c *Codec) Get(ctx context.Context, key interface{}) (interface{}, error) {
+	val, err := c.store.Get(ctx, key)
 
 	if err == nil {
 		c.stats.Hits++
@@ -48,8 +49,8 @@ func (c *Codec) Get(key interface{}) (interface{}, error) {
 }
 
 // GetWithTTL allows to retrieve the value from a given key identifier and its corresponding TTL
-func (c *Codec) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
-	val, ttl, err := c.store.GetWithTTL(key)
+func (c *Codec) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+	val, ttl, err := c.store.GetWithTTL(ctx, key)
 
 	if err == nil {
 		c.stats.Hits++
@@ -62,8 +63,8 @@ func (c *Codec) GetWithTTL(key interface{}) (interface{}, time.Duration, error) 
 
 // Set allows to set a value for a given key identifier and also allows to specify
 // an expiration time
-func (c *Codec) Set(key interface{}, value interface{}, options *store.Options) error {
-	err := c.store.Set(key, value, options)
+func (c *Codec) Set(ctx context.Context, key interface{}, value interface{}, options *store.Options) error {
+	err := c.store.Set(ctx, key, value, options)
 
 	if err == nil {
 		c.stats.SetSuccess++
@@ -75,8 +76,8 @@ func (c *Codec) Set(key interface{}, value interface{}, options *store.Options) 
 }
 
 // Delete allows to remove a value for a given key identifier
-func (c *Codec) Delete(key interface{}) error {
-	err := c.store.Delete(key)
+func (c *Codec) Delete(ctx context.Context, key interface{}) error {
+	err := c.store.Delete(ctx, key)
 
 	if err == nil {
 		c.stats.DeleteSuccess++
@@ -88,8 +89,8 @@ func (c *Codec) Delete(key interface{}) error {
 }
 
 // Invalidate invalidates some cach items from given options
-func (c *Codec) Invalidate(options store.InvalidateOptions) error {
-	err := c.store.Invalidate(options)
+func (c *Codec) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+	err := c.store.Invalidate(ctx, options)
 
 	if err == nil {
 		c.stats.InvalidateSuccess++
@@ -101,8 +102,8 @@ func (c *Codec) Invalidate(options store.InvalidateOptions) error {
 }
 
 // Clear resets all codec store data
-func (c *Codec) Clear() error {
-	err := c.store.Clear()
+func (c *Codec) Clear(ctx context.Context) error {
+	err := c.store.Clear(ctx)
 
 	if err == nil {
 		c.stats.ClearSuccess++

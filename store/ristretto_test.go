@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -14,7 +15,6 @@ import (
 func TestNewRistretto(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
 	options := &Options{
@@ -33,7 +33,8 @@ func TestNewRistretto(t *testing.T) {
 func TestRistrettoGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -44,7 +45,7 @@ func TestRistrettoGet(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	value, err := store.Get(cacheKey)
+	value, err := store.Get(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -54,7 +55,8 @@ func TestRistrettoGet(t *testing.T) {
 func TestRistrettoGetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -64,7 +66,7 @@ func TestRistrettoGetWhenError(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	value, err := store.Get(cacheKey)
+	value, err := store.Get(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, value)
@@ -74,7 +76,8 @@ func TestRistrettoGetWhenError(t *testing.T) {
 func TestRistrettoGetWithTTL(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -85,7 +88,7 @@ func TestRistrettoGetWithTTL(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -96,7 +99,8 @@ func TestRistrettoGetWithTTL(t *testing.T) {
 func TestRistrettoGetWithTTLWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -106,7 +110,7 @@ func TestRistrettoGetWithTTLWhenError(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, value)
@@ -117,7 +121,8 @@ func TestRistrettoGetWithTTLWhenError(t *testing.T) {
 func TestRistrettoSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -131,7 +136,7 @@ func TestRistrettoSet(t *testing.T) {
 	store := NewRistretto(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{
 		Cost: 4,
 	})
 
@@ -142,7 +147,8 @@ func TestRistrettoSet(t *testing.T) {
 func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -156,7 +162,7 @@ func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
 	store := NewRistretto(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue, nil)
 
 	// Then
 	assert.Nil(t, err)
@@ -165,7 +171,8 @@ func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
 func TestRistrettoSetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -179,7 +186,7 @@ func TestRistrettoSetWhenError(t *testing.T) {
 	store := NewRistretto(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue, nil)
 
 	// Then
 	assert.Equal(t, fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", cacheValue, cacheKey), err)
@@ -188,7 +195,8 @@ func TestRistrettoSetWhenError(t *testing.T) {
 func TestRistrettoSetWithTags(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -201,7 +209,7 @@ func TestRistrettoSetWithTags(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
 
 	// Then
 	assert.Nil(t, err)
@@ -210,7 +218,8 @@ func TestRistrettoSetWithTags(t *testing.T) {
 func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -223,7 +232,7 @@ func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
 
 	// Then
 	assert.Nil(t, err)
@@ -232,7 +241,8 @@ func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
 func TestRistrettoDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -242,7 +252,7 @@ func TestRistrettoDelete(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	err := store.Delete(cacheKey)
+	err := store.Delete(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -251,7 +261,8 @@ func TestRistrettoDelete(t *testing.T) {
 func TestRistrettoInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -267,7 +278,7 @@ func TestRistrettoInvalidate(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	err := store.Invalidate(options)
+	err := store.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -276,7 +287,8 @@ func TestRistrettoInvalidate(t *testing.T) {
 func TestRistrettoInvalidateWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -290,7 +302,7 @@ func TestRistrettoInvalidateWhenError(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	err := store.Invalidate(options)
+	err := store.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -299,7 +311,8 @@ func TestRistrettoInvalidateWhenError(t *testing.T) {
 func TestRistrettoClear(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
 	client.EXPECT().Clear()
@@ -307,7 +320,7 @@ func TestRistrettoClear(t *testing.T) {
 	store := NewRistretto(client, nil)
 
 	// When
-	err := store.Clear()
+	err := store.Clear(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -316,7 +329,6 @@ func TestRistrettoClear(t *testing.T) {
 func TestRistrettoGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockRistrettoClientInterface(ctrl)
 

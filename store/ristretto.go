@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -41,7 +42,7 @@ func NewRistretto(client RistrettoClientInterface, options *Options) *RistrettoS
 }
 
 // Get returns data stored from a given key
-func (s *RistrettoStore) Get(key interface{}) (interface{}, error) {
+func (s *RistrettoStore) Get(_ context.Context, key interface{}) (interface{}, error) {
 	var err error
 
 	value, exists := s.client.Get(key)
@@ -53,13 +54,13 @@ func (s *RistrettoStore) Get(key interface{}) (interface{}, error) {
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *RistrettoStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
-	value, err := s.Get(key)
+func (s *RistrettoStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+	value, err := s.Get(ctx, key)
 	return value, 0, err
 }
 
 // Set defines data in Ristretto memoey cache for given key identifier
-func (s *RistrettoStore) Set(key interface{}, value interface{}, options *Options) error {
+func (s *RistrettoStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
 	var err error
 
 	if options == nil {
@@ -75,18 +76,18 @@ func (s *RistrettoStore) Set(key interface{}, value interface{}, options *Option
 	}
 
 	if tags := options.TagsValue(); len(tags) > 0 {
-		s.setTags(key, tags)
+		s.setTags(ctx, key, tags)
 	}
 
 	return nil
 }
 
-func (s *RistrettoStore) setTags(key interface{}, tags []string) {
+func (s *RistrettoStore) setTags(ctx context.Context, key interface{}, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
 		var cacheKeys = []string{}
 
-		if result, err := s.Get(tagKey); err == nil {
+		if result, err := s.Get(ctx, tagKey); err == nil {
 			if bytes, ok := result.([]byte); ok {
 				cacheKeys = strings.Split(string(bytes), ",")
 			}
@@ -104,24 +105,24 @@ func (s *RistrettoStore) setTags(key interface{}, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
+		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
 			Expiration: 720 * time.Hour,
 		})
 	}
 }
 
 // Delete removes data in Ristretto memoey cache for given key identifier
-func (s *RistrettoStore) Delete(key interface{}) error {
+func (s *RistrettoStore) Delete(_ context.Context, key interface{}) error {
 	s.client.Del(key)
 	return nil
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *RistrettoStore) Invalidate(options InvalidateOptions) error {
+func (s *RistrettoStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
-			result, err := s.Get(tagKey)
+			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
@@ -132,7 +133,7 @@ func (s *RistrettoStore) Invalidate(options InvalidateOptions) error {
 			}
 
 			for _, cacheKey := range cacheKeys {
-				s.Delete(cacheKey)
+				s.Delete(ctx, cacheKey)
 			}
 		}
 	}
@@ -140,13 +141,13 @@ func (s *RistrettoStore) Invalidate(options InvalidateOptions) error {
 	return nil
 }
 
+// Clear resets all data in the store
+func (s *RistrettoStore) Clear(_ context.Context) error {
+	s.client.Clear()
+	return nil
+}
+
 // GetType returns the store type
 func (s *RistrettoStore) GetType() string {
 	return RistrettoType
-}
-
-// Clear resets all data in the store
-func (s *RistrettoStore) Clear() error {
-	s.client.Clear()
-	return nil
 }

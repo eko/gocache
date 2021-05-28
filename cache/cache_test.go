@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -15,7 +16,6 @@ import (
 func TestNew(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 
@@ -32,7 +32,8 @@ func TestNew(t *testing.T) {
 func TestCacheSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := &store.Options{
 		Expiration: 5 * time.Second,
@@ -45,19 +46,20 @@ func TestCacheSet(t *testing.T) {
 	}
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Set("my-key", value, options).Return(nil)
+	store.EXPECT().Set(ctx, "my-key", value, options).Return(nil)
 
 	cache := New(store)
 
 	// When
-	err := cache.Set("my-key", value, options)
+	err := cache.Set(ctx, "my-key", value, options)
 	assert.Nil(t, err)
 }
 
 func TestCacheSetWhenErrorOccurs(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := &store.Options{
 		Expiration: 5 * time.Second,
@@ -72,19 +74,20 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 	storeErr := errors.New("An error has occurred while inserting data into store")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Set("my-key", value, options).Return(storeErr)
+	store.EXPECT().Set(ctx, "my-key", value, options).Return(storeErr)
 
 	cache := New(store)
 
 	// When
-	err := cache.Set("my-key", value, options)
+	err := cache.Set(ctx, "my-key", value, options)
 	assert.Equal(t, storeErr, err)
 }
 
 func TestCacheGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheValue := &struct {
 		Hello string
@@ -93,12 +96,12 @@ func TestCacheGet(t *testing.T) {
 	}
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Get("my-key").Return(cacheValue, nil)
+	store.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
 
 	cache := New(store)
 
 	// When
-	value, err := cache.Get("my-key")
+	value, err := cache.Get(ctx, "my-key")
 
 	// Then
 	assert.Nil(t, err)
@@ -108,17 +111,18 @@ func TestCacheGet(t *testing.T) {
 func TestCacheGetWhenNotFound(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	returnedErr := errors.New("Unable to find item in store")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Get("my-key").Return(nil, returnedErr)
+	store.EXPECT().Get(ctx, "my-key").Return(nil, returnedErr)
 
 	cache := New(store)
 
 	// When
-	value, err := cache.Get("my-key")
+	value, err := cache.Get(ctx, "my-key")
 
 	// Then
 	assert.Nil(t, value)
@@ -128,7 +132,8 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 func TestCacheGetWithTTL(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheValue := &struct {
 		Hello string
@@ -138,13 +143,13 @@ func TestCacheGetWithTTL(t *testing.T) {
 	expiration := 1 * time.Second
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().GetWithTTL("my-key").
+	store.EXPECT().GetWithTTL(ctx, "my-key").
 		Return(cacheValue, expiration, nil)
 
 	cache := New(store)
 
 	// When
-	value, ttl, err := cache.GetWithTTL("my-key")
+	value, ttl, err := cache.GetWithTTL(ctx, "my-key")
 
 	// Then
 	assert.Nil(t, err)
@@ -155,19 +160,20 @@ func TestCacheGetWithTTL(t *testing.T) {
 func TestCacheGetWithTTLWhenNotFound(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	returnedErr := errors.New("Unable to find item in store")
 	expiration := 0 * time.Second
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().GetWithTTL("my-key").
+	store.EXPECT().GetWithTTL(ctx, "my-key").
 		Return(nil, expiration, returnedErr)
 
 	cache := New(store)
 
 	// When
-	value, ttl, err := cache.GetWithTTL("my-key")
+	value, ttl, err := cache.GetWithTTL(ctx, "my-key")
 
 	// Then
 	assert.Nil(t, value)
@@ -178,7 +184,6 @@ func TestCacheGetWithTTLWhenNotFound(t *testing.T) {
 func TestCacheGetCodec(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 
@@ -195,7 +200,6 @@ func TestCacheGetCodec(t *testing.T) {
 func TestCacheGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 
@@ -208,7 +212,6 @@ func TestCacheGetType(t *testing.T) {
 func TestCacheGetCacheKeyWhenKeyIsString(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 
@@ -224,7 +227,6 @@ func TestCacheGetCacheKeyWhenKeyIsString(t *testing.T) {
 func TestCacheGetCacheKeyWhenKeyIsStruct(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 
@@ -246,15 +248,16 @@ func TestCacheGetCacheKeyWhenKeyIsStruct(t *testing.T) {
 func TestCacheDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Delete("my-key").Return(nil)
+	store.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	cache := New(store)
 
 	// When
-	err := cache.Delete("my-key")
+	err := cache.Delete(ctx, "my-key")
 
 	// Then
 	assert.Nil(t, err)
@@ -263,19 +266,20 @@ func TestCacheDelete(t *testing.T) {
 func TestCacheInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
 	}
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Invalidate(options).Return(nil)
+	store.EXPECT().Invalidate(ctx, options).Return(nil)
 
 	cache := New(store)
 
 	// When
-	err := cache.Invalidate(options)
+	err := cache.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -284,7 +288,8 @@ func TestCacheInvalidate(t *testing.T) {
 func TestCacheInvalidateWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := store.InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -293,12 +298,12 @@ func TestCacheInvalidateWhenError(t *testing.T) {
 	expectedErr := errors.New("Unexpected error during invalidation")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Invalidate(options).Return(expectedErr)
+	store.EXPECT().Invalidate(ctx, options).Return(expectedErr)
 
 	cache := New(store)
 
 	// When
-	err := cache.Invalidate(options)
+	err := cache.Invalidate(ctx, options)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -307,15 +312,16 @@ func TestCacheInvalidateWhenError(t *testing.T) {
 func TestCacheClear(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Clear().Return(nil)
+	store.EXPECT().Clear(ctx).Return(nil)
 
 	cache := New(store)
 
 	// When
-	err := cache.Clear()
+	err := cache.Clear(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -324,17 +330,18 @@ func TestCacheClear(t *testing.T) {
 func TestCacheClearWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	expectedErr := errors.New("Unexpected error during invalidation")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Clear().Return(expectedErr)
+	store.EXPECT().Clear(ctx).Return(expectedErr)
 
 	cache := New(store)
 
 	// When
-	err := cache.Clear()
+	err := cache.Clear(ctx)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -343,17 +350,18 @@ func TestCacheClearWhenError(t *testing.T) {
 func TestCacheDeleteWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	expectedErr := errors.New("Unable to delete key")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Delete("my-key").Return(expectedErr)
+	store.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
 	cache := New(store)
 
 	// When
-	err := cache.Delete("my-key")
+	err := cache.Delete(ctx, "my-key")
 
 	// Then
 	assert.Equal(t, expectedErr, err)
