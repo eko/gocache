@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -11,6 +12,8 @@ import (
 
 // should be configured to connect to real Redis Cluster
 func BenchmarkRedisClusterSet(b *testing.B) {
+	ctx := context.Background()
+
 	addr := strings.Split("redis:6379", ",")
 	store := NewRedisCluster(redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: addr,
@@ -23,7 +26,7 @@ func BenchmarkRedisClusterSet(b *testing.B) {
 				key := fmt.Sprintf("test-%d", n)
 				value := []byte(fmt.Sprintf("value-%d", n))
 
-				store.Set(key, value, &Options{
+				store.Set(ctx, key, value, &Options{
 					Tags: []string{fmt.Sprintf("tag-%d", n)},
 				})
 			}
@@ -32,6 +35,8 @@ func BenchmarkRedisClusterSet(b *testing.B) {
 }
 
 func BenchmarkRedisClusterGet(b *testing.B) {
+	ctx := context.Background()
+
 	addr := strings.Split("redis:6379", ",")
 	store := NewRedisCluster(redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: addr,
@@ -40,13 +45,13 @@ func BenchmarkRedisClusterGet(b *testing.B) {
 	key := "test"
 	value := []byte("value")
 
-	store.Set(key, value, nil)
+	store.Set(ctx, key, value, nil)
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
 		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 			for i := 0; i < b.N*n; i++ {
-				_, _ = store.Get(key)
+				_, _ = store.Get(ctx, key)
 			}
 		})
 	}

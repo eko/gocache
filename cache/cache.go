@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"crypto"
 	"fmt"
 	"reflect"
@@ -28,37 +29,37 @@ func New(store store.StoreInterface) *Cache {
 }
 
 // Get returns the object stored in cache if it exists
-func (c *Cache) Get(key interface{}) (interface{}, error) {
+func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, error) {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Get(cacheKey)
+	return c.codec.Get(ctx, cacheKey)
 }
 
 // GetWithTTL returns the object stored in cache and its corresponding TTL
-func (c *Cache) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+func (c *Cache) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.GetWithTTL(cacheKey)
+	return c.codec.GetWithTTL(ctx, cacheKey)
 }
 
 // Set populates the cache item using the given key
-func (c *Cache) Set(key, object interface{}, options *store.Options) error {
+func (c *Cache) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Set(cacheKey, object, options)
+	return c.codec.Set(ctx, cacheKey, object, options)
 }
 
 // Delete removes the cache item using the given key
-func (c *Cache) Delete(key interface{}) error {
+func (c *Cache) Delete(ctx context.Context, key interface{}) error {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Delete(cacheKey)
+	return c.codec.Delete(ctx, cacheKey)
 }
 
 // Invalidate invalidates cache item from given options
-func (c *Cache) Invalidate(options store.InvalidateOptions) error {
-	return c.codec.Invalidate(options)
+func (c *Cache) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+	return c.codec.Invalidate(ctx, options)
 }
 
 // Clear resets all cache data
-func (c *Cache) Clear() error {
-	return c.codec.Clear()
+func (c *Cache) Clear(ctx context.Context) error {
+	return c.codec.Clear(ctx)
 }
 
 // GetCodec returns the current codec

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -41,7 +42,7 @@ func NewGoCache(client GoCacheClientInterface, options *Options) *GoCacheStore {
 }
 
 // Get returns data stored from a given key
-func (s *GoCacheStore) Get(key interface{}) (interface{}, error) {
+func (s *GoCacheStore) Get(_ context.Context, key interface{}) (interface{}, error) {
 	var err error
 	keyStr := key.(string)
 	value, exists := s.client.Get(keyStr)
@@ -53,7 +54,7 @@ func (s *GoCacheStore) Get(key interface{}) (interface{}, error) {
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *GoCacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+func (s *GoCacheStore) GetWithTTL(_ context.Context, key interface{}) (interface{}, time.Duration, error) {
 	data, t, exists := s.client.GetWithExpiration(key.(string))
 	if !exists {
 		return data, 0, errors.New("Value not found in GoCache store")
@@ -63,7 +64,7 @@ func (s *GoCacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, 
 }
 
 // Set defines data in GoCache memoey cache for given key identifier
-func (s *GoCacheStore) Set(key interface{}, value interface{}, options *Options) error {
+func (s *GoCacheStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
 
 	if options == nil {
 		options = s.options
@@ -72,18 +73,18 @@ func (s *GoCacheStore) Set(key interface{}, value interface{}, options *Options)
 	s.client.Set(key.(string), value, options.ExpirationValue())
 
 	if tags := options.TagsValue(); len(tags) > 0 {
-		s.setTags(key, tags)
+		s.setTags(ctx, key, tags)
 	}
 
 	return nil
 }
 
-func (s *GoCacheStore) setTags(key interface{}, tags []string) {
+func (s *GoCacheStore) setTags(ctx context.Context, key interface{}, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(GoCacheTagPattern, tag)
 		var cacheKeys map[string]struct{}
 
-		if result, err := s.Get(tagKey); err == nil {
+		if result, err := s.Get(ctx, tagKey); err == nil {
 			if bytes, ok := result.(map[string]struct{}); ok {
 				cacheKeys = bytes
 			}
@@ -103,17 +104,17 @@ func (s *GoCacheStore) setTags(key interface{}, tags []string) {
 }
 
 // Delete removes data in GoCache memoey cache for given key identifier
-func (s *GoCacheStore) Delete(key interface{}) error {
+func (s *GoCacheStore) Delete(_ context.Context, key interface{}) error {
 	s.client.Delete(key.(string))
 	return nil
 }
 
 // Invalidate invalidates some cache data in GoCache memoey cache for given options
-func (s *GoCacheStore) Invalidate(options InvalidateOptions) error {
+func (s *GoCacheStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(GoCacheTagPattern, tag)
-			result, err := s.Get(tagKey)
+			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
@@ -124,7 +125,7 @@ func (s *GoCacheStore) Invalidate(options InvalidateOptions) error {
 			}
 
 			for cacheKey := range cacheKeys {
-				_ = s.Delete(cacheKey)
+				_ = s.Delete(ctx, cacheKey)
 			}
 		}
 	}
@@ -138,7 +139,7 @@ func (s *GoCacheStore) GetType() string {
 }
 
 // Clear resets all data in the store
-func (s *GoCacheStore) Clear() error {
+func (s *GoCacheStore) Clear(_ context.Context) error {
 	s.client.Flush()
 	return nil
 }

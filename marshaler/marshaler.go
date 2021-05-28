@@ -1,6 +1,8 @@
 package marshaler
 
 import (
+	"context"
+
 	"github.com/eko/gocache/cache"
 	"github.com/eko/gocache/store"
 	"github.com/vmihailenco/msgpack"
@@ -19,8 +21,8 @@ func New(cache cache.CacheInterface) *Marshaler {
 }
 
 // Get obtains a value from cache and unmarshal value with given object
-func (c *Marshaler) Get(key interface{}, returnObj interface{}) (interface{}, error) {
-	result, err := c.cache.Get(key)
+func (c *Marshaler) Get(ctx context.Context, key interface{}, returnObj interface{}) (interface{}, error) {
+	result, err := c.cache.Get(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -40,26 +42,26 @@ func (c *Marshaler) Get(key interface{}, returnObj interface{}) (interface{}, er
 }
 
 // Set sets a value in cache by marshaling value
-func (c *Marshaler) Set(key, object interface{}, options *store.Options) error {
+func (c *Marshaler) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
 	bytes, err := msgpack.Marshal(object)
 	if err != nil {
 		return err
 	}
 
-	return c.cache.Set(key, bytes, options)
+	return c.cache.Set(ctx, key, bytes, options)
 }
 
 // Delete removes a value from the cache
-func (c *Marshaler) Delete(key interface{}) error {
-	return c.cache.Delete(key)
+func (c *Marshaler) Delete(ctx context.Context, key interface{}) error {
+	return c.cache.Delete(ctx, key)
 }
 
 // Invalidate invalidate cache values using given options
-func (c *Marshaler) Invalidate(options store.InvalidateOptions) error {
-	return c.cache.Invalidate(options)
+func (c *Marshaler) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+	return c.cache.Invalidate(ctx, options)
 }
 
 // Clear reset all cache data
-func (c *Marshaler) Clear() error {
-	return c.cache.Clear()
+func (c *Marshaler) Clear(ctx context.Context) error {
+	return c.cache.Clear(ctx)
 }

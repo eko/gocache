@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"time"
 )
 
@@ -16,9 +15,6 @@ type Options struct {
 
 	// Tags allows to specify associated tags to the current value
 	Tags []string
-
-	// Ctx pass context for control timeout for all operations
-	Ctx context.Context
 }
 
 // CostValue returns the allocated memory capacity
@@ -34,9 +30,4 @@ func (o Options) ExpirationValue() time.Duration {
 // TagsValue returns the tags option value
 func (o Options) TagsValue() []string {
 	return o.Tags
-}
-
-// CtxValue returns the ctx option value
-func (o Options) CtxValue() context.Context {
-	return o.Ctx
 }

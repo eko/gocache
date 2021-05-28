@@ -47,7 +47,6 @@ func TestRecord(t *testing.T) {
 func TestRecordFromCodec(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	redisStore := mocksStore.NewMockStoreInterface(ctrl)
 	redisStore.EXPECT().GetType().Return("redis")

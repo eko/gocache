@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,20 +46,20 @@ func (c *ChainCache) setter() {
 				break
 			}
 
-			cache.Set(item.key, item.value, &store.Options{Expiration: item.ttl})
+			cache.Set(context.Background(), item.key, item.value, &store.Options{Expiration: item.ttl})
 		}
 	}
 }
 
 // Get returns the object stored in cache if it exists
-func (c *ChainCache) Get(key interface{}) (interface{}, error) {
+func (c *ChainCache) Get(ctx context.Context, key interface{}) (interface{}, error) {
 	var object interface{}
 	var err error
 	var ttl time.Duration
 
 	for _, cache := range c.caches {
 		storeType := cache.GetCodec().GetStore().GetType()
-		object, ttl, err = cache.GetWithTTL(key)
+		object, ttl, err = cache.GetWithTTL(ctx, key)
 		if err == nil {
 			// Set the value back until this cache layer
 			c.setChannel <- &chainKeyValue{key, object, ttl, &storeType}
@@ -70,9 +71,9 @@ func (c *ChainCache) Get(key interface{}) (interface{}, error) {
 }
 
 // Set sets a value in available caches
-func (c *ChainCache) Set(key, object interface{}, options *store.Options) error {
+func (c *ChainCache) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
 	for _, cache := range c.caches {
-		err := cache.Set(key, object, options)
+		err := cache.Set(ctx, key, object, options)
 		if err != nil {
 			storeType := cache.GetCodec().GetStore().GetType()
 			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)
@@ -83,27 +84,27 @@ func (c *ChainCache) Set(key, object interface{}, options *store.Options) error 
 }
 
 // Delete removes a value from all available caches
-func (c *ChainCache) Delete(key interface{}) error {
+func (c *ChainCache) Delete(ctx context.Context, key interface{}) error {
 	for _, cache := range c.caches {
-		cache.Delete(key)
+		cache.Delete(ctx, key)
 	}
 
 	return nil
 }
 
 // Invalidate invalidates cache item from given options
-func (c *ChainCache) Invalidate(options store.InvalidateOptions) error {
+func (c *ChainCache) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
 	for _, cache := range c.caches {
-		cache.Invalidate(options)
+		cache.Invalidate(ctx, options)
 	}
 
 	return nil
 }
 
 // Clear resets all cache data
-func (c *ChainCache) Clear() error {
+func (c *ChainCache) Clear(ctx context.Context) error {
 	for _, cache := range c.caches {
-		cache.Clear()
+		cache.Clear(ctx)
 	}
 
 	return nil

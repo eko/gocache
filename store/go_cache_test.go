@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -13,7 +14,6 @@ import (
 func TestNewGoCache(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	options := &Options{
@@ -32,7 +32,8 @@ func TestNewGoCache(t *testing.T) {
 func TestGoCacheGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -43,7 +44,7 @@ func TestGoCacheGet(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	value, err := store.Get(cacheKey)
+	value, err := store.Get(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -53,7 +54,8 @@ func TestGoCacheGet(t *testing.T) {
 func TestGoCacheGetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -63,7 +65,7 @@ func TestGoCacheGetWhenError(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	value, err := store.Get(cacheKey)
+	value, err := store.Get(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, value)
@@ -73,7 +75,8 @@ func TestGoCacheGetWhenError(t *testing.T) {
 func TestGoCacheGetWithTTL(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -84,7 +87,7 @@ func TestGoCacheGetWithTTL(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -95,7 +98,8 @@ func TestGoCacheGetWithTTL(t *testing.T) {
 func TestGoCacheGetWithTTLWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -105,7 +109,7 @@ func TestGoCacheGetWithTTLWhenError(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, value)
@@ -116,7 +120,8 @@ func TestGoCacheGetWithTTLWhenError(t *testing.T) {
 func TestGoCacheSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -128,7 +133,7 @@ func TestGoCacheSet(t *testing.T) {
 	store := NewGoCache(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{
 		Cost: 4,
 	})
 
@@ -139,7 +144,8 @@ func TestGoCacheSet(t *testing.T) {
 func TestGoCacheSetWhenNoOptionsGiven(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
@@ -151,7 +157,7 @@ func TestGoCacheSetWhenNoOptionsGiven(t *testing.T) {
 	store := NewGoCache(client, options)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue, nil)
 
 	// Then
 	assert.Nil(t, err)
@@ -160,7 +166,8 @@ func TestGoCacheSetWhenNoOptionsGiven(t *testing.T) {
 func TestGoCacheSetWithTags(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -174,7 +181,7 @@ func TestGoCacheSetWithTags(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
 
 	// Then
 	assert.Nil(t, err)
@@ -183,7 +190,8 @@ func TestGoCacheSetWithTags(t *testing.T) {
 func TestGoCacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -197,7 +205,7 @@ func TestGoCacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
 
 	// Then
 	assert.Nil(t, err)
@@ -206,7 +214,8 @@ func TestGoCacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 func TestGoCacheDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
@@ -216,7 +225,7 @@ func TestGoCacheDelete(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	err := store.Delete(cacheKey)
+	err := store.Delete(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -225,7 +234,8 @@ func TestGoCacheDelete(t *testing.T) {
 func TestGoCacheInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -241,7 +251,7 @@ func TestGoCacheInvalidate(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	err := store.Invalidate(options)
+	err := store.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -250,7 +260,8 @@ func TestGoCacheInvalidate(t *testing.T) {
 func TestGoCacheInvalidateWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	options := InvalidateOptions{
 		Tags: []string{"tag1"},
@@ -264,7 +275,7 @@ func TestGoCacheInvalidateWhenError(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	err := store.Invalidate(options)
+	err := store.Invalidate(ctx, options)
 
 	// Then
 	assert.Nil(t, err)
@@ -273,7 +284,8 @@ func TestGoCacheInvalidateWhenError(t *testing.T) {
 func TestGoCacheClear(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Flush()
@@ -281,7 +293,7 @@ func TestGoCacheClear(t *testing.T) {
 	store := NewGoCache(client, nil)
 
 	// When
-	err := store.Clear()
+	err := store.Clear(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -290,7 +302,6 @@ func TestGoCacheClear(t *testing.T) {
 func TestGoCacheGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 
