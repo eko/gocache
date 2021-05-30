@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/codec"
-	"github.com/eko/gocache/store"
-	mocksStore "github.com/eko/gocache/test/mocks/store"
+	"github.com/eko/gocache/v2/codec"
+	"github.com/eko/gocache/v2/store"
+	mocksStore "github.com/eko/gocache/v2/test/mocks/store"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
