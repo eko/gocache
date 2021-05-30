@@ -17,5 +17,4 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.7.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	google.golang.org/appengine v1.6.7 // indirect
 )

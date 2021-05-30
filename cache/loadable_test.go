@@ -18,7 +18,7 @@ func TestNewLoadable(t *testing.T) {
 
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "test data loaded", nil
 	}
 
@@ -47,7 +47,7 @@ func TestLoadableGetWhenAlreadyInCache(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return nil, errors.New("Should not be called")
 	}
 
@@ -71,7 +71,7 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("Unable to find in cache 1"))
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return nil, errors.New("An error has occurred while loading data from custom source")
 	}
 
@@ -102,7 +102,7 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("Unable to find in cache 1"))
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue, (*store.Options)(nil)).AnyTimes().Return(nil)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return cacheValue, nil
 	}
 
@@ -130,7 +130,7 @@ func TestLoadableDelete(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(nil)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "a value", nil
 	}
 
@@ -154,7 +154,7 @@ func TestLoadableDeleteWhenError(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "a value", nil
 	}
 
@@ -180,7 +180,7 @@ func TestLoadableInvalidate(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Invalidate(ctx, options).Return(nil)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "a value", nil
 	}
 
@@ -208,7 +208,7 @@ func TestLoadableInvalidateWhenError(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Invalidate(ctx, options).Return(expectedErr)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "a value", nil
 	}
 
@@ -230,7 +230,7 @@ func TestLoadableClear(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Clear(ctx).Return(nil)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "a value", nil
 	}
 
@@ -254,7 +254,7 @@ func TestLoadableClearWhenError(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache1.EXPECT().Clear(ctx).Return(expectedErr)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "a value", nil
 	}
 
@@ -273,7 +273,7 @@ func TestLoadableGetType(t *testing.T) {
 
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
-	loadFunc := func(key interface{}) (interface{}, error) {
+	loadFunc := func(_ context.Context, key interface{}) (interface{}, error) {
 		return "test data loaded", nil
 	}
 

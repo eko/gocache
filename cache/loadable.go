@@ -16,7 +16,7 @@ type loadableKeyValue struct {
 	value interface{}
 }
 
-type loadFunction func(key interface{}) (interface{}, error)
+type loadFunction func(ctx context.Context, key interface{}) (interface{}, error)
 
 // LoadableCache represents a cache that uses a function to load data
 type LoadableCache struct {
@@ -54,7 +54,7 @@ func (c *LoadableCache) Get(ctx context.Context, key interface{}) (interface{}, 
 	}
 
 	// Unable to find in cache, try to load it from load function
-	object, err = c.loadFunc(key)
+	object, err = c.loadFunc(ctx, key)
 	if err != nil {
 		return object, err
 	}
