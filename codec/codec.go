@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/eko/gocache/store"
+	"github.com/eko/gocache/v2/store"
 )
 
 // Stats allows to returns some statistics of codec usage

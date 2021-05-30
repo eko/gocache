@@ -3,8 +3,8 @@ package marshaler
 import (
 	"context"
 
-	"github.com/eko/gocache/cache"
-	"github.com/eko/gocache/store"
+	"github.com/eko/gocache/v2/cache"
+	"github.com/eko/gocache/v2/store"
 	"github.com/vmihailenco/msgpack"
 )
 

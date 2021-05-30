@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/eko/gocache/store"
+	"github.com/eko/gocache/v2/store"
 )
 
 // CodecInterface represents an instance of a cache codec

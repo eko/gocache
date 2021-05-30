@@ -6,7 +6,7 @@ package mocks
 
 import (
 	context "context"
-	store "github.com/eko/gocache/store"
+	store "github.com/eko/gocache/v2/store"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 	time "time"

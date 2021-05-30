@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 
-	"github.com/eko/gocache/store"
+	"github.com/eko/gocache/v2/store"
 )
 
 const (

@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/eko/gocache/codec"
-	"github.com/eko/gocache/store"
+	"github.com/eko/gocache/v2/codec"
+	"github.com/eko/gocache/v2/store"
 )
 
 const (
