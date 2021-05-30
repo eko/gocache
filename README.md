@@ -206,7 +206,7 @@ redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 redisStore := store.NewRedis(redisClient, nil)
 
 // Initialize a load function that loads your data from a custom source
-loadFunction := func(key interface{}) (interface{}, error) {
+loadFunction := func(ctx context.Context, key interface{}) (interface{}, error) {
     // ... retrieve value from available source
     return &Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}, nil
 }
