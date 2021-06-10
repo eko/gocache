@@ -2,6 +2,7 @@ package codec
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/eko/gocache/v2/store"
@@ -23,8 +24,9 @@ type Stats struct {
 
 // Codec represents an instance of a cache store
 type Codec struct {
-	store store.StoreInterface
-	stats *Stats
+	store    store.StoreInterface
+	stats    *Stats
+	statsMtx sync.Mutex
 }
 
 // New return a new codec instance
@@ -39,6 +41,8 @@ func New(store store.StoreInterface) *Codec {
 func (c *Codec) Get(ctx context.Context, key interface{}) (interface{}, error) {
 	val, err := c.store.Get(ctx, key)
 
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
 	if err == nil {
 		c.stats.Hits++
 	} else {
@@ -52,6 +56,8 @@ func (c *Codec) Get(ctx context.Context, key interface{}) (interface{}, error) {
 func (c *Codec) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
 	val, ttl, err := c.store.GetWithTTL(ctx, key)
 
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
 	if err == nil {
 		c.stats.Hits++
 	} else {
@@ -66,6 +72,8 @@ func (c *Codec) GetWithTTL(ctx context.Context, key interface{}) (interface{}, t
 func (c *Codec) Set(ctx context.Context, key interface{}, value interface{}, options *store.Options) error {
 	err := c.store.Set(ctx, key, value, options)
 
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
 	if err == nil {
 		c.stats.SetSuccess++
 	} else {
@@ -79,6 +87,8 @@ func (c *Codec) Set(ctx context.Context, key interface{}, value interface{}, opt
 func (c *Codec) Delete(ctx context.Context, key interface{}) error {
 	err := c.store.Delete(ctx, key)
 
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
 	if err == nil {
 		c.stats.DeleteSuccess++
 	} else {
@@ -92,6 +102,8 @@ func (c *Codec) Delete(ctx context.Context, key interface{}) error {
 func (c *Codec) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
 	err := c.store.Invalidate(ctx, options)
 
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
 	if err == nil {
 		c.stats.InvalidateSuccess++
 	} else {
@@ -105,6 +117,8 @@ func (c *Codec) Invalidate(ctx context.Context, options store.InvalidateOptions)
 func (c *Codec) Clear(ctx context.Context) error {
 	err := c.store.Clear(ctx)
 
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
 	if err == nil {
 		c.stats.ClearSuccess++
 	} else {
@@ -121,5 +135,8 @@ func (c *Codec) GetStore() store.StoreInterface {
 
 // GetStats returns some statistics about the current codec
 func (c *Codec) GetStats() *Stats {
-	return c.stats
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
+	stats := *c.stats
+	return &stats
 }
