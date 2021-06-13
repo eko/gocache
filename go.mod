@@ -11,7 +11,7 @@ require (
 	github.com/go-redis/redis/v8 v8.10.0
 	github.com/golang/mock v1.5.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/client_golang v1.11.0
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cast v1.3.1
