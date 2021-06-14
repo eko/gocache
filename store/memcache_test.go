@@ -250,9 +250,16 @@ func TestMemcacheSetWithTags(t *testing.T) {
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
+	tagKey := "gocache_tag_tag1"
+
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().Set(gomock.Any()).AnyTimes().Return(nil)
-	client.EXPECT().Get("gocache_tag_tag1").Return(nil, nil)
+	client.EXPECT().Get(tagKey).Return(nil, memcache.ErrCacheMiss)
+	client.EXPECT().Add(&memcache.Item{
+		Key:        tagKey,
+		Value:      []byte(cacheKey),
+		Expiration: int32(TagKeyExpiry.Seconds()),
+	}).Return(nil)
 
 	store := NewMemcache(client, nil)
 

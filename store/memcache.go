@@ -107,43 +107,10 @@ func (s *MemcacheStore) setTags(ctx context.Context, key interface{}, tags []str
 
 			var err error
 			for i := 0; i < 3; i++ {
-				var (
-					cacheKeys = []string{}
-					result    *memcache.Item
-				)
-
-				result, err = s.client.Get(tagKey)
-				if err == nil {
-					cacheKeys = strings.Split(string(result.Value), ",")
-				} else if !errors.Is(err, memcache.ErrCacheMiss) {
-					continue
-				}
-
-				for _, cacheKey := range cacheKeys {
-					if cacheKey == key.(string) {
-						return nil
-					}
-				}
-
-				cacheKeys = append(cacheKeys, key.(string))
-
-				newVal := []byte(strings.Join(cacheKeys, ","))
-
-				if result == nil {
-					err = s.client.Add(&memcache.Item{
-						Key:        tagKey,
-						Value:      newVal,
-						Expiration: int32(TagKeyExpiry.Seconds()),
-					})
-				} else {
-					result.Value = newVal
-					result.Expiration = int32(TagKeyExpiry.Seconds())
-					err = s.client.CompareAndSwap(result)
-				}
-
-				if err == nil {
+				if err = s.addKeyToTagValue(tagKey, key); err == nil {
 					return nil
 				}
+				// loop to retry any failure (including race conditions)
 			}
 
 			return err
@@ -153,12 +120,53 @@ func (s *MemcacheStore) setTags(ctx context.Context, key interface{}, tags []str
 	group.Wait()
 }
 
+func (s *MemcacheStore) addKeyToTagValue(tagKey string, key interface{}) error {
+	var (
+		cacheKeys = []string{}
+		result    *memcache.Item
+		err       error
+	)
+
+	result, err = s.client.Get(tagKey)
+	if err == nil {
+		cacheKeys = strings.Split(string(result.Value), ",")
+	} else if !errors.Is(err, memcache.ErrCacheMiss) {
+		return err
+	}
+
+	for _, cacheKey := range cacheKeys {
+		// if key already exists, nothing to do
+		if cacheKey == key.(string) {
+			return nil
+		}
+	}
+
+	cacheKeys = append(cacheKeys, key.(string))
+
+	newVal := []byte(strings.Join(cacheKeys, ","))
+
+	if result == nil {
+		// if key didnt exist, use Add to create only if still not there
+		return s.client.Add(&memcache.Item{
+			Key:        tagKey,
+			Value:      newVal,
+			Expiration: int32(TagKeyExpiry.Seconds()),
+		})
+	}
+
+	// update existing value
+	// using CompareAndSwap to ensure not to run over writes between Get and here
+	result.Value = newVal
+	result.Expiration = int32(TagKeyExpiry.Seconds())
+	return s.client.CompareAndSwap(result)
+}
+
 // Delete removes data from Memcache for given key identifier
 func (s *MemcacheStore) Delete(_ context.Context, key interface{}) error {
 	return s.client.Delete(key.(string))
 }
 
-// Invalidate invalidates some cache data in Redis for given options
+// Invalidate invalidates some cache data in Memcache for given options
 func (s *MemcacheStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
 	if tags := options.TagsValue(); len(tags) > 0 {
 		for _, tag := range tags {
