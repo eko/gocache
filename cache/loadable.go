@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"sync"
 
 	"github.com/eko/gocache/v2/store"
 )
@@ -23,6 +24,7 @@ type LoadableCache struct {
 	loadFunc   loadFunction
 	cache      CacheInterface
 	setChannel chan *loadableKeyValue
+	setterWg   *sync.WaitGroup
 }
 
 // NewLoadable instanciates a new cache that uses a function to load data
@@ -31,14 +33,18 @@ func NewLoadable(loadFunc loadFunction, cache CacheInterface) *LoadableCache {
 		loadFunc:   loadFunc,
 		cache:      cache,
 		setChannel: make(chan *loadableKeyValue, 10000),
+		setterWg:   &sync.WaitGroup{},
 	}
 
+	loadable.setterWg.Add(1)
 	go loadable.setter()
 
 	return loadable
 }
 
 func (c *LoadableCache) setter() {
+	defer c.setterWg.Done()
+
 	for item := range c.setChannel {
 		c.Set(context.Background(), item.key, item.value, nil)
 	}
@@ -88,4 +94,11 @@ func (c *LoadableCache) Clear(ctx context.Context) error {
 // GetType returns the cache type
 func (c *LoadableCache) GetType() string {
 	return LoadableType
+}
+
+func (c *LoadableCache) Close() error {
+	close(c.setChannel)
+	c.setterWg.Wait()
+
+	return nil
 }

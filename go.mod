@@ -17,4 +17,5 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.7.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
+	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 )
