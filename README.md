@@ -25,6 +25,7 @@ Here is what it brings in detail:
 
 * [Memory (bigcache)](https://github.com/allegro/bigcache) (allegro/bigcache)
 * [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
+* [Memory (go-cache)](https://github.com/patrickmn/go-cache) (patrickmn/go-cache)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis/v8) (go-redis/redis)
 * [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
@@ -70,7 +71,7 @@ cacheManager.Clear(ctx) // Clears the entire cache, in case you want to flush al
 
 ```go
 bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute))
-bigcacheStore := store.NewBigcache(bigcacheClient, nil) // No otions provided (as second argument)
+bigcacheStore := store.NewBigcache(bigcacheClient, nil) // No options provided (as second argument)
 
 cacheManager := cache.New(bigcacheStore)
 err := cacheManager.Set(ctx, "my-key", []byte("my-value"), nil)
@@ -103,6 +104,25 @@ if err != nil {
 value := cacheManager.Get(ctx, "my-key")
 
 cacheManager.Delete(ctx, "my-key")
+```
+
+#### Memory (using Go-cache)
+
+```go
+gocacheClient := gocache.New(5*time.Minute, 10*time.Minute)
+gocacheStore := store.NewGoCache(gocacheClient, nil)
+
+cacheManager := cache.New(gocacheStore)
+err := cacheManager.Set(ctx, "my-key", []byte("my-value"), nil)
+if err != nil {
+	panic(err)
+}
+
+value, err := cacheManager.Get(ctx, "my-key")
+if err != nil {
+	panic(err)
+}
+fmt.Printf("%s", value)
 ```
 
 #### Redis
