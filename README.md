@@ -40,7 +40,7 @@ Here is what it brings in detail:
 
 ### A simple cache
 
-Here is a simple cache instanciation with Redis but you can also look at other available stores:
+Here is a simple cache instantiation with Redis but you can also look at other available stores:
 
 #### Memcache
 
