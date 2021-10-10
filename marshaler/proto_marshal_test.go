@@ -8,40 +8,86 @@ import (
 
 	"github.com/eko/gocache/v2/store"
 	mocksCache "github.com/eko/gocache/v2/test/mocks/cache"
+	"github.com/eko/gocache/v2/test/proto/proto3_proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmihailenco/msgpack"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
-type testCacheValue struct {
+type testProtoCacheValue struct {
 	Hello string
 }
 
-func TestNew(t *testing.T) {
+func TestNewProtoMarshaler(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 
 	// When
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// Then
-	assert.IsType(t, new(Marshaler), marshaler)
+	assert.IsType(t, new(ProtoMarshaler), marshaler)
 	assert.Equal(t, cache, marshaler.cache)
 }
 
-func TestGetWhenStoreReturnsSliceOfBytes(t *testing.T) {
+func TestNewProtoMarshalerWithMarshalOptions(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache := mocksCache.NewMockCacheInterface(ctrl)
+
+	// When
+	marshaler := NewProtoMarshaler(cache, WithMarshalerOption(protojson.MarshalOptions{
+		AllowPartial: true,
+	}))
+
+	// Then
+	assert.IsType(t, new(ProtoMarshaler), marshaler)
+	assert.Equal(t, protojson.MarshalOptions{
+		AllowPartial: true,
+	}, marshaler.marshalOpts)
+	assert.Equal(t, cache, marshaler.cache)
+}
+
+func TestNewProtoMarshalerWithUnmarshalOptions(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache := mocksCache.NewMockCacheInterface(ctrl)
+
+	// When
+	marshaler := NewProtoMarshaler(cache, WithUnmarshalerOption(protojson.UnmarshalOptions{
+		AllowPartial: true,
+	}))
+
+	// Then
+	assert.IsType(t, new(ProtoMarshaler), marshaler)
+	assert.Equal(t, protojson.UnmarshalOptions{
+		AllowPartial: true,
+	}, marshaler.unmarshalOpts)
+	assert.Equal(t, cache, marshaler.cache)
+}
+
+func TestProtoGetWhenStoreReturnsSliceOfBytes(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
 	ctx := context.Background()
 
-	cacheValue := &testCacheValue{
-		Hello: "world",
+	cacheValue := &proto3_proto.Message{
+		Submessage: &proto3_proto.Message{
+			StringMap: map[string]string{
+				"hello": "world",
+			},
+		},
+		StringMap: map[string]string{
+			"hello": "world",
+		},
 	}
 
-	cacheValueBytes, err := msgpack.Marshal(cacheValue)
+	cacheValueBytes, err := protojson.MarshalOptions{}.Marshal(cacheValue)
 	if err != nil {
 		assert.Error(t, err)
 	}
@@ -49,27 +95,35 @@ func TestGetWhenStoreReturnsSliceOfBytes(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Get(ctx, "my-key").Return(cacheValueBytes, nil)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
+	retValue := &proto3_proto.Message{}
 	// When
-	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", retValue)
 
 	// Then
 	assert.Nil(t, err)
 	assert.Equal(t, cacheValue, value)
 }
 
-func TestGetWhenStoreReturnsString(t *testing.T) {
+func TestProtoGetWhenStoreReturnsString(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
 	ctx := context.Background()
 
-	cacheValue := &testCacheValue{
-		Hello: "world",
+	cacheValue := &proto3_proto.Message{
+		Submessage: &proto3_proto.Message{
+			StringMap: map[string]string{
+				"hello": "world",
+			},
+		},
+		StringMap: map[string]string{
+			"hello": "world",
+		},
 	}
 
-	cacheValueBytes, err := msgpack.Marshal(cacheValue)
+	cacheValueBytes, err := protojson.MarshalOptions{}.Marshal(cacheValue)
 	if err != nil {
 		assert.Error(t, err)
 	}
@@ -77,17 +131,19 @@ func TestGetWhenStoreReturnsString(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Get(ctx, "my-key").Return(string(cacheValueBytes), nil)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
+
+	retValue := &proto3_proto.Message{}
 
 	// When
-	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", retValue)
 
 	// Then
 	assert.Nil(t, err)
 	assert.Equal(t, cacheValue, value)
 }
 
-func TestGetWhenUnmarshalingError(t *testing.T) {
+func TestProtoGetWhenUnmarshalingError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -96,17 +152,19 @@ func TestGetWhenUnmarshalingError(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Get(ctx, "my-key").Return("unknown-string", nil)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
+
+	retValue := &proto3_proto.Message{}
 
 	// When
-	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", retValue)
 
 	// Then
 	assert.NotNil(t, err)
 	assert.Nil(t, value)
 }
 
-func TestGetWhenNotFoundInStore(t *testing.T) {
+func TestProtoGetWhenNotFoundInStore(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -117,73 +175,34 @@ func TestGetWhenNotFoundInStore(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Get(ctx, "my-key").Return(nil, expectedErr)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
+
+	retValue := &proto3_proto.Message{}
 
 	// When
-	value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
+	value, err := marshaler.Get(ctx, "my-key", retValue)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
 	assert.Nil(t, value)
 }
 
-func TestSetWhenStruct(t *testing.T) {
+func TestProtoSetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
 	ctx := context.Background()
 
-	cacheValue := &testCacheValue{
-		Hello: "world",
+	cacheValue := &proto3_proto.MessageWithMap{
+		ByteMapping: map[bool][]byte{
+			true: []byte("hello world"),
+		},
 	}
 
-	options := &store.Options{
-		Expiration: 5 * time.Second,
+	cacheValueBytes, err := protojson.MarshalOptions{}.Marshal(cacheValue)
+	if err != nil {
+		assert.Error(t, err)
 	}
-
-	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Set(ctx, "my-key", []byte{0x81, 0xa5, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0xa5, 0x77, 0x6f, 0x72, 0x6c, 0x64}, options).Return(nil)
-
-	marshaler := New(cache)
-
-	// When
-	err := marshaler.Set(ctx, "my-key", cacheValue, options)
-
-	// Then
-	assert.Nil(t, err)
-}
-
-func TestSetWhenString(t *testing.T) {
-	// Given
-	ctrl := gomock.NewController(t)
-
-	ctx := context.Background()
-
-	cacheValue := "test"
-
-	options := &store.Options{
-		Expiration: 5 * time.Second,
-	}
-
-	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Set(ctx, "my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(nil)
-
-	marshaler := New(cache)
-
-	// When
-	err := marshaler.Set(ctx, "my-key", cacheValue, options)
-
-	// Then
-	assert.Nil(t, err)
-}
-
-func TestSetWhenError(t *testing.T) {
-	// Given
-	ctrl := gomock.NewController(t)
-
-	ctx := context.Background()
-
-	cacheValue := "test"
 
 	options := &store.Options{
 		Expiration: 5 * time.Second,
@@ -192,18 +211,18 @@ func TestSetWhenError(t *testing.T) {
 	expectedErr := errors.New("An unexpected error occurred")
 
 	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Set(ctx, "my-key", []byte{0xa4, 0x74, 0x65, 0x73, 0x74}, options).Return(expectedErr)
+	cache.EXPECT().Set(ctx, "my-key", cacheValueBytes, options).Return(expectedErr)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// When
-	err := marshaler.Set(ctx, "my-key", cacheValue, options)
+	err = marshaler.Set(ctx, "my-key", cacheValue, options)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
 }
 
-func TestDelete(t *testing.T) {
+func TestProtoDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -212,7 +231,7 @@ func TestDelete(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Delete(ctx, "my-key").Return(nil)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// When
 	err := marshaler.Delete(ctx, "my-key")
@@ -221,7 +240,7 @@ func TestDelete(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestDeleteWhenError(t *testing.T) {
+func TestProtoDeleteWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -232,7 +251,7 @@ func TestDeleteWhenError(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// When
 	err := marshaler.Delete(ctx, "my-key")
@@ -241,7 +260,7 @@ func TestDeleteWhenError(t *testing.T) {
 	assert.Equal(t, expectedErr, err)
 }
 
-func TestInvalidate(t *testing.T) {
+func TestProtoInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -254,7 +273,7 @@ func TestInvalidate(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Invalidate(ctx, options).Return(nil)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// When
 	err := marshaler.Invalidate(ctx, options)
@@ -263,7 +282,7 @@ func TestInvalidate(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestInvalidatingWhenError(t *testing.T) {
+func TestProtoInvalidatingWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -278,7 +297,7 @@ func TestInvalidatingWhenError(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Invalidate(ctx, options).Return(expectedErr)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// When
 	err := marshaler.Invalidate(ctx, options)
@@ -287,7 +306,7 @@ func TestInvalidatingWhenError(t *testing.T) {
 	assert.Equal(t, expectedErr, err)
 }
 
-func TestClear(t *testing.T) {
+func TestProtoClear(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -296,7 +315,7 @@ func TestClear(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Clear(ctx).Return(nil)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// When
 	err := marshaler.Clear(ctx)
@@ -305,7 +324,7 @@ func TestClear(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestClearWhenError(t *testing.T) {
+func TestProtoClearWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -316,49 +335,11 @@ func TestClearWhenError(t *testing.T) {
 	cache := mocksCache.NewMockCacheInterface(ctrl)
 	cache.EXPECT().Clear(ctx).Return(expectedErr)
 
-	marshaler := New(cache)
+	marshaler := NewProtoMarshaler(cache)
 
 	// When
 	err := marshaler.Clear(ctx)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
-}
-
-func TestNestedStructFailure(t *testing.T) {
-	type parent struct {
-		msg string
-	}
-
-	type child struct {
-		p parent
-	}
-
-	// Given
-	ctrl := gomock.NewController(t)
-
-	ctx := context.Background()
-
-	cacheValue := &child{
-		p: parent{
-			msg: "hi",
-		},
-	}
-
-	cacheValueBytes, err := msgpack.Marshal(cacheValue)
-	if err != nil {
-		assert.Error(t, err)
-	}
-
-	cache := mocksCache.NewMockCacheInterface(ctrl)
-	cache.EXPECT().Get(ctx, "my-key").Return(cacheValueBytes, nil)
-
-	marshaler := New(cache)
-
-	// When
-	value, err := marshaler.Get(ctx, "my-key", new(child))
-
-	// Then
-	assert.Nil(t, err)
-	assert.NotEqual(t, cacheValue, value)
 }
