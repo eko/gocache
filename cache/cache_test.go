@@ -245,6 +245,28 @@ func TestCacheGetCacheKeyWhenKeyIsStruct(t *testing.T) {
 	assert.Equal(t, "8144fe5310cf0e62ac83fd79c113aad2", computedKey)
 }
 
+type StructWithGenerator struct{}
+
+func (_ *StructWithGenerator) GetCacheKey() string {
+	return "my-generated-key"
+}
+
+func TestCacheGetCacheKeyWhenKeyImplementsGenerator(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	store := mocksStore.NewMockStoreInterface(ctrl)
+
+	cache := New(store)
+
+	// When
+	key := &StructWithGenerator{}
+
+	generatedKey := cache.getCacheKey(key)
+	// Then
+	assert.Equal(t, "my-generated-key", generatedKey)
+}
+
 func TestCacheDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
