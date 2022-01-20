@@ -11,7 +11,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/golang/mock v1.6.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.12.0
 	github.com/smartystreets/assertions v1.2.1
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/spf13/cast v1.4.1
@@ -38,12 +38,12 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.26.0 // indirect
-	github.com/prometheus/procfs v0.6.0 // indirect
+	github.com/prometheus/common v0.32.1 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
-	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40 // indirect
-	google.golang.org/appengine v1.4.0 // indirect
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
