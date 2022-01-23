@@ -16,6 +16,10 @@ const (
 	CacheType = "cache"
 )
 
+type CacheKeyGenerator interface {
+	GetCacheKey() string
+}
+
 // Cache represents the configuration needed by a cache
 type Cache struct {
 	codec codec.CodecInterface
@@ -79,6 +83,8 @@ func (c *Cache) getCacheKey(key interface{}) string {
 	switch key.(type) {
 	case string:
 		return key.(string)
+	case CacheKeyGenerator:
+		return key.(CacheKeyGenerator).GetCacheKey()
 	default:
 		return checksum(key)
 	}
