@@ -394,6 +394,16 @@ type StoreInterface interface {
 
 Of course, I suggest you to have a look at current caches or stores to implement your own.
 
+### Custom cache key generator
+
+You can implement the following interface in order to generate a custom cache key:
+
+```go
+type CacheKeyGenerator interface {
+	GetCacheKey() string
+}
+```
+
 ### Benchmarks
 
 ![Benchmarks](https://raw.githubusercontent.com/eko/gocache/master/misc/benchmarks.jpeg)
