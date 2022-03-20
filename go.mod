@@ -15,7 +15,7 @@ require (
 	github.com/smartystreets/assertions v1.2.1
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/spf13/cast v1.4.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
