@@ -167,7 +167,7 @@ func ShouldBeBlank(actual interface{}, expected ...interface{}) string {
 	return success
 }
 
-// ShouldNotBeBlank receives exactly 1 string parameter and ensures that it is equal to "".
+// ShouldNotBeBlank receives exactly 1 string parameter and ensures that it is not equal to "".
 func ShouldNotBeBlank(actual interface{}, expected ...interface{}) string {
 	if fail := need(0, expected); fail != success {
 		return fail
