@@ -348,6 +348,27 @@ if err != nil {
 
 Mix this with expiration times on your caches to have a fine tuned control on how your data are cached.
 
+
+### Install
+
+To begin working with the latest version of go-cache, you can use the following command:
+
+```go
+go get github.com/eko/gocache/v2
+```
+
+To avoid any errors when trying to import your libraries use the following import statement:
+
+```go
+import (
+	"github.com/eko/gocache/v2/cache"
+	"github.com/eko/gocache/v2/store"
+)
+```
+
+If you run into any errors, please be sure to run `go mod tidy` to clean your go.mod file.
+
+
 ### Write your own custom cache
 
 Cache respect the following interface so you can write your own (proprietary?) cache logic if needed by implementing the following interface:
