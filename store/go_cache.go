@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type GoCacheClientInterface interface {
 
 // GoCacheStore is a store for GoCache (memory) library
 type GoCacheStore struct {
+	mu      sync.RWMutex
 	client  GoCacheClientInterface
 	options *Options
 }
@@ -89,15 +91,21 @@ func (s *GoCacheStore) setTags(ctx context.Context, key interface{}, tags []stri
 				cacheKeys = bytes
 			}
 		}
+
+		s.mu.RLock()
 		if _, exists := cacheKeys[key.(string)]; exists {
+			s.mu.RUnlock()
 			continue
 		}
+		s.mu.RUnlock()
 
 		if cacheKeys == nil {
 			cacheKeys = make(map[string]struct{})
 		}
 
+		s.mu.Lock()
 		cacheKeys[key.(string)] = struct{}{}
+		s.mu.Unlock()
 
 		s.client.Set(tagKey, cacheKeys, 720*time.Hour)
 	}

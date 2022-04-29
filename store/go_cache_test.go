@@ -3,11 +3,13 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	mocksStore "github.com/eko/gocache/v2/test/mocks/store/clients"
 	"github.com/golang/mock/gomock"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -309,4 +311,23 @@ func TestGoCacheGetType(t *testing.T) {
 
 	// When - Then
 	assert.Equal(t, GoCacheType, store.GetType())
+}
+
+func TestGoCacheSetTagsConcurrency(t *testing.T) {
+	ctx := context.Background()
+
+	client := cache.New(10*time.Second, 30*time.Second)
+	store := NewGoCache(client, nil)
+
+	for i := 0; i < 200; i++ {
+		go func(i int) {
+
+			key := fmt.Sprintf("%d", i)
+
+			err := store.Set(ctx, key, []string{"one", "two"}, &Options{
+				Tags: []string{"tag1", "tag2", "tag3"},
+			})
+			assert.Nil(t, err, err)
+		}(i)
+	}
 }
