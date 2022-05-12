@@ -331,3 +331,35 @@ func TestGoCacheSetTagsConcurrency(t *testing.T) {
 		}(i)
 	}
 }
+
+func TestGoCacheInvalidateConcurrency(t *testing.T) {
+	ctx := context.Background()
+
+	client := cache.New(10*time.Second, 30*time.Second)
+	store := NewGoCache(client, nil)
+
+	var tags []string
+	for i := 0; i < 200; i++ {
+		tags = append(tags, fmt.Sprintf("tag%d", i))
+	}
+
+	for i := 0; i < 200; i++ {
+
+		go func(i int) {
+			key := fmt.Sprintf("%d", i)
+
+			err := store.Set(ctx, key, []string{"one", "two"}, &Options{
+				Tags: tags,
+			})
+			assert.Nil(t, err, err)
+		}(i)
+
+		go func(i int) {
+			err := store.Invalidate(ctx, InvalidateOptions{
+				Tags: []string{fmt.Sprintf("tag%d", i)},
+			})
+			assert.Nil(t, err, err)
+		}(i)
+
+	}
+}

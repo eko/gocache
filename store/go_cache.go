@@ -132,9 +132,11 @@ func (s *GoCacheStore) Invalidate(ctx context.Context, options InvalidateOptions
 				cacheKeys = bytes
 			}
 
+			s.mu.RLock()
 			for cacheKey := range cacheKeys {
 				_ = s.Delete(ctx, cacheKey)
 			}
+			s.mu.RUnlock()
 		}
 	}
 
