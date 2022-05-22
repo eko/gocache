@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/eko/gocache/v2/store"
+	"github.com/eko/gocache/v3/store"
 )
 
 const (
@@ -12,27 +12,27 @@ const (
 	LoadableType = "loadable"
 )
 
-type loadableKeyValue struct {
-	key   interface{}
-	value interface{}
+type loadableKeyValue[T any] struct {
+	key   any
+	value T
 }
 
-type loadFunction func(ctx context.Context, key interface{}) (interface{}, error)
+type LoadFunction[T any] func(ctx context.Context, key any) (T, error)
 
 // LoadableCache represents a cache that uses a function to load data
-type LoadableCache struct {
-	loadFunc   loadFunction
-	cache      CacheInterface
-	setChannel chan *loadableKeyValue
+type LoadableCache[T any] struct {
+	loadFunc   LoadFunction[T]
+	cache      CacheInterface[T]
+	setChannel chan *loadableKeyValue[T]
 	setterWg   *sync.WaitGroup
 }
 
 // NewLoadable instanciates a new cache that uses a function to load data
-func NewLoadable(loadFunc loadFunction, cache CacheInterface) *LoadableCache {
-	loadable := &LoadableCache{
+func NewLoadable[T any](loadFunc LoadFunction[T], cache CacheInterface[T]) *LoadableCache[T] {
+	loadable := &LoadableCache[T]{
 		loadFunc:   loadFunc,
 		cache:      cache,
-		setChannel: make(chan *loadableKeyValue, 10000),
+		setChannel: make(chan *loadableKeyValue[T], 10000),
 		setterWg:   &sync.WaitGroup{},
 	}
 
@@ -42,7 +42,7 @@ func NewLoadable(loadFunc loadFunction, cache CacheInterface) *LoadableCache {
 	return loadable
 }
 
-func (c *LoadableCache) setter() {
+func (c *LoadableCache[T]) setter() {
 	defer c.setterWg.Done()
 
 	for item := range c.setChannel {
@@ -51,7 +51,7 @@ func (c *LoadableCache) setter() {
 }
 
 // Get returns the object stored in cache if it exists
-func (c *LoadableCache) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 	var err error
 
 	object, err := c.cache.Get(ctx, key)
@@ -66,37 +66,37 @@ func (c *LoadableCache) Get(ctx context.Context, key interface{}) (interface{}, 
 	}
 
 	// Then, put it back in cache
-	c.setChannel <- &loadableKeyValue{key, object}
+	c.setChannel <- &loadableKeyValue[T]{key, object}
 
 	return object, err
 }
 
 // Set sets a value in available caches
-func (c *LoadableCache) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
+func (c *LoadableCache[T]) Set(ctx context.Context, key any, object T, options *store.Options) error {
 	return c.cache.Set(ctx, key, object, options)
 }
 
 // Delete removes a value from cache
-func (c *LoadableCache) Delete(ctx context.Context, key interface{}) error {
+func (c *LoadableCache[T]) Delete(ctx context.Context, key any) error {
 	return c.cache.Delete(ctx, key)
 }
 
 // Invalidate invalidates cache item from given options
-func (c *LoadableCache) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+func (c *LoadableCache[T]) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
 	return c.cache.Invalidate(ctx, options)
 }
 
 // Clear resets all cache data
-func (c *LoadableCache) Clear(ctx context.Context) error {
+func (c *LoadableCache[T]) Clear(ctx context.Context) error {
 	return c.cache.Clear(ctx)
 }
 
 // GetType returns the cache type
-func (c *LoadableCache) GetType() string {
+func (c *LoadableCache[T]) GetType() string {
 	return LoadableType
 }
 
-func (c *LoadableCache) Close() error {
+func (c *LoadableCache[T]) Close() error {
 	close(c.setChannel)
 	c.setterWg.Wait()
 

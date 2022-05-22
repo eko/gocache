@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eko/gocache/v2/store"
+	"github.com/eko/gocache/v3/store"
 )
 
 // Stats allows to returns some statistics of codec usage
@@ -38,7 +38,7 @@ func New(store store.StoreInterface) *Codec {
 }
 
 // Get allows to retrieve the value from a given key identifier
-func (c *Codec) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (c *Codec) Get(ctx context.Context, key any) (any, error) {
 	val, err := c.store.Get(ctx, key)
 
 	c.statsMtx.Lock()
@@ -53,7 +53,7 @@ func (c *Codec) Get(ctx context.Context, key interface{}) (interface{}, error) {
 }
 
 // GetWithTTL allows to retrieve the value from a given key identifier and its corresponding TTL
-func (c *Codec) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (c *Codec) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	val, ttl, err := c.store.GetWithTTL(ctx, key)
 
 	c.statsMtx.Lock()
@@ -69,7 +69,7 @@ func (c *Codec) GetWithTTL(ctx context.Context, key interface{}) (interface{}, t
 
 // Set allows to set a value for a given key identifier and also allows to specify
 // an expiration time
-func (c *Codec) Set(ctx context.Context, key interface{}, value interface{}, options *store.Options) error {
+func (c *Codec) Set(ctx context.Context, key any, value any, options *store.Options) error {
 	err := c.store.Set(ctx, key, value, options)
 
 	c.statsMtx.Lock()
@@ -84,7 +84,7 @@ func (c *Codec) Set(ctx context.Context, key interface{}, value interface{}, opt
 }
 
 // Delete allows to remove a value for a given key identifier
-func (c *Codec) Delete(ctx context.Context, key interface{}) error {
+func (c *Codec) Delete(ctx context.Context, key any) error {
 	err := c.store.Delete(ctx, key)
 
 	c.statsMtx.Lock()

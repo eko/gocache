@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	store "github.com/eko/gocache/v2/store"
+	store "github.com/eko/gocache/v3/store"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -51,7 +51,7 @@ func (mr *MockStoreInterfaceMockRecorder) Clear(ctx interface{}) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockStoreInterface) Delete(ctx context.Context, key interface{}) error {
+func (m *MockStoreInterface) Delete(ctx context.Context, key any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, key)
 	ret0, _ := ret[0].(error)
@@ -65,10 +65,10 @@ func (mr *MockStoreInterfaceMockRecorder) Delete(ctx, key interface{}) *gomock.C
 }
 
 // Get mocks base method.
-func (m *MockStoreInterface) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (m *MockStoreInterface) Get(ctx context.Context, key any) (any, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, key)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -94,10 +94,10 @@ func (mr *MockStoreInterfaceMockRecorder) GetType() *gomock.Call {
 }
 
 // GetWithTTL mocks base method.
-func (m *MockStoreInterface) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (m *MockStoreInterface) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWithTTL", ctx, key)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(time.Duration)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -124,7 +124,7 @@ func (mr *MockStoreInterfaceMockRecorder) Invalidate(ctx, options interface{}) *
 }
 
 // Set mocks base method.
-func (m *MockStoreInterface) Set(ctx context.Context, key, value interface{}, options *store.Options) error {
+func (m *MockStoreInterface) Set(ctx context.Context, key, value any, options *store.Options) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", ctx, key, value, options)
 	ret0, _ := ret[0].(error)

@@ -46,9 +46,9 @@ func NewFreecache(client FreecacheClientInterface, options *Options) *FreecacheS
 }
 
 // Get returns data stored from a given key. It returns the value or not found error
-func (f *FreecacheStore) Get(_ context.Context, key interface{}) (interface{}, error) {
+func (f *FreecacheStore) Get(_ context.Context, key any) (any, error) {
 	var err error
-	var result interface{}
+	var result any
 	if k, ok := key.(string); ok {
 		result, err = f.client.Get([]byte(k))
 		if err != nil {
@@ -61,7 +61,7 @@ func (f *FreecacheStore) Get(_ context.Context, key interface{}) (interface{}, e
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (f *FreecacheStore) GetWithTTL(_ context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (f *FreecacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duration, error) {
 	if k, ok := key.(string); ok {
 		result, err := f.client.Get([]byte(k))
 		if err != nil {
@@ -83,7 +83,7 @@ func (f *FreecacheStore) GetWithTTL(_ context.Context, key interface{}) (interfa
 // If the key is larger than 65535 or value is larger than 1/1024 of the cache size,
 // the entry will not be written to the cache. expireSeconds <= 0 means no expire,
 // but it can be evicted when cache is full.
-func (f *FreecacheStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
+func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options *Options) error {
 	var err error
 	var val []byte
 
@@ -113,7 +113,7 @@ func (f *FreecacheStore) Set(ctx context.Context, key interface{}, value interfa
 	return errors.New("key type not supported by Freecache store")
 }
 
-func (f *FreecacheStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (f *FreecacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(FreecacheTagPattern, tag)
 		var cacheKeys = f.getCacheKeysForTag(ctx, tagKey)
@@ -145,7 +145,7 @@ func (f *FreecacheStore) getCacheKeysForTag(ctx context.Context, tagKey string) 
 }
 
 // Delete deletes an item in the cache by key and returns err or nil if a delete occurred
-func (f *FreecacheStore) Delete(_ context.Context, key interface{}) error {
+func (f *FreecacheStore) Delete(_ context.Context, key any) error {
 	if v, ok := key.(string); ok {
 		if f.client.Del([]byte(v)) {
 			return nil

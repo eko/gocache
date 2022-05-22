@@ -128,7 +128,7 @@ func (p *PegasusStore) Close() error {
 }
 
 // Get returns data stored from a given key
-func (p *PegasusStore) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (p *PegasusStore) Get(ctx context.Context, key any) (any, error) {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	defer table.Close()
 	if err != nil {
@@ -144,7 +144,7 @@ func (p *PegasusStore) Get(ctx context.Context, key interface{}) (interface{}, e
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (p *PegasusStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (p *PegasusStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	defer table.Close()
 	if err != nil {
@@ -165,7 +165,7 @@ func (p *PegasusStore) GetWithTTL(ctx context.Context, key interface{}) (interfa
 }
 
 // Set defines data in Pegasus for given key identifier
-func (p *PegasusStore) Set(ctx context.Context, key, value interface{}, options *Options) error {
+func (p *PegasusStore) Set(ctx context.Context, key, value any, options *Options) error {
 	if options == nil {
 		options = &Options{}
 	}
@@ -189,7 +189,7 @@ func (p *PegasusStore) Set(ctx context.Context, key, value interface{}, options 
 	return nil
 }
 
-func (p *PegasusStore) setTags(ctx context.Context, key interface{}, tags []string) error {
+func (p *PegasusStore) setTags(ctx context.Context, key any, tags []string) error {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(PegasusTagPattern, tag)
 		var cacheKeys = []string{}
@@ -223,7 +223,7 @@ func (p *PegasusStore) setTags(ctx context.Context, key interface{}, tags []stri
 }
 
 // Delete removes data from Pegasus for given key identifier
-func (p *PegasusStore) Delete(ctx context.Context, key interface{}) error {
+func (p *PegasusStore) Delete(ctx context.Context, key any) error {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	defer table.Close()
 	if err != nil {
