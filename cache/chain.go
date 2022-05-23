@@ -72,12 +72,20 @@ func (c *ChainCache) Get(ctx context.Context, key interface{}) (interface{}, err
 
 // Set sets a value in available caches
 func (c *ChainCache) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
+	errs := []error{}
 	for _, cache := range c.caches {
 		err := cache.Set(ctx, key, object, options)
 		if err != nil {
 			storeType := cache.GetCodec().GetStore().GetType()
-			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)
+			errs = append(errs, fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err))
 		}
+	}
+	if len(errs) > 0 {
+		errStr := ""
+		for k, v := range errs {
+			errStr += fmt.Sprintf("Error %d of %d: %v", k, len(errs), v.Error())
+		}
+		return errors.New(errStr)
 	}
 
 	return nil
