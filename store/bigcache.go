@@ -48,7 +48,7 @@ func (s *BigcacheStore) Get(_ context.Context, key interface{}) (interface{}, er
 		return nil, err
 	}
 	if item == nil {
-		return nil, errors.New("Unable to retrieve data from bigcache")
+		return nil, NotFoundWithCause(errors.New("Unable to retrieve data from bigcache"))
 	}
 
 	return item, err

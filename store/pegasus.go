@@ -139,7 +139,9 @@ func (p *PegasusStore) Get(ctx context.Context, key interface{}) (interface{}, e
 	if err != nil {
 		return nil, err
 	}
-
+	if value == nil {
+		return nil, NotFound{}
+	}
 	return value, nil
 }
 
@@ -154,6 +156,9 @@ func (p *PegasusStore) GetWithTTL(ctx context.Context, key interface{}) (interfa
 	value, err := table.Get(ctx, []byte(cast.ToString(key)), empty)
 	if err != nil {
 		return nil, 0, err
+	}
+	if value == nil {
+		return nil, 0, NotFound{}
 	}
 
 	ttl, err := table.TTL(ctx, []byte(cast.ToString(key)), empty)

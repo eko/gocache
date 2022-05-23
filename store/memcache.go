@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/bradfitz/gomemcache/memcache"
 )
@@ -55,7 +56,7 @@ func (s *MemcacheStore) Get(_ context.Context, key interface{}) (interface{}, er
 		return nil, err
 	}
 	if item == nil {
-		return nil, errors.New("Unable to retrieve data from memcache")
+		return nil, NotFoundWithCause(errors.New("Unable to retrieve data from memcache"))
 	}
 
 	return item.Value, err
@@ -68,7 +69,7 @@ func (s *MemcacheStore) GetWithTTL(_ context.Context, key interface{}) (interfac
 		return nil, 0, err
 	}
 	if item == nil {
-		return nil, 0, errors.New("Unable to retrieve data from memcache")
+		return nil, 0, NotFoundWithCause(errors.New("Unable to retrieve data from memcache"))
 	}
 
 	return item.Value, time.Duration(item.Expiration) * time.Second, err
