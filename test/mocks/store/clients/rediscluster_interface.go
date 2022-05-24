@@ -98,7 +98,7 @@ func (mr *MockRedisClusterClientInterfaceMockRecorder) Get(ctx, key interface{})
 }
 
 // SAdd mocks base method.
-func (m *MockRedisClusterClientInterface) SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+func (m *MockRedisClusterClientInterface) SAdd(ctx context.Context, key string, members ...any) *redis.IntCmd {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, key}
 	for _, a := range members {
@@ -131,7 +131,7 @@ func (mr *MockRedisClusterClientInterfaceMockRecorder) SMembers(ctx, key interfa
 }
 
 // Set mocks base method.
-func (m *MockRedisClusterClientInterface) Set(ctx context.Context, key string, values interface{}, expiration time.Duration) *redis.StatusCmd {
+func (m *MockRedisClusterClientInterface) Set(ctx context.Context, key string, values any, expiration time.Duration) *redis.StatusCmd {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", ctx, key, values, expiration)
 	ret0, _ := ret[0].(*redis.StatusCmd)

@@ -9,8 +9,8 @@ import (
 	reflect "reflect"
 	time "time"
 
-	codec "github.com/eko/gocache/v2/codec"
-	store "github.com/eko/gocache/v2/store"
+	codec "github.com/eko/gocache/v3/codec"
+	store "github.com/eko/gocache/v3/store"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -52,7 +52,7 @@ func (mr *MockCacheInterfaceMockRecorder) Clear(ctx interface{}) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockCacheInterface) Delete(ctx context.Context, key interface{}) error {
+func (m *MockCacheInterface) Delete(ctx context.Context, key any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, key)
 	ret0, _ := ret[0].(error)
@@ -66,10 +66,10 @@ func (mr *MockCacheInterfaceMockRecorder) Delete(ctx, key interface{}) *gomock.C
 }
 
 // Get mocks base method.
-func (m *MockCacheInterface) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (m *MockCacheInterface) Get(ctx context.Context, key any) (any, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, key)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -109,7 +109,7 @@ func (mr *MockCacheInterfaceMockRecorder) Invalidate(ctx, options interface{}) *
 }
 
 // Set mocks base method.
-func (m *MockCacheInterface) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
+func (m *MockCacheInterface) Set(ctx context.Context, key, object any, options *store.Options) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", ctx, key, object, options)
 	ret0, _ := ret[0].(error)
@@ -120,6 +120,43 @@ func (m *MockCacheInterface) Set(ctx context.Context, key, object interface{}, o
 func (mr *MockCacheInterfaceMockRecorder) Set(ctx, key, object, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCacheInterface)(nil).Set), ctx, key, object, options)
+}
+
+// MockCacheKeyGenerator is a mock of CacheKeyGenerator interface.
+type MockCacheKeyGenerator struct {
+	ctrl     *gomock.Controller
+	recorder *MockCacheKeyGeneratorMockRecorder
+}
+
+// MockCacheKeyGeneratorMockRecorder is the mock recorder for MockCacheKeyGenerator.
+type MockCacheKeyGeneratorMockRecorder struct {
+	mock *MockCacheKeyGenerator
+}
+
+// NewMockCacheKeyGenerator creates a new mock instance.
+func NewMockCacheKeyGenerator(ctrl *gomock.Controller) *MockCacheKeyGenerator {
+	mock := &MockCacheKeyGenerator{ctrl: ctrl}
+	mock.recorder = &MockCacheKeyGeneratorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCacheKeyGenerator) EXPECT() *MockCacheKeyGeneratorMockRecorder {
+	return m.recorder
+}
+
+// GetCacheKey mocks base method.
+func (m *MockCacheKeyGenerator) GetCacheKey() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCacheKey")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetCacheKey indicates an expected call of GetCacheKey.
+func (mr *MockCacheKeyGeneratorMockRecorder) GetCacheKey() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCacheKey", reflect.TypeOf((*MockCacheKeyGenerator)(nil).GetCacheKey))
 }
 
 // MockSetterCacheInterface is a mock of SetterCacheInterface interface.
@@ -160,7 +197,7 @@ func (mr *MockSetterCacheInterfaceMockRecorder) Clear(ctx interface{}) *gomock.C
 }
 
 // Delete mocks base method.
-func (m *MockSetterCacheInterface) Delete(ctx context.Context, key interface{}) error {
+func (m *MockSetterCacheInterface) Delete(ctx context.Context, key any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, key)
 	ret0, _ := ret[0].(error)
@@ -174,10 +211,10 @@ func (mr *MockSetterCacheInterfaceMockRecorder) Delete(ctx, key interface{}) *go
 }
 
 // Get mocks base method.
-func (m *MockSetterCacheInterface) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (m *MockSetterCacheInterface) Get(ctx context.Context, key any) (any, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, key)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -217,10 +254,10 @@ func (mr *MockSetterCacheInterfaceMockRecorder) GetType() *gomock.Call {
 }
 
 // GetWithTTL mocks base method.
-func (m *MockSetterCacheInterface) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (m *MockSetterCacheInterface) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWithTTL", ctx, key)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(time.Duration)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -247,7 +284,7 @@ func (mr *MockSetterCacheInterfaceMockRecorder) Invalidate(ctx, options interfac
 }
 
 // Set mocks base method.
-func (m *MockSetterCacheInterface) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
+func (m *MockSetterCacheInterface) Set(ctx context.Context, key, object any, options *store.Options) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", ctx, key, object, options)
 	ret0, _ := ret[0].(error)
@@ -258,4 +295,126 @@ func (m *MockSetterCacheInterface) Set(ctx context.Context, key, object interfac
 func (mr *MockSetterCacheInterfaceMockRecorder) Set(ctx, key, object, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockSetterCacheInterface)(nil).Set), ctx, key, object, options)
+}
+
+// MockCloseableCacheInterface is a mock of CloseableCacheInterface interface.
+type MockCloseableCacheInterface struct {
+	ctrl     *gomock.Controller
+	recorder *MockCloseableCacheInterfaceMockRecorder
+}
+
+// MockCloseableCacheInterfaceMockRecorder is the mock recorder for MockCloseableCacheInterface.
+type MockCloseableCacheInterfaceMockRecorder struct {
+	mock *MockCloseableCacheInterface
+}
+
+// NewMockCloseableCacheInterface creates a new mock instance.
+func NewMockCloseableCacheInterface(ctrl *gomock.Controller) *MockCloseableCacheInterface {
+	mock := &MockCloseableCacheInterface{ctrl: ctrl}
+	mock.recorder = &MockCloseableCacheInterfaceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCloseableCacheInterface) EXPECT() *MockCloseableCacheInterfaceMockRecorder {
+	return m.recorder
+}
+
+// Clear mocks base method.
+func (m *MockCloseableCacheInterface) Clear(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Clear", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Clear indicates an expected call of Clear.
+func (mr *MockCloseableCacheInterfaceMockRecorder) Clear(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clear", reflect.TypeOf((*MockCloseableCacheInterface)(nil).Clear), ctx)
+}
+
+// Close mocks base method.
+func (m *MockCloseableCacheInterface) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockCloseableCacheInterfaceMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockCloseableCacheInterface)(nil).Close))
+}
+
+// Delete mocks base method.
+func (m *MockCloseableCacheInterface) Delete(ctx context.Context, key any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockCloseableCacheInterfaceMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockCloseableCacheInterface)(nil).Delete), ctx, key)
+}
+
+// Get mocks base method.
+func (m *MockCloseableCacheInterface) Get(ctx context.Context, key any) (any, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", ctx, key)
+	ret0, _ := ret[0].(any)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockCloseableCacheInterfaceMockRecorder) Get(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCloseableCacheInterface)(nil).Get), ctx, key)
+}
+
+// GetType mocks base method.
+func (m *MockCloseableCacheInterface) GetType() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetType")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetType indicates an expected call of GetType.
+func (mr *MockCloseableCacheInterfaceMockRecorder) GetType() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetType", reflect.TypeOf((*MockCloseableCacheInterface)(nil).GetType))
+}
+
+// Invalidate mocks base method.
+func (m *MockCloseableCacheInterface) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Invalidate", ctx, options)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Invalidate indicates an expected call of Invalidate.
+func (mr *MockCloseableCacheInterfaceMockRecorder) Invalidate(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockCloseableCacheInterface)(nil).Invalidate), ctx, options)
+}
+
+// Set mocks base method.
+func (m *MockCloseableCacheInterface) Set(ctx context.Context, key, object any, options *store.Options) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Set", ctx, key, object, options)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Set indicates an expected call of Set.
+func (mr *MockCloseableCacheInterfaceMockRecorder) Set(ctx, key, object, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCloseableCacheInterface)(nil).Set), ctx, key, object, options)
 }

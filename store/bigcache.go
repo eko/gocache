@@ -42,7 +42,7 @@ func NewBigcache(client BigcacheClientInterface, options *Options) *BigcacheStor
 }
 
 // Get returns data stored from a given key
-func (s *BigcacheStore) Get(_ context.Context, key interface{}) (interface{}, error) {
+func (s *BigcacheStore) Get(_ context.Context, key any) (any, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
 		return nil, err
@@ -55,13 +55,13 @@ func (s *BigcacheStore) Get(_ context.Context, key interface{}) (interface{}, er
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *BigcacheStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (s *BigcacheStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	item, err := s.Get(ctx, key)
 	return item, 0, err
 }
 
 // Set defines data in Bigcache for given key identifier
-func (s *BigcacheStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
+func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options *Options) error {
 	if options == nil {
 		options = s.options
 	}
@@ -88,7 +88,7 @@ func (s *BigcacheStore) Set(ctx context.Context, key interface{}, value interfac
 	return nil
 }
 
-func (s *BigcacheStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (s *BigcacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(BigcacheTagPattern, tag)
 		var cacheKeys = []string{}
@@ -118,7 +118,7 @@ func (s *BigcacheStore) setTags(ctx context.Context, key interface{}, tags []str
 }
 
 // Delete removes data from Bigcache for given key identifier
-func (s *BigcacheStore) Delete(_ context.Context, key interface{}) error {
+func (s *BigcacheStore) Delete(_ context.Context, key any) error {
 	return s.client.Delete(key.(string))
 }
 

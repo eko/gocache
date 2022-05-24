@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/bradfitz/gomemcache/memcache"
 )
@@ -49,7 +50,7 @@ func NewMemcache(client MemcacheClientInterface, options *Options) *MemcacheStor
 }
 
 // Get returns data stored from a given key
-func (s *MemcacheStore) Get(_ context.Context, key interface{}) (interface{}, error) {
+func (s *MemcacheStore) Get(_ context.Context, key any) (any, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func (s *MemcacheStore) Get(_ context.Context, key interface{}) (interface{}, er
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *MemcacheStore) GetWithTTL(_ context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (s *MemcacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duration, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
 		return nil, 0, err
@@ -75,7 +76,7 @@ func (s *MemcacheStore) GetWithTTL(_ context.Context, key interface{}) (interfac
 }
 
 // Set defines data in Memcache for given key identifier
-func (s *MemcacheStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
+func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options *Options) error {
 	if options == nil {
 		options = s.options
 	}
@@ -98,7 +99,7 @@ func (s *MemcacheStore) Set(ctx context.Context, key interface{}, value interfac
 	return nil
 }
 
-func (s *MemcacheStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (s *MemcacheStore) setTags(ctx context.Context, key any, tags []string) {
 	group, ctx := errgroup.WithContext(ctx)
 	for _, tag := range tags {
 		currentTag := tag
@@ -120,7 +121,7 @@ func (s *MemcacheStore) setTags(ctx context.Context, key interface{}, tags []str
 	group.Wait()
 }
 
-func (s *MemcacheStore) addKeyToTagValue(tagKey string, key interface{}) error {
+func (s *MemcacheStore) addKeyToTagValue(tagKey string, key any) error {
 	var (
 		cacheKeys = []string{}
 		result    *memcache.Item
@@ -162,7 +163,7 @@ func (s *MemcacheStore) addKeyToTagValue(tagKey string, key interface{}) error {
 }
 
 // Delete removes data from Memcache for given key identifier
-func (s *MemcacheStore) Delete(_ context.Context, key interface{}) error {
+func (s *MemcacheStore) Delete(_ context.Context, key any) error {
 	return s.client.Delete(key.(string))
 }
 

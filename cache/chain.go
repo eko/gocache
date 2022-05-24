@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eko/gocache/v2/store"
+	"github.com/eko/gocache/v3/store"
 )
 
 const (
@@ -13,24 +13,24 @@ const (
 	ChainType = "chain"
 )
 
-type chainKeyValue struct {
-	key       interface{}
-	value     interface{}
+type chainKeyValue[T any] struct {
+	key       any
+	value     T
 	ttl       time.Duration
 	storeType *string
 }
 
 // ChainCache represents the configuration needed by a cache aggregator
-type ChainCache struct {
-	caches     []SetterCacheInterface
-	setChannel chan *chainKeyValue
+type ChainCache[T any] struct {
+	caches     []SetterCacheInterface[T]
+	setChannel chan *chainKeyValue[T]
 }
 
 // NewChain instantiates a new cache aggregator
-func NewChain(caches ...SetterCacheInterface) *ChainCache {
-	chain := &ChainCache{
+func NewChain[T any](caches ...SetterCacheInterface[T]) *ChainCache[T] {
+	chain := &ChainCache[T]{
 		caches:     caches,
-		setChannel: make(chan *chainKeyValue, 10000),
+		setChannel: make(chan *chainKeyValue[T], 10000),
 	}
 
 	go chain.setter()
@@ -39,7 +39,7 @@ func NewChain(caches ...SetterCacheInterface) *ChainCache {
 }
 
 // setter sets a value in available caches, until a given cache layer
-func (c *ChainCache) setter() {
+func (c *ChainCache[T]) setter() {
 	for item := range c.setChannel {
 		for _, cache := range c.caches {
 			if item.storeType != nil && *item.storeType == cache.GetCodec().GetStore().GetType() {
@@ -52,8 +52,8 @@ func (c *ChainCache) setter() {
 }
 
 // Get returns the object stored in cache if it exists
-func (c *ChainCache) Get(ctx context.Context, key interface{}) (interface{}, error) {
-	var object interface{}
+func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
+	var object T
 	var err error
 	var ttl time.Duration
 
@@ -62,7 +62,7 @@ func (c *ChainCache) Get(ctx context.Context, key interface{}) (interface{}, err
 		object, ttl, err = cache.GetWithTTL(ctx, key)
 		if err == nil {
 			// Set the value back until this cache layer
-			c.setChannel <- &chainKeyValue{key, object, ttl, &storeType}
+			c.setChannel <- &chainKeyValue[T]{key, object, ttl, &storeType}
 			return object, nil
 		}
 	}
@@ -71,7 +71,7 @@ func (c *ChainCache) Get(ctx context.Context, key interface{}) (interface{}, err
 }
 
 // Set sets a value in available caches
-func (c *ChainCache) Set(ctx context.Context, key, object interface{}, options *store.Options) error {
+func (c *ChainCache[T]) Set(ctx context.Context, key any, object T, options *store.Options) error {
 	for _, cache := range c.caches {
 		err := cache.Set(ctx, key, object, options)
 		if err != nil {
@@ -84,7 +84,7 @@ func (c *ChainCache) Set(ctx context.Context, key, object interface{}, options *
 }
 
 // Delete removes a value from all available caches
-func (c *ChainCache) Delete(ctx context.Context, key interface{}) error {
+func (c *ChainCache[T]) Delete(ctx context.Context, key any) error {
 	for _, cache := range c.caches {
 		cache.Delete(ctx, key)
 	}
@@ -93,7 +93,7 @@ func (c *ChainCache) Delete(ctx context.Context, key interface{}) error {
 }
 
 // Invalidate invalidates cache item from given options
-func (c *ChainCache) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+func (c *ChainCache[T]) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
 	for _, cache := range c.caches {
 		cache.Invalidate(ctx, options)
 	}
@@ -102,7 +102,7 @@ func (c *ChainCache) Invalidate(ctx context.Context, options store.InvalidateOpt
 }
 
 // Clear resets all cache data
-func (c *ChainCache) Clear(ctx context.Context) error {
+func (c *ChainCache[T]) Clear(ctx context.Context) error {
 	for _, cache := range c.caches {
 		cache.Clear(ctx)
 	}
@@ -111,11 +111,11 @@ func (c *ChainCache) Clear(ctx context.Context) error {
 }
 
 // GetCaches returns all Chained caches
-func (c *ChainCache) GetCaches() []SetterCacheInterface {
+func (c *ChainCache[T]) GetCaches() []SetterCacheInterface[T] {
 	return c.caches
 }
 
 // GetType returns the cache type
-func (c *ChainCache) GetType() string {
+func (c *ChainCache[T]) GetType() string {
 	return ChainType
 }

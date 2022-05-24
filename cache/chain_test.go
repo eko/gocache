@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/v2/store"
-	mocksCache "github.com/eko/gocache/v2/test/mocks/cache"
-	mocksCodec "github.com/eko/gocache/v2/test/mocks/codec"
-	mocksStore "github.com/eko/gocache/v2/test/mocks/store"
+	"github.com/eko/gocache/v3/store"
+	mocksCache "github.com/eko/gocache/v3/test/mocks/cache"
+	mocksCodec "github.com/eko/gocache/v3/test/mocks/codec"
+	mocksStore "github.com/eko/gocache/v3/test/mocks/store"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,12 +23,12 @@ func TestNewChain(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
 	// When
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// Then
-	assert.IsType(t, new(ChainCache), cache)
+	assert.IsType(t, new(ChainCache[any]), cache)
 
-	assert.Equal(t, []SetterCacheInterface{cache1, cache2}, cache.caches)
+	assert.Equal(t, []SetterCacheInterface[any]{cache1, cache2}, cache.caches)
 }
 
 func TestChainGetCaches(t *testing.T) {
@@ -38,13 +38,13 @@ func TestChainGetCaches(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	caches := cache.GetCaches()
 
 	// Then
-	assert.Equal(t, []SetterCacheInterface{cache1, cache2}, caches)
+	assert.Equal(t, []SetterCacheInterface[any]{cache1, cache2}, caches)
 
 	assert.Equal(t, cache1, caches[0])
 	assert.Equal(t, cache2, caches[1])
@@ -77,7 +77,7 @@ func TestChainGetWhenAvailableInFirstCache(t *testing.T) {
 	// Cache 2
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
@@ -131,7 +131,7 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue,
 		0*time.Second, nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
@@ -176,7 +176,7 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
 		errors.New("Unable to find in cache 2"))
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
@@ -208,7 +208,7 @@ func TestChainSet(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().Set(ctx, "my-key", cacheValue, options).Return(nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Set(ctx, "my-key", cacheValue, options)
@@ -247,7 +247,7 @@ func TestChainSetWhenErrorOnSetting(t *testing.T) {
 	// Cache 2
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Set(ctx, "my-key", cacheValue, options)
@@ -271,7 +271,7 @@ func TestChainDelete(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().Delete(ctx, "my-key").Return(nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Delete(ctx, "my-key")
@@ -294,7 +294,7 @@ func TestChainDeleteWhenError(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().Delete(ctx, "my-key").Return(nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Delete(ctx, "my-key")
@@ -321,7 +321,7 @@ func TestChainInvalidate(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().Invalidate(ctx, options).Return(nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Invalidate(ctx, options)
@@ -348,7 +348,7 @@ func TestChainInvalidateWhenError(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().Invalidate(ctx, options).Return(nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Invalidate(ctx, options)
@@ -371,7 +371,7 @@ func TestChainClear(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().Clear(ctx).Return(nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Clear(ctx)
@@ -394,7 +394,7 @@ func TestChainClearWhenError(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface(ctrl)
 	cache2.EXPECT().Clear(ctx).Return(nil)
 
-	cache := NewChain(cache1, cache2)
+	cache := NewChain[any](cache1, cache2)
 
 	// When
 	err := cache.Clear(ctx)
@@ -409,7 +409,7 @@ func TestChainGetType(t *testing.T) {
 
 	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
 
-	cache := NewChain(cache1)
+	cache := NewChain[any](cache1)
 
 	// When - Then
 	assert.Equal(t, ChainType, cache.GetType())
@@ -417,7 +417,7 @@ func TestChainGetType(t *testing.T) {
 
 func TestCacheChecksum(t *testing.T) {
 	testCases := []struct {
-		value        interface{}
+		value        any
 		expectedHash string
 	}{
 		{value: 273273623, expectedHash: "a187c153af38575778244cb3796536da"},

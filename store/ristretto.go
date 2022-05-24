@@ -17,9 +17,9 @@ const (
 
 // RistrettoClientInterface represents a dgraph-io/ristretto client
 type RistrettoClientInterface interface {
-	Get(key interface{}) (interface{}, bool)
-	SetWithTTL(key, value interface{}, cost int64, ttl time.Duration) bool
-	Del(key interface{})
+	Get(key any) (any, bool)
+	SetWithTTL(key, value any, cost int64, ttl time.Duration) bool
+	Del(key any)
 	Clear()
 }
 
@@ -42,7 +42,7 @@ func NewRistretto(client RistrettoClientInterface, options *Options) *RistrettoS
 }
 
 // Get returns data stored from a given key
-func (s *RistrettoStore) Get(_ context.Context, key interface{}) (interface{}, error) {
+func (s *RistrettoStore) Get(_ context.Context, key any) (any, error) {
 	var err error
 
 	value, exists := s.client.Get(key)
@@ -54,13 +54,13 @@ func (s *RistrettoStore) Get(_ context.Context, key interface{}) (interface{}, e
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *RistrettoStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (s *RistrettoStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	value, err := s.Get(ctx, key)
 	return value, 0, err
 }
 
 // Set defines data in Ristretto memoey cache for given key identifier
-func (s *RistrettoStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
+func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options *Options) error {
 	var err error
 
 	if options == nil {
@@ -82,7 +82,7 @@ func (s *RistrettoStore) Set(ctx context.Context, key interface{}, value interfa
 	return nil
 }
 
-func (s *RistrettoStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
 		var cacheKeys = []string{}
@@ -112,7 +112,7 @@ func (s *RistrettoStore) setTags(ctx context.Context, key interface{}, tags []st
 }
 
 // Delete removes data in Ristretto memoey cache for given key identifier
-func (s *RistrettoStore) Delete(_ context.Context, key interface{}) error {
+func (s *RistrettoStore) Delete(_ context.Context, key any) error {
 	s.client.Del(key)
 	return nil
 }

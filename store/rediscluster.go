@@ -13,10 +13,10 @@ type RedisClusterClientInterface interface {
 	Get(ctx context.Context, key string) *redis.StringCmd
 	TTL(ctx context.Context, key string) *redis.DurationCmd
 	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
-	Set(ctx context.Context, key string, values interface{}, expiration time.Duration) *redis.StatusCmd
+	Set(ctx context.Context, key string, values any, expiration time.Duration) *redis.StatusCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	FlushAll(ctx context.Context) *redis.StatusCmd
-	SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd
+	SAdd(ctx context.Context, key string, members ...any) *redis.IntCmd
 	SMembers(ctx context.Context, key string) *redis.StringSliceCmd
 }
 
@@ -46,12 +46,12 @@ func NewRedisCluster(client RedisClusterClientInterface, options *Options) *Redi
 }
 
 // Get returns data stored from a given key
-func (s *RedisClusterStore) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (s *RedisClusterStore) Get(ctx context.Context, key any) (any, error) {
 	return s.clusclient.Get(ctx, key.(string)).Result()
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *RedisClusterStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (s *RedisClusterStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	object, err := s.clusclient.Get(ctx, key.(string)).Result()
 	if err != nil {
 		return nil, 0, err
@@ -66,7 +66,7 @@ func (s *RedisClusterStore) GetWithTTL(ctx context.Context, key interface{}) (in
 }
 
 // Set defines data in Redis for given key identifier
-func (s *RedisClusterStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
+func (s *RedisClusterStore) Set(ctx context.Context, key any, value any, options *Options) error {
 	if options == nil {
 		options = s.options
 	}
@@ -83,7 +83,7 @@ func (s *RedisClusterStore) Set(ctx context.Context, key interface{}, value inte
 	return nil
 }
 
-func (s *RedisClusterStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (s *RedisClusterStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(RedisTagPattern, tag)
 		s.clusclient.SAdd(ctx, tagKey, key.(string))
@@ -92,7 +92,7 @@ func (s *RedisClusterStore) setTags(ctx context.Context, key interface{}, tags [
 }
 
 // Delete removes data from Redis for given key identifier
-func (s *RedisClusterStore) Delete(ctx context.Context, key interface{}) error {
+func (s *RedisClusterStore) Delete(ctx context.Context, key any) error {
 	_, err := s.clusclient.Del(ctx, key.(string)).Result()
 	return err
 }
