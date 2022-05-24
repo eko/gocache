@@ -110,29 +110,39 @@ func (mr *MockStoreInterfaceMockRecorder) GetWithTTL(ctx, key interface{}) *gomo
 }
 
 // Invalidate mocks base method.
-func (m *MockStoreInterface) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+func (m *MockStoreInterface) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Invalidate", ctx, options)
+	varargs := []interface{}{ctx}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Invalidate", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Invalidate indicates an expected call of Invalidate.
-func (mr *MockStoreInterfaceMockRecorder) Invalidate(ctx, options interface{}) *gomock.Call {
+func (mr *MockStoreInterfaceMockRecorder) Invalidate(ctx interface{}, options ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockStoreInterface)(nil).Invalidate), ctx, options)
+	varargs := append([]interface{}{ctx}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockStoreInterface)(nil).Invalidate), varargs...)
 }
 
 // Set mocks base method.
-func (m *MockStoreInterface) Set(ctx context.Context, key, value any, options *store.Options) error {
+func (m *MockStoreInterface) Set(ctx context.Context, key, value any, options ...store.Option) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", ctx, key, value, options)
+	varargs := []interface{}{ctx, key, value}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Set", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Set indicates an expected call of Set.
-func (mr *MockStoreInterfaceMockRecorder) Set(ctx, key, value, options interface{}) *gomock.Call {
+func (mr *MockStoreInterfaceMockRecorder) Set(ctx, key, value interface{}, options ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockStoreInterface)(nil).Set), ctx, key, value, options)
+	varargs := append([]interface{}{ctx, key, value}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockStoreInterface)(nil).Set), varargs...)
 }

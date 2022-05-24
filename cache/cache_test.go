@@ -35,23 +35,21 @@ func TestCacheSet(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := &store.Options{
-		Expiration: 5 * time.Second,
-	}
-
 	value := &struct {
 		Hello string
 	}{
 		Hello: "world",
 	}
 
-	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Set(ctx, "my-key", value, options).Return(nil)
+	mockedStore := mocksStore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Set(ctx, "my-key", value, store.OptionsMatcher{
+		Expiration: 5 * time.Second,
+	}).Return(nil)
 
-	cache := New[any](store)
+	cache := New[any](mockedStore)
 
 	// When
-	err := cache.Set(ctx, "my-key", value, options)
+	err := cache.Set(ctx, "my-key", value, store.WithExpiration(5*time.Second))
 	assert.Nil(t, err)
 }
 
@@ -61,10 +59,6 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := &store.Options{
-		Expiration: 5 * time.Second,
-	}
-
 	value := &struct {
 		Hello string
 	}{
@@ -73,13 +67,15 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 
 	storeErr := errors.New("An error has occurred while inserting data into store")
 
-	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Set(ctx, "my-key", value, options).Return(storeErr)
+	mockedStore := mocksStore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Set(ctx, "my-key", value, store.OptionsMatcher{
+		Expiration: 5 * time.Second,
+	}).Return(storeErr)
 
-	cache := New[any](store)
+	cache := New[any](mockedStore)
 
 	// When
-	err := cache.Set(ctx, "my-key", value, options)
+	err := cache.Set(ctx, "my-key", value, store.WithExpiration(5*time.Second))
 	assert.Equal(t, storeErr, err)
 }
 
@@ -291,17 +287,15 @@ func TestCacheInvalidate(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := store.InvalidateOptions{
+	mockedStore := mocksStore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{
 		Tags: []string{"tag1"},
-	}
+	}).Return(nil)
 
-	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Invalidate(ctx, options).Return(nil)
-
-	cache := New[any](store)
+	cache := New[any](mockedStore)
 
 	// When
-	err := cache.Invalidate(ctx, options)
+	err := cache.Invalidate(ctx, store.WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -313,19 +307,17 @@ func TestCacheInvalidateWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := store.InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
-
 	expectedErr := errors.New("Unexpected error during invalidation")
 
-	store := mocksStore.NewMockStoreInterface(ctrl)
-	store.EXPECT().Invalidate(ctx, options).Return(expectedErr)
+	mockedStore := mocksStore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{
+		Tags: []string{"tag1"},
+	}).Return(expectedErr)
 
-	cache := New[any](store)
+	cache := New[any](mockedStore)
 
 	// When
-	err := cache.Invalidate(ctx, options)
+	err := cache.Invalidate(ctx, store.WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Equal(t, expectedErr, err)

@@ -30,18 +30,14 @@ type FreecacheClientInterface interface {
 //FreecacheStore is a store for freecache
 type FreecacheStore struct {
 	client  FreecacheClientInterface
-	options *Options
+	options *options
 }
 
 // NewFreecache creates a new store to freecache instance(s)
-func NewFreecache(client FreecacheClientInterface, options *Options) *FreecacheStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewFreecache(client FreecacheClientInterface, options ...Option) *FreecacheStore {
 	return &FreecacheStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
@@ -83,14 +79,12 @@ func (f *FreecacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durat
 // If the key is larger than 65535 or value is larger than 1/1024 of the cache size,
 // the entry will not be written to the cache. expireSeconds <= 0 means no expire,
 // but it can be evicted when cache is full.
-func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options *Options) error {
+func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
 	var err error
 	var val []byte
 
 	// Using default options set during cache initialization
-	if options == nil {
-		options = f.options
-	}
+	opts := applyOptionsWithDefault(f.options, options...)
 
 	//type check for value, as freecache only supports value of type []byte
 	switch v := value.(type) {
@@ -101,11 +95,11 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options *O
 	}
 
 	if k, ok := key.(string); ok {
-		err = f.client.Set([]byte(k), val, int(options.Expiration.Seconds()))
+		err = f.client.Set([]byte(k), val, int(opts.expiration.Seconds()))
 		if err != nil {
 			return fmt.Errorf("size of key: %v, value: %v, err: %v", k, len(val), err)
 		}
-		if tags := options.TagsValue(); len(tags) > 0 {
+		if tags := opts.tags; len(tags) > 0 {
 			f.setTags(ctx, key, tags)
 		}
 		return nil
@@ -130,7 +124,7 @@ func (f *FreecacheStore) setTags(ctx context.Context, key any, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		f.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{Expiration: 720 * time.Hour})
+		f.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), WithExpiration(720*time.Hour))
 	}
 }
 
@@ -157,8 +151,10 @@ func (f *FreecacheStore) Delete(_ context.Context, key any) error {
 }
 
 // Invalidate invalidates some cache data in freecache for given options
-func (f *FreecacheStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (f *FreecacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(FreecacheTagPattern, tag)
 			var cacheKeys = f.getCacheKeysForTag(ctx, tagKey)

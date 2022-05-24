@@ -46,7 +46,7 @@ func (c *ChainCache[T]) setter() {
 				break
 			}
 
-			cache.Set(context.Background(), item.key, item.value, &store.Options{Expiration: item.ttl})
+			cache.Set(context.Background(), item.key, item.value, store.WithExpiration(item.ttl))
 		}
 	}
 }
@@ -71,9 +71,9 @@ func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
 }
 
 // Set sets a value in available caches
-func (c *ChainCache[T]) Set(ctx context.Context, key any, object T, options *store.Options) error {
+func (c *ChainCache[T]) Set(ctx context.Context, key any, object T, options ...store.Option) error {
 	for _, cache := range c.caches {
-		err := cache.Set(ctx, key, object, options)
+		err := cache.Set(ctx, key, object, options...)
 		if err != nil {
 			storeType := cache.GetCodec().GetStore().GetType()
 			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)
@@ -93,9 +93,9 @@ func (c *ChainCache[T]) Delete(ctx context.Context, key any) error {
 }
 
 // Invalidate invalidates cache item from given options
-func (c *ChainCache[T]) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
+func (c *ChainCache[T]) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
 	for _, cache := range c.caches {
-		cache.Invalidate(ctx, options)
+		cache.Invalidate(ctx, options...)
 	}
 
 	return nil

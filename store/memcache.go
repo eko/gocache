@@ -34,18 +34,14 @@ const (
 // MemcacheStore is a store for Memcache
 type MemcacheStore struct {
 	client  MemcacheClientInterface
-	options *Options
+	options *options
 }
 
 // NewMemcache creates a new store to Memcache instance(s)
-func NewMemcache(client MemcacheClientInterface, options *Options) *MemcacheStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewMemcache(client MemcacheClientInterface, options ...Option) *MemcacheStore {
 	return &MemcacheStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
@@ -76,15 +72,13 @@ func (s *MemcacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durati
 }
 
 // Set defines data in Memcache for given key identifier
-func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options *Options) error {
-	if options == nil {
-		options = s.options
-	}
+func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
+	opts := applyOptionsWithDefault(s.options, options...)
 
 	item := &memcache.Item{
 		Key:        key.(string),
 		Value:      value.([]byte),
-		Expiration: int32(options.ExpirationValue().Seconds()),
+		Expiration: int32(opts.expiration.Seconds()),
 	}
 
 	err := s.client.Set(item)
@@ -92,7 +86,7 @@ func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options *Op
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -168,8 +162,10 @@ func (s *MemcacheStore) Delete(_ context.Context, key any) error {
 }
 
 // Invalidate invalidates some cache data in Memcache for given options
-func (s *MemcacheStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *MemcacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(MemcacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

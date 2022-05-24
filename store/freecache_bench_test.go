@@ -14,10 +14,7 @@ func BenchmarkFreecacheSet(b *testing.B) {
 	ctx := context.Background()
 
 	c := freecache.NewCache(1000)
-	opts := &Options{
-		Expiration: 10 * time.Second,
-	}
-	freecacheStore := NewFreecache(c, opts)
+	freecacheStore := NewFreecache(c, WithExpiration(10*time.Second))
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
@@ -26,7 +23,7 @@ func BenchmarkFreecacheSet(b *testing.B) {
 				key := fmt.Sprintf("test-%d", n)
 				value := []byte(fmt.Sprintf("value-%d", n))
 
-				_ = freecacheStore.Set(ctx, key, value, nil)
+				_ = freecacheStore.Set(ctx, key, value)
 			}
 		})
 	}
@@ -36,14 +33,11 @@ func BenchmarkFreecacheGet(b *testing.B) {
 	ctx := context.Background()
 
 	c := freecache.NewCache(1000)
-	opts := &Options{
-		Expiration: 10 * time.Second,
-	}
-	freecacheStore := NewFreecache(c, opts)
+	freecacheStore := NewFreecache(c, WithExpiration(10*time.Second))
 	key := "test"
 	value := []byte("value")
 
-	err := freecacheStore.Set(ctx, key, value, nil)
+	err := freecacheStore.Set(ctx, key, value)
 	if err != nil {
 		b.Error(err)
 	}

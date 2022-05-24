@@ -30,18 +30,14 @@ const (
 // RedisStore is a store for Redis
 type RedisClusterStore struct {
 	clusclient RedisClusterClientInterface
-	options    *Options
+	options    *options
 }
 
 // NewRedis creates a new store to Redis instance(s)
-func NewRedisCluster(client RedisClusterClientInterface, options *Options) *RedisClusterStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewRedisCluster(client RedisClusterClientInterface, options ...Option) *RedisClusterStore {
 	return &RedisClusterStore{
 		clusclient: client,
-		options:    options,
+		options:    applyOptions(options...),
 	}
 }
 
@@ -66,17 +62,15 @@ func (s *RedisClusterStore) GetWithTTL(ctx context.Context, key any) (any, time.
 }
 
 // Set defines data in Redis for given key identifier
-func (s *RedisClusterStore) Set(ctx context.Context, key any, value any, options *Options) error {
-	if options == nil {
-		options = s.options
-	}
+func (s *RedisClusterStore) Set(ctx context.Context, key any, value any, options ...Option) error {
+	opts := applyOptionsWithDefault(s.options, options...)
 
-	err := s.clusclient.Set(ctx, key.(string), value, options.ExpirationValue()).Err()
+	err := s.clusclient.Set(ctx, key.(string), value, opts.expiration).Err()
 	if err != nil {
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -98,8 +92,10 @@ func (s *RedisClusterStore) Delete(ctx context.Context, key any) error {
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *RedisClusterStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *RedisClusterStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RedisTagPattern, tag)
 			cacheKeys, err := s.clusclient.SMembers(ctx, tagKey).Result()

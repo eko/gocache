@@ -26,18 +26,14 @@ const (
 // BigcacheStore is a store for Bigcache
 type BigcacheStore struct {
 	client  BigcacheClientInterface
-	options *Options
+	options *options
 }
 
 // NewBigcache creates a new store to Bigcache instance(s)
-func NewBigcache(client BigcacheClientInterface, options *Options) *BigcacheStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewBigcache(client BigcacheClientInterface, options ...Option) *BigcacheStore {
 	return &BigcacheStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
@@ -61,10 +57,8 @@ func (s *BigcacheStore) GetWithTTL(ctx context.Context, key any) (any, time.Dura
 }
 
 // Set defines data in Bigcache for given key identifier
-func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options *Options) error {
-	if options == nil {
-		options = s.options
-	}
+func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
+	opts := applyOptionsWithDefault(s.options, options...)
 
 	var val []byte
 	switch v := value.(type) {
@@ -81,7 +75,7 @@ func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options *Op
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -111,9 +105,7 @@ func (s *BigcacheStore) setTags(ctx context.Context, key any, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
-			Expiration: 720 * time.Hour,
-		})
+		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), WithExpiration(720*time.Hour))
 	}
 }
 
@@ -123,8 +115,10 @@ func (s *BigcacheStore) Delete(_ context.Context, key any) error {
 }
 
 // Invalidate invalidates some cache data in Bigcache for given options
-func (s *BigcacheStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *BigcacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(BigcacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

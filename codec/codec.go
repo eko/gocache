@@ -69,8 +69,8 @@ func (c *Codec) GetWithTTL(ctx context.Context, key any) (any, time.Duration, er
 
 // Set allows to set a value for a given key identifier and also allows to specify
 // an expiration time
-func (c *Codec) Set(ctx context.Context, key any, value any, options *store.Options) error {
-	err := c.store.Set(ctx, key, value, options)
+func (c *Codec) Set(ctx context.Context, key any, value any, options ...store.Option) error {
+	err := c.store.Set(ctx, key, value, options...)
 
 	c.statsMtx.Lock()
 	defer c.statsMtx.Unlock()
@@ -99,8 +99,8 @@ func (c *Codec) Delete(ctx context.Context, key any) error {
 }
 
 // Invalidate invalidates some cach items from given options
-func (c *Codec) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
-	err := c.store.Invalidate(ctx, options)
+func (c *Codec) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
+	err := c.store.Invalidate(ctx, options...)
 
 	c.statsMtx.Lock()
 	defer c.statsMtx.Unlock()

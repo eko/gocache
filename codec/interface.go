@@ -11,9 +11,9 @@ import (
 type CodecInterface interface {
 	Get(ctx context.Context, key any) (any, error)
 	GetWithTTL(ctx context.Context, key any) (any, time.Duration, error)
-	Set(ctx context.Context, key any, value any, options *store.Options) error
+	Set(ctx context.Context, key any, value any, options ...store.Option) error
 	Delete(ctx context.Context, key any) error
-	Invalidate(ctx context.Context, options store.InvalidateOptions) error
+	Invalidate(ctx context.Context, options ...store.InvalidateOption) error
 	Clear(ctx context.Context) error
 
 	GetStore() store.StoreInterface
