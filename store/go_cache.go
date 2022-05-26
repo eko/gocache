@@ -28,18 +28,14 @@ type GoCacheClientInterface interface {
 type GoCacheStore struct {
 	mu      sync.RWMutex
 	client  GoCacheClientInterface
-	options *Options
+	options *options
 }
 
 // NewGoCache creates a new store to GoCache (memory) library instance
-func NewGoCache(client GoCacheClientInterface, options *Options) *GoCacheStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewGoCache(client GoCacheClientInterface, options ...Option) *GoCacheStore {
 	return &GoCacheStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
@@ -66,15 +62,16 @@ func (s *GoCacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duratio
 }
 
 // Set defines data in GoCache memoey cache for given key identifier
-func (s *GoCacheStore) Set(ctx context.Context, key any, value any, options *Options) error {
+func (s *GoCacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
 
-	if options == nil {
-		options = s.options
+	opts := applyOptions(options...)
+	if opts == nil {
+		opts = s.options
 	}
 
-	s.client.Set(key.(string), value, options.ExpirationValue())
+	s.client.Set(key.(string), value, opts.expiration)
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -118,8 +115,10 @@ func (s *GoCacheStore) Delete(_ context.Context, key any) error {
 }
 
 // Invalidate invalidates some cache data in GoCache memoey cache for given options
-func (s *GoCacheStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *GoCacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(GoCacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

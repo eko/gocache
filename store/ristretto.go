@@ -26,18 +26,14 @@ type RistrettoClientInterface interface {
 // RistrettoStore is a store for Ristretto (memory) library
 type RistrettoStore struct {
 	client  RistrettoClientInterface
-	options *Options
+	options *options
 }
 
 // NewRistretto creates a new store to Ristretto (memory) library instance
-func NewRistretto(client RistrettoClientInterface, options *Options) *RistrettoStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewRistretto(client RistrettoClientInterface, options ...Option) *RistrettoStore {
 	return &RistrettoStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
@@ -60,14 +56,12 @@ func (s *RistrettoStore) GetWithTTL(ctx context.Context, key any) (any, time.Dur
 }
 
 // Set defines data in Ristretto memoey cache for given key identifier
-func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options *Options) error {
+func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ...Option) error {
+	opts := applyOptionsWithDefault(s.options, options...)
+
 	var err error
 
-	if options == nil {
-		options = s.options
-	}
-
-	if set := s.client.SetWithTTL(key, value, options.CostValue(), options.ExpirationValue()); !set {
+	if set := s.client.SetWithTTL(key, value, opts.cost, opts.expiration); !set {
 		err = fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", value, key)
 	}
 
@@ -75,7 +69,7 @@ func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options *O
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -105,9 +99,7 @@ func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
-			Expiration: 720 * time.Hour,
-		})
+		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), WithExpiration(720*time.Hour))
 	}
 }
 
@@ -118,8 +110,10 @@ func (s *RistrettoStore) Delete(_ context.Context, key any) error {
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *RistrettoStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *RistrettoStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

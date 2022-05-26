@@ -72,8 +72,8 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 }
 
 // Set sets a value in available caches
-func (c *LoadableCache[T]) Set(ctx context.Context, key any, object T, options *store.Options) error {
-	return c.cache.Set(ctx, key, object, options)
+func (c *LoadableCache[T]) Set(ctx context.Context, key any, object T, options ...store.Option) error {
+	return c.cache.Set(ctx, key, object, options...)
 }
 
 // Delete removes a value from cache
@@ -82,8 +82,8 @@ func (c *LoadableCache[T]) Delete(ctx context.Context, key any) error {
 }
 
 // Invalidate invalidates cache item from given options
-func (c *LoadableCache[T]) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
-	return c.cache.Invalidate(ctx, options)
+func (c *LoadableCache[T]) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
+	return c.cache.Invalidate(ctx, options...)
 }
 
 // Clear resets all cache data

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/v3/store"
 	mocksCache "github.com/eko/gocache/v3/test/mocks/cache"
 	mocksCodec "github.com/eko/gocache/v3/test/mocks/codec"
 	mocksMetrics "github.com/eko/gocache/v3/test/mocks/metrics"
@@ -19,7 +18,7 @@ func TestNewMetric(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
 
 	// When
@@ -45,7 +44,7 @@ func TestMetricGet(t *testing.T) {
 	}
 
 	codec1 := mocksCodec.NewMockCodecInterface(ctrl)
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
 	cache1.EXPECT().GetCodec().Return(codec1)
 
@@ -80,7 +79,7 @@ func TestMetricGetWhenChainCache(t *testing.T) {
 	codec1 := mocksCodec.NewMockCodecInterface(ctrl)
 	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue,
 		0*time.Second, nil)
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
@@ -112,19 +111,15 @@ func TestMetricSet(t *testing.T) {
 		Hello: "world",
 	}
 
-	options := &store.Options{
-		Expiration: 5 * time.Second,
-	}
-
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
-	cache1.EXPECT().Set(ctx, "my-key", value, options).Return(nil)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().Set(ctx, "my-key", value).Return(nil)
 
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
 
 	cache := NewMetric[any](metrics, cache1)
 
 	// When
-	err := cache.Set(ctx, "my-key", value, options)
+	err := cache.Set(ctx, "my-key", value)
 
 	// Then
 	assert.Nil(t, err)
@@ -136,7 +131,7 @@ func TestMetricDelete(t *testing.T) {
 
 	ctx := context.Background()
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
@@ -158,7 +153,7 @@ func TestMetricDeleteWhenError(t *testing.T) {
 
 	expectedErr := errors.New("Unable to delete key")
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
@@ -178,19 +173,15 @@ func TestMetricInvalidate(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := store.InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
-
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
-	cache1.EXPECT().Invalidate(ctx, options).Return(nil)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().Invalidate(ctx).Return(nil)
 
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
 
 	cache := NewMetric[any](metrics, cache1)
 
 	// When
-	err := cache.Invalidate(ctx, options)
+	err := cache.Invalidate(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -202,21 +193,17 @@ func TestMetricInvalidateWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := store.InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
-
 	expectedErr := errors.New("Unexpected error while invalidating data")
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
-	cache1.EXPECT().Invalidate(ctx, options).Return(expectedErr)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().Invalidate(ctx).Return(expectedErr)
 
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
 
 	cache := NewMetric[any](metrics, cache1)
 
 	// When
-	err := cache.Invalidate(ctx, options)
+	err := cache.Invalidate(ctx)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -228,7 +215,7 @@ func TestMetricClear(t *testing.T) {
 
 	ctx := context.Background()
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(nil)
 
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
@@ -250,7 +237,7 @@ func TestMetricClearWhenError(t *testing.T) {
 
 	expectedErr := errors.New("Unexpected error while clearing cache")
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(expectedErr)
 
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
@@ -268,7 +255,7 @@ func TestMetricGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	cache1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	metrics := mocksMetrics.NewMockMetricsInterface(ctrl)
 
 	cache := NewMetric[any](metrics, cache1)

@@ -131,6 +131,10 @@ github.com/stretchr/testify/assert
 ## explicit
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
+# golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf
+## explicit; go 1.18
+golang.org/x/exp/constraints
+golang.org/x/exp/slices
 # golang.org/x/net v0.0.0-20220412020605-290c469a71a5
 ## explicit; go 1.17
 golang.org/x/net/context

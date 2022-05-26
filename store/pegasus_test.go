@@ -90,7 +90,7 @@ func TestPegasusStore_Get(t *testing.T) {
 		defer p.Close()
 
 		k, v := "test-gocache-key", "test-gocache-value"
-		p.Set(ctx, k, v, &Options{})
+		p.Set(ctx, k, v)
 		value, err := p.Get(ctx, k)
 		So(cast.ToString(value), ShouldEqual, v)
 		So(err, ShouldBeNil)
@@ -108,7 +108,7 @@ func TestPegasusStore_GetWithTTL(t *testing.T) {
 
 		Convey("test set ttl that not achieve", func() {
 			k, v, retention := "test-gocache-key-01", "test-gocache-value", time.Minute*10
-			p.Set(ctx, k, v, &Options{Expiration: retention})
+			p.Set(ctx, k, v, WithExpiration(retention))
 
 			value, ttl, err := p.GetWithTTL(ctx, k)
 			So(cast.ToString(value), ShouldEqual, v)
@@ -117,7 +117,7 @@ func TestPegasusStore_GetWithTTL(t *testing.T) {
 		})
 		Convey("test no ttl", func() {
 			k, v := "test-gocache-key-02", "test-gocache-value"
-			p.Set(ctx, k, v, &Options{})
+			p.Set(ctx, k, v)
 
 			value, ttl, err := p.GetWithTTL(ctx, k)
 			So(cast.ToString(value), ShouldEqual, v)
@@ -126,7 +126,7 @@ func TestPegasusStore_GetWithTTL(t *testing.T) {
 		})
 		Convey("test set ttl that already achieve", func() {
 			k, v, retention := "test-gocache-key-03", "test-gocache-value", time.Millisecond*10
-			p.Set(ctx, k, v, &Options{Expiration: retention})
+			p.Set(ctx, k, v, WithExpiration(retention))
 			time.Sleep(time.Second * 1)
 
 			value, ttl, err := p.GetWithTTL(ctx, k)
@@ -147,7 +147,7 @@ func TestPegasusStore_Set(t *testing.T) {
 		defer p.Close()
 
 		k, v := "test-gocache-key", "test-gocache-value"
-		err := p.Set(ctx, k, v, &Options{})
+		err := p.Set(ctx, k, v)
 		So(err, ShouldBeNil)
 	})
 }
@@ -177,7 +177,7 @@ func TestPegasusStore_Delete(t *testing.T) {
 		defer p.Close()
 
 		k, v := "test-gocache-key", "test-gocache-value"
-		p.Set(ctx, k, v, &Options{})
+		p.Set(ctx, k, v)
 
 		err := p.Delete(ctx, k)
 		So(err, ShouldBeNil)
@@ -193,7 +193,7 @@ func TestPegasusStore_Invalidate(t *testing.T) {
 		p, _ := NewPegasus(ctx, testPegasusOptions())
 		defer p.Close()
 
-		err := p.Invalidate(ctx, InvalidateOptions{})
+		err := p.Invalidate(ctx)
 		So(err, ShouldBeNil)
 	})
 }
@@ -209,8 +209,8 @@ func TestPegasusStore_Clear(t *testing.T) {
 
 		k1, v1 := "test-gocache-key-01", "test-gocache-value"
 		k2, v2 := "test-gocache-key-01", "test-gocache-value"
-		p.Set(ctx, k1, v1, &Options{})
-		p.Set(ctx, k2, v2, &Options{})
+		p.Set(ctx, k1, v1)
+		p.Set(ctx, k2, v2)
 
 		err := p.Clear(ctx)
 		So(err, ShouldBeNil)

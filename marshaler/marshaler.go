@@ -42,13 +42,13 @@ func (c *Marshaler) Get(ctx context.Context, key any, returnObj any) (any, error
 }
 
 // Set sets a value in cache by marshaling value
-func (c *Marshaler) Set(ctx context.Context, key, object any, options *store.Options) error {
+func (c *Marshaler) Set(ctx context.Context, key, object any, options ...store.Option) error {
 	bytes, err := msgpack.Marshal(object)
 	if err != nil {
 		return err
 	}
 
-	return c.cache.Set(ctx, key, bytes, options)
+	return c.cache.Set(ctx, key, bytes, options...)
 }
 
 // Delete removes a value from the cache
@@ -57,8 +57,8 @@ func (c *Marshaler) Delete(ctx context.Context, key any) error {
 }
 
 // Invalidate invalidate cache values using given options
-func (c *Marshaler) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
-	return c.cache.Invalidate(ctx, options)
+func (c *Marshaler) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
+	return c.cache.Invalidate(ctx, options...)
 }
 
 // Clear reset all cache data

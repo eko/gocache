@@ -18,17 +18,13 @@ func TestNewGoCache(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
-	options := &Options{
-		Cost: 8,
-	}
-
 	// When
-	store := NewGoCache(client, options)
+	store := NewGoCache(client, WithCost(8))
 
 	// Then
 	assert.IsType(t, new(GoCacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, options, store.options)
+	assert.Equal(t, &options{cost: 8}, store.options)
 }
 
 func TestGoCacheGet(t *testing.T) {
@@ -43,7 +39,7 @@ func TestGoCacheGet(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(cacheValue, true)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
 	value, err := store.Get(ctx, cacheKey)
@@ -64,7 +60,7 @@ func TestGoCacheGetWhenError(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(nil, false)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
 	value, err := store.Get(ctx, cacheKey)
@@ -86,7 +82,7 @@ func TestGoCacheGetWithTTL(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().GetWithExpiration(cacheKey).Return(cacheValue, time.Now(), true)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
@@ -108,7 +104,7 @@ func TestGoCacheGetWithTTLWhenError(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().GetWithExpiration(cacheKey).Return(nil, time.Now(), false)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
@@ -127,17 +123,14 @@ func TestGoCacheSet(t *testing.T) {
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
-	options := &Options{}
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Set(cacheKey, cacheValue, 0*time.Second)
 
-	store := NewGoCache(client, options)
+	store := NewGoCache(client)
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, &Options{
-		Cost: 4,
-	})
+	err := store.Set(ctx, cacheKey, cacheValue, WithCost(4))
 
 	// Then
 	assert.Nil(t, err)
@@ -151,15 +144,14 @@ func TestGoCacheSetWhenNoOptionsGiven(t *testing.T) {
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
-	options := &Options{}
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Set(cacheKey, cacheValue, 0*time.Second)
 
-	store := NewGoCache(client, options)
+	store := NewGoCache(client)
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue)
 
 	// Then
 	assert.Nil(t, err)
@@ -180,10 +172,10 @@ func TestGoCacheSetWithTags(t *testing.T) {
 	var cacheKeys = map[string]struct{}{"my-key": {}}
 	client.EXPECT().Set("gocache_tag_tag1", cacheKeys, 720*time.Hour)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, WithTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -204,10 +196,10 @@ func TestGoCacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	var cacheKeys = map[string]struct{}{"my-key": {}, "a-second-key": {}}
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, true)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, WithTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -224,7 +216,7 @@ func TestGoCacheDelete(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Delete(cacheKey)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
 	err := store.Delete(ctx, cacheKey)
@@ -239,10 +231,6 @@ func TestGoCacheInvalidate(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
-
 	var cacheKeys = map[string]struct{}{"a23fdf987h2svc23": {}, "jHG2372x38hf74": {}}
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
@@ -250,10 +238,10 @@ func TestGoCacheInvalidate(t *testing.T) {
 	client.EXPECT().Delete("a23fdf987h2svc23")
 	client.EXPECT().Delete("jHG2372x38hf74")
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
-	err := store.Invalidate(ctx, options)
+	err := store.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -265,19 +253,15 @@ func TestGoCacheInvalidateWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
-
 	cacheKeys := []byte("a23fdf987h2svc23,jHG2372x38hf74")
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, false)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
-	err := store.Invalidate(ctx, options)
+	err := store.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -292,7 +276,7 @@ func TestGoCacheClear(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Flush()
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When
 	err := store.Clear(ctx)
@@ -307,7 +291,7 @@ func TestGoCacheGetType(t *testing.T) {
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	// When - Then
 	assert.Equal(t, GoCacheType, store.GetType())
@@ -317,16 +301,19 @@ func TestGoCacheSetTagsConcurrency(t *testing.T) {
 	ctx := context.Background()
 
 	client := cache.New(10*time.Second, 30*time.Second)
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	for i := 0; i < 200; i++ {
 		go func(i int) {
 
 			key := fmt.Sprintf("%d", i)
 
-			err := store.Set(ctx, key, []string{"one", "two"}, &Options{
-				Tags: []string{"tag1", "tag2", "tag3"},
-			})
+			err := store.Set(
+				ctx,
+				key,
+				[]string{"one", "two"},
+				WithTags([]string{"tag1", "tag2", "tag3"}),
+			)
 			assert.Nil(t, err, err)
 		}(i)
 	}
@@ -336,7 +323,7 @@ func TestGoCacheInvalidateConcurrency(t *testing.T) {
 	ctx := context.Background()
 
 	client := cache.New(10*time.Second, 30*time.Second)
-	store := NewGoCache(client, nil)
+	store := NewGoCache(client)
 
 	var tags []string
 	for i := 0; i < 200; i++ {
@@ -348,16 +335,12 @@ func TestGoCacheInvalidateConcurrency(t *testing.T) {
 		go func(i int) {
 			key := fmt.Sprintf("%d", i)
 
-			err := store.Set(ctx, key, []string{"one", "two"}, &Options{
-				Tags: tags,
-			})
+			err := store.Set(ctx, key, []string{"one", "two"}, WithTags(tags))
 			assert.Nil(t, err, err)
 		}(i)
 
 		go func(i int) {
-			err := store.Invalidate(ctx, InvalidateOptions{
-				Tags: []string{fmt.Sprintf("tag%d", i)},
-			})
+			err := store.Invalidate(ctx, WithInvalidateTags([]string{fmt.Sprintf("tag%d", i)}))
 			assert.Nil(t, err, err)
 		}(i)
 

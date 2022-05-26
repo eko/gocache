@@ -36,8 +36,8 @@ func (c *MetricCache[T]) Get(ctx context.Context, key any) (T, error) {
 }
 
 // Set sets a value from the cache
-func (c *MetricCache[T]) Set(ctx context.Context, key any, object T, options *store.Options) error {
-	return c.cache.Set(ctx, key, object, options)
+func (c *MetricCache[T]) Set(ctx context.Context, key any, object T, options ...store.Option) error {
+	return c.cache.Set(ctx, key, object, options...)
 }
 
 // Delete removes a value from the cache
@@ -46,8 +46,8 @@ func (c *MetricCache[T]) Delete(ctx context.Context, key any) error {
 }
 
 // Invalidate invalidates cache item from given options
-func (c *MetricCache[T]) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
-	return c.cache.Invalidate(ctx, options)
+func (c *MetricCache[T]) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
+	return c.cache.Invalidate(ctx, options...)
 }
 
 // Clear resets all cache data

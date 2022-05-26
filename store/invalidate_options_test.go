@@ -8,10 +8,10 @@ import (
 
 func TestInvalidateOptionsTagsValue(t *testing.T) {
 	// Given
-	options := InvalidateOptions{
-		Tags: []string{"tag1", "tag2", "tag3"},
+	options := invalidateOptions{
+		tags: []string{"tag1", "tag2", "tag3"},
 	}
 
 	// When - Then
-	assert.Equal(t, []string{"tag1", "tag2", "tag3"}, options.TagsValue())
+	assert.Equal(t, []string{"tag1", "tag2", "tag3"}, options.tags)
 }

@@ -48,15 +48,13 @@ Here is a simple cache instantiation with Redis but you can also look at other a
 ```go
 memcacheStore := store.NewMemcache(
 	memcache.New("10.0.0.1:11211", "10.0.0.2:11211", "10.0.0.3:11212"),
-	&store.Options{
-		Expiration: 10*time.Second,
-	},
+	store.WithExpiration(10*time.Second),
 )
 
 cacheManager := cache.New[[]byte](memcacheStore)
-err := cacheManager.Set(ctx, "my-key", []byte("my-value"), &store.Options{
-	Expiration: 15*time.Second, // Override default value of 10 seconds defined in the store
-})
+err := cacheManager.Set(ctx, "my-key", []byte("my-value"),
+	store.WithExpiration(15*time.Second), // Override default value of 10 seconds defined in the store
+)
 if err != nil {
     panic(err)
 }
@@ -72,10 +70,10 @@ cacheManager.Clear(ctx) // Clears the entire cache, in case you want to flush al
 
 ```go
 bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute))
-bigcacheStore := store.NewBigcache(bigcacheClient, nil) // No options provided (as second argument)
+bigcacheStore := store.NewBigcache(bigcacheClient)
 
 cacheManager := cache.New[[]byte](bigcacheStore)
-err := cacheManager.Set(ctx, "my-key", []byte("my-value"), nil)
+err := cacheManager.Set(ctx, "my-key", []byte("my-value"))
 if err != nil {
     panic(err)
 }
@@ -94,10 +92,10 @@ ristrettoCache, err := ristretto.NewCache(&ristretto.Config{
 if err != nil {
     panic(err)
 }
-ristrettoStore := store.NewRistretto(ristrettoCache, nil)
+ristrettoStore := store.NewRistretto(ristrettoCache)
 
 cacheManager := cache.New[string](ristrettoStore)
-err := cacheManager.Set(ctx, "my-key", "my-value", &store.Options{Cost: 2})
+err := cacheManager.Set(ctx, "my-key", "my-value", store.WithCost(2))
 if err != nil {
     panic(err)
 }
@@ -111,10 +109,10 @@ cacheManager.Delete(ctx, "my-key")
 
 ```go
 gocacheClient := gocache.New(5*time.Minute, 10*time.Minute)
-gocacheStore := store.NewGoCache(gocacheClient, nil)
+gocacheStore := store.NewGoCache(gocacheClient)
 
 cacheManager := cache.New[[]byte](gocacheStore)
-err := cacheManager.Set(ctx, "my-key", []byte("my-value"), nil)
+err := cacheManager.Set(ctx, "my-key", []byte("my-value"))
 if err != nil {
 	panic(err)
 }
@@ -131,10 +129,10 @@ fmt.Printf("%s", value)
 ```go
 redisStore := store.NewRedis(redis.NewClient(&redis.Options{
 	Addr: "127.0.0.1:6379",
-}), nil)
+}))
 
 cacheManager := cache.New[string](redisStore)
-err := cacheManager.Set("my-key", "my-value", &store.Options{Expiration: 15*time.Second})
+err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
 if err != nil {
     panic(err)
 }
@@ -153,9 +151,7 @@ switch err {
 #### Freecache
 
 ```go
-freecacheStore := store.NewFreecache(freecache.NewCache(1000), &Options{
-	Expiration: 10 * time.Second,
-})
+freecacheStore := store.NewFreecache(freecache.NewCache(1000), store.WithExpiration(10 * time.Second))
 
 cacheManager := cache.New[[]byte](freecacheStore)
 err := cacheManager.Set(ctx, "by-key", []byte("my-value"), opts)
@@ -179,9 +175,7 @@ if err != nil {
 }
 
 cacheManager := cache.New[string](pegasusStore)
-err = cacheManager.Set(ctx, "my-key", "my-value", &store.Options{
-    Expiration: 10 * time.Second,
-})
+err = cacheManager.Set(ctx, "my-key", "my-value", store.WithExpiration(10 * time.Second))
 if err != nil {
     panic(err)
 }
@@ -203,8 +197,8 @@ if err != nil {
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 
 // Initialize stores
-ristrettoStore := store.NewRistretto(ristrettoCache, nil)
-redisStore := store.NewRedis(redisClient, &store.Options{Expiration: 5*time.Second})
+ristrettoStore := store.NewRistretto(ristrettoCache)
+redisStore := store.NewRedis(redisClient, store.WithExpiration(5*time.Second))
 
 // Initialize chained cache
 cacheManager := cache.NewChain[any](
@@ -229,7 +223,7 @@ type Book struct {
 
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initialize a load function that loads your data from a custom source
 loadFunction := func(ctx context.Context, key any) (*Book, error) {
@@ -255,7 +249,7 @@ This cache will record metrics depending on the metric provider you pass to it. 
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initializes Prometheus metrics service
 promMetrics := metrics.NewPrometheus("my-test-app")
@@ -276,7 +270,7 @@ Some caches like Redis stores and returns the value as a string so you have to m
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
 cacheManager := cache.NewMetric[any](
@@ -319,7 +313,7 @@ Here is an example on how to use it:
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
 cacheManager := cache.NewMetric[*Book](
@@ -334,13 +328,13 @@ key := BookQuery{Slug: "my-test-amazing-book"}
 value := &Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
 
 // Set an item in the cache and attach it a "book" tag
-err = marshal.Set(ctx, key, value, store.Options{Tags: []string{"book"}})
+err = marshal.Set(ctx, key, value, store.WithTags([]string{"book"}))
 if err != nil {
     panic(err)
 }
 
 // Remove all items that have the "book" tag
-err := marshal.Invalidate(ctx, store.InvalidateOptions{Tags: []string{"book"}})
+err := marshal.Invalidate(ctx, store.WithInvalidateTags([]string{"book"}))
 if err != nil {
     panic(err)
 }
@@ -370,7 +364,7 @@ func main() {
 	}), nil)
 
 	cacheManager := cache.New[string](redisStore)
-	err := cacheManager.Set("my-key", "my-value", &store.Options{Expiration: 15*time.Second})
+	err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
 	if err != nil {
 		panic(err)
 	}
@@ -411,9 +405,9 @@ Cache respect the following interface so you can write your own (proprietary?) c
 ```go
 type CacheInterface[T any] interface {
 	Get(ctx context.Context, key any) (T, error)
-	Set(ctx context.Context, key any, object T, options *store.Options) error
+	Set(ctx context.Context, key any, object T, options ...store.Option) error
 	Delete(ctx context.Context, key any) error
-	Invalidate(ctx context.Context, options store.InvalidateOptions) error
+	Invalidate(ctx context.Context, options ...store.InvalidateOption) error
 	Clear(ctx context.Context) error
 	GetType() string
 }
@@ -440,9 +434,9 @@ You also have the ability to write your own custom store by implementing the fol
 type StoreInterface interface {
 	Get(ctx context.Context, key any) (any, error)
 	GetWithTTL(ctx context.Context, key any) (any, time.Duration, error)
-	Set(ctx context.Context, key any, value any, options *Options) error
+	Set(ctx context.Context, key any, value any, options ...Option) error
 	Delete(ctx context.Context, key any) error
-	Invalidate(ctx context.Context, options InvalidateOptions) error
+	Invalidate(ctx context.Context, options ...InvalidateOption) error
 	Clear(ctx context.Context) error
 	GetType() string
 }

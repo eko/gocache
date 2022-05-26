@@ -61,9 +61,9 @@ func (c *Cache[T]) GetWithTTL(ctx context.Context, key any) (T, time.Duration, e
 }
 
 // Set populates the cache item using the given key
-func (c *Cache[T]) Set(ctx context.Context, key any, object T, options *store.Options) error {
+func (c *Cache[T]) Set(ctx context.Context, key any, object T, options ...store.Option) error {
 	cacheKey := c.getCacheKey(key)
-	return c.codec.Set(ctx, cacheKey, object, options)
+	return c.codec.Set(ctx, cacheKey, object, options...)
 }
 
 // Delete removes the cache item using the given key
@@ -73,8 +73,8 @@ func (c *Cache[T]) Delete(ctx context.Context, key any) error {
 }
 
 // Invalidate invalidates cache item from given options
-func (c *Cache[T]) Invalidate(ctx context.Context, options store.InvalidateOptions) error {
-	return c.codec.Invalidate(ctx, options)
+func (c *Cache[T]) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
+	return c.codec.Invalidate(ctx, options...)
 }
 
 // Clear resets all cache data
