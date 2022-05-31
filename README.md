@@ -20,6 +20,7 @@ Here is what it brings in detail:
 * ✅ A marshaler to automatically marshal/unmarshal your cache values as a struct
 * ✅ Define default values in stores and override them when setting data
 * ✅ Cache invalidation by expiration time and/or using tags
+* ✅ Use of Generics
 
 ## Built-in stores
 
@@ -47,15 +48,13 @@ Here is a simple cache instantiation with Redis but you can also look at other a
 ```go
 memcacheStore := store.NewMemcache(
 	memcache.New("10.0.0.1:11211", "10.0.0.2:11211", "10.0.0.3:11212"),
-	&store.Options{
-		Expiration: 10*time.Second,
-	},
+	store.WithExpiration(10*time.Second),
 )
 
-cacheManager := cache.New(memcacheStore)
-err := cacheManager.Set(ctx, "my-key", []byte("my-value"), &store.Options{
-	Expiration: 15*time.Second, // Override default value of 10 seconds defined in the store
-})
+cacheManager := cache.New[[]byte](memcacheStore)
+err := cacheManager.Set(ctx, "my-key", []byte("my-value"),
+	store.WithExpiration(15*time.Second), // Override default value of 10 seconds defined in the store
+)
 if err != nil {
     panic(err)
 }
@@ -71,10 +70,10 @@ cacheManager.Clear(ctx) // Clears the entire cache, in case you want to flush al
 
 ```go
 bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute))
-bigcacheStore := store.NewBigcache(bigcacheClient, nil) // No options provided (as second argument)
+bigcacheStore := store.NewBigcache(bigcacheClient)
 
-cacheManager := cache.New(bigcacheStore)
-err := cacheManager.Set(ctx, "my-key", []byte("my-value"), nil)
+cacheManager := cache.New[[]byte](bigcacheStore)
+err := cacheManager.Set(ctx, "my-key", []byte("my-value"))
 if err != nil {
     panic(err)
 }
@@ -93,10 +92,10 @@ ristrettoCache, err := ristretto.NewCache(&ristretto.Config{
 if err != nil {
     panic(err)
 }
-ristrettoStore := store.NewRistretto(ristrettoCache, nil)
+ristrettoStore := store.NewRistretto(ristrettoCache)
 
-cacheManager := cache.New(ristrettoStore)
-err := cacheManager.Set(ctx, "my-key", "my-value", &store.Options{Cost: 2})
+cacheManager := cache.New[string](ristrettoStore)
+err := cacheManager.Set(ctx, "my-key", "my-value", store.WithCost(2))
 if err != nil {
     panic(err)
 }
@@ -110,10 +109,10 @@ cacheManager.Delete(ctx, "my-key")
 
 ```go
 gocacheClient := gocache.New(5*time.Minute, 10*time.Minute)
-gocacheStore := store.NewGoCache(gocacheClient, nil)
+gocacheStore := store.NewGoCache(gocacheClient)
 
-cacheManager := cache.New(gocacheStore)
-err := cacheManager.Set(ctx, "my-key", []byte("my-value"), nil)
+cacheManager := cache.New[[]byte](gocacheStore)
+err := cacheManager.Set(ctx, "my-key", []byte("my-value"))
 if err != nil {
 	panic(err)
 }
@@ -130,10 +129,10 @@ fmt.Printf("%s", value)
 ```go
 redisStore := store.NewRedis(redis.NewClient(&redis.Options{
 	Addr: "127.0.0.1:6379",
-}), nil)
+}))
 
-cacheManager := cache.New(redisStore)
-err := cacheManager.Set("my-key", "my-value", &store.Options{Expiration: 15*time.Second})
+cacheManager := cache.New[string](redisStore)
+err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
 if err != nil {
     panic(err)
 }
@@ -152,11 +151,9 @@ switch err {
 #### Freecache
 
 ```go
-freecacheStore := store.NewFreecache(freecache.NewCache(1000), &Options{
-	Expiration: 10 * time.Second,
-})
+freecacheStore := store.NewFreecache(freecache.NewCache(1000), store.WithExpiration(10 * time.Second))
 
-cacheManager := cache.New(freecacheStore)
+cacheManager := cache.New[[]byte](freecacheStore)
 err := cacheManager.Set(ctx, "by-key", []byte("my-value"), opts)
 if err != nil {
     panic(err)
@@ -177,10 +174,8 @@ if err != nil {
     return
 }
 
-cacheManager := cache.New(pegasusStore)
-err = cacheManager.Set(ctx, "my-key", "my-value", &store.Options{
-    Expiration: 10 * time.Second,
-})
+cacheManager := cache.New[string](pegasusStore)
+err = cacheManager.Set(ctx, "my-key", "my-value", store.WithExpiration(10 * time.Second))
 if err != nil {
     panic(err)
 }
@@ -202,13 +197,13 @@ if err != nil {
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 
 // Initialize stores
-ristrettoStore := store.NewRistretto(ristrettoCache, nil)
-redisStore := store.NewRedis(redisClient, &store.Options{Expiration: 5*time.Second})
+ristrettoStore := store.NewRistretto(ristrettoCache)
+redisStore := store.NewRedis(redisClient, store.WithExpiration(5*time.Second))
 
 // Initialize chained cache
-cacheManager := cache.NewChain(
-    cache.New(ristrettoStore),
-    cache.New(redisStore),
+cacheManager := cache.NewChain[any](
+    cache.New[any](ristrettoStore),
+    cache.New[any](redisStore),
 )
 
 // ... Then, do what you want with your cache
@@ -221,20 +216,25 @@ cacheManager := cache.NewChain(
 This cache will provide a load function that acts as a callable function and will set your data back in your cache in case they are not available:
 
 ```go
+type Book struct {
+	ID string
+	Name string
+}
+
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initialize a load function that loads your data from a custom source
-loadFunction := func(ctx context.Context, key interface{}) (interface{}, error) {
+loadFunction := func(ctx context.Context, key any) (*Book, error) {
     // ... retrieve value from available source
-    return &Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}, nil
+    return &Book{ID: 1, Name: "My test amazing book"}, nil
 }
 
 // Initialize loadable cache
-cacheManager := cache.NewLoadable(
+cacheManager := cache.NewLoadable[*Book](
 	loadFunction,
-	cache.New(redisStore),
+	cache.New[*Book](redisStore),
 )
 
 // ... Then, you can get your data and your function will automatically put them in cache(s)
@@ -249,15 +249,15 @@ This cache will record metrics depending on the metric provider you pass to it. 
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initializes Prometheus metrics service
 promMetrics := metrics.NewPrometheus("my-test-app")
 
 // Initialize metric cache
-cacheManager := cache.NewMetric(
+cacheManager := cache.NewMetric[any](
 	promMetrics,
-	cache.New(redisStore),
+	cache.New[any](redisStore),
 )
 
 // ... Then, you can get your data and metrics will be observed by Prometheus
@@ -270,12 +270,12 @@ Some caches like Redis stores and returns the value as a string so you have to m
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
-cacheManager := cache.NewMetric(
+cacheManager := cache.NewMetric[any](
 	promMetrics,
-	cache.New(redisStore),
+	cache.New[any](redisStore),
 )
 
 // Initializes marshaler
@@ -313,28 +313,28 @@ Here is an example on how to use it:
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient, nil)
+redisStore := store.NewRedis(redisClient)
 
 // Initialize chained cache
-cacheManager := cache.NewMetric(
+cacheManager := cache.NewMetric[*Book](
 	promMetrics,
-	cache.New(redisStore),
+	cache.New[*Book](redisStore),
 )
 
 // Initializes marshaler
 marshal := marshaler.New(cacheManager)
 
 key := BookQuery{Slug: "my-test-amazing-book"}
-value := Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
+value := &Book{ID: 1, Name: "My test amazing book", Slug: "my-test-amazing-book"}
 
 // Set an item in the cache and attach it a "book" tag
-err = marshal.Set(ctx, key, value, store.Options{Tags: []string{"book"}})
+err = marshal.Set(ctx, key, value, store.WithTags([]string{"book"}))
 if err != nil {
     panic(err)
 }
 
 // Remove all items that have the "book" tag
-err := marshal.Invalidate(ctx, store.InvalidateOptions{Tags: []string{"book"}})
+err := marshal.Invalidate(ctx, store.WithInvalidateTags([]string{"book"}))
 if err != nil {
     panic(err)
 }
@@ -348,21 +348,50 @@ if err != nil {
 
 Mix this with expiration times on your caches to have a fine tuned control on how your data are cached.
 
+```go
+package main
 
-### Install
+import (
+	"log"
+	"github.com/eko/gocache/v3/generic"
+	"github.com/eko/gocache/v3/cache"
+	"github.com/eko/gocache/v3/store"
+)
+
+func main() {
+	redisStore := store.NewRedis(redis.NewClient(&redis.Options{
+		Addr: "127.0.0.1:6379",
+	}), nil)
+
+	cacheManager := cache.New[string](redisStore)
+	err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
+	if err != nil {
+		panic(err)
+	}
+
+	value, err := cacheManager.Get(ctx, "my-key")
+	if err != nil {
+		log.Fatalf("unable to get cache key '%s' from the cache: %v", err)
+	}
+
+	fmt.Printf("%#+v\n", value)
+}
+```
+
+## Installation
 
 To begin working with the latest version of go-cache, you can use the following command:
 
 ```go
-go get github.com/eko/gocache/v2
+go get github.com/eko/gocache/v3
 ```
 
 To avoid any errors when trying to import your libraries use the following import statement:
 
 ```go
 import (
-	"github.com/eko/gocache/v2/cache"
-	"github.com/eko/gocache/v2/store"
+	"github.com/eko/gocache/v3/cache"
+	"github.com/eko/gocache/v3/store"
 )
 ```
 
@@ -374,11 +403,11 @@ If you run into any errors, please be sure to run `go mod tidy` to clean your go
 Cache respect the following interface so you can write your own (proprietary?) cache logic if needed by implementing the following interface:
 
 ```go
-type CacheInterface interface {
-	Get(ctx context.Context, key interface{}) (interface{}, error)
-	Set(ctx context.Context, key, object interface{}, options *store.Options) error
-	Delete(ctx context.Context, key interface{}) error
-	Invalidate(ctx context.Context, options store.InvalidateOptions) error
+type CacheInterface[T any] interface {
+	Get(ctx context.Context, key any) (T, error)
+	Set(ctx context.Context, key any, object T, options ...store.Option) error
+	Delete(ctx context.Context, key any) error
+	Invalidate(ctx context.Context, options ...store.InvalidateOption) error
 	Clear(ctx context.Context) error
 	GetType() string
 }
@@ -387,9 +416,9 @@ type CacheInterface interface {
 Or, in case you use a setter cache, also implement the `GetCodec()` method:
 
 ```go
-type SetterCacheInterface interface {
-	CacheInterface
-	GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error)
+type SetterCacheInterface[T any] interface {
+	CacheInterface[T]
+	GetWithTTL(ctx context.Context, key any) (T, time.Duration, error)
 
 	GetCodec() codec.CodecInterface
 }
@@ -403,11 +432,11 @@ You also have the ability to write your own custom store by implementing the fol
 
 ```go
 type StoreInterface interface {
-	Get(ctx context.Context, key interface{}) (interface{}, error)
-	GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error)
-	Set(ctx context.Context, key interface{}, value interface{}, options *Options) error
-	Delete(ctx context.Context, key interface{}) error
-	Invalidate(ctx context.Context, options InvalidateOptions) error
+	Get(ctx context.Context, key any) (any, error)
+	GetWithTTL(ctx context.Context, key any) (any, time.Duration, error)
+	Set(ctx context.Context, key any, value any, options ...Option) error
+	Delete(ctx context.Context, key any) error
+	Invalidate(ctx context.Context, options ...InvalidateOption) error
 	Clear(ctx context.Context) error
 	GetType() string
 }
@@ -429,10 +458,6 @@ type CacheKeyGenerator interface {
 
 ![Benchmarks](https://raw.githubusercontent.com/eko/gocache/master/misc/benchmarks.jpeg)
 
-## Community
-
-Please feel free to contribute on this library and do not hesitate to open an issue if you want to discuss about a feature.
-
 ## Run tests
 
 Generate mocks:
@@ -447,3 +472,7 @@ Test suite can be run with:
 $ make test # run unit test
 $ make benchmark-store # run benchmark test
 ```
+
+## Community
+
+Please feel free to contribute on this library and do not hesitate to open an issue if you want to discuss about a feature.

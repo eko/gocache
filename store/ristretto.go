@@ -17,32 +17,28 @@ const (
 
 // RistrettoClientInterface represents a dgraph-io/ristretto client
 type RistrettoClientInterface interface {
-	Get(key interface{}) (interface{}, bool)
-	SetWithTTL(key, value interface{}, cost int64, ttl time.Duration) bool
-	Del(key interface{})
+	Get(key any) (any, bool)
+	SetWithTTL(key, value any, cost int64, ttl time.Duration) bool
+	Del(key any)
 	Clear()
 }
 
 // RistrettoStore is a store for Ristretto (memory) library
 type RistrettoStore struct {
 	client  RistrettoClientInterface
-	options *Options
+	options *options
 }
 
 // NewRistretto creates a new store to Ristretto (memory) library instance
-func NewRistretto(client RistrettoClientInterface, options *Options) *RistrettoStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewRistretto(client RistrettoClientInterface, options ...Option) *RistrettoStore {
 	return &RistrettoStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
 // Get returns data stored from a given key
-func (s *RistrettoStore) Get(_ context.Context, key interface{}) (interface{}, error) {
+func (s *RistrettoStore) Get(_ context.Context, key any) (any, error) {
 	var err error
 
 	value, exists := s.client.Get(key)
@@ -54,20 +50,18 @@ func (s *RistrettoStore) Get(_ context.Context, key interface{}) (interface{}, e
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *RistrettoStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (s *RistrettoStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	value, err := s.Get(ctx, key)
 	return value, 0, err
 }
 
 // Set defines data in Ristretto memoey cache for given key identifier
-func (s *RistrettoStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
+func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ...Option) error {
+	opts := applyOptionsWithDefault(s.options, options...)
+
 	var err error
 
-	if options == nil {
-		options = s.options
-	}
-
-	if set := s.client.SetWithTTL(key, value, options.CostValue(), options.ExpirationValue()); !set {
+	if set := s.client.SetWithTTL(key, value, opts.cost, opts.expiration); !set {
 		err = fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", value, key)
 	}
 
@@ -75,14 +69,14 @@ func (s *RistrettoStore) Set(ctx context.Context, key interface{}, value interfa
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
 	return nil
 }
 
-func (s *RistrettoStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
 		var cacheKeys = []string{}
@@ -105,21 +99,21 @@ func (s *RistrettoStore) setTags(ctx context.Context, key interface{}, tags []st
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
-			Expiration: 720 * time.Hour,
-		})
+		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), WithExpiration(720*time.Hour))
 	}
 }
 
 // Delete removes data in Ristretto memoey cache for given key identifier
-func (s *RistrettoStore) Delete(_ context.Context, key interface{}) error {
+func (s *RistrettoStore) Delete(_ context.Context, key any) error {
 	s.client.Del(key)
 	return nil
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *RistrettoStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *RistrettoStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

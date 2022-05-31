@@ -59,10 +59,10 @@ func (mr *MockGoCacheClientInterfaceMockRecorder) Flush() *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockGoCacheClientInterface) Get(k string) (interface{}, bool) {
+func (m *MockGoCacheClientInterface) Get(k string) (any, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", k)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -74,10 +74,10 @@ func (mr *MockGoCacheClientInterfaceMockRecorder) Get(k interface{}) *gomock.Cal
 }
 
 // GetWithExpiration mocks base method.
-func (m *MockGoCacheClientInterface) GetWithExpiration(k string) (interface{}, time.Time, bool) {
+func (m *MockGoCacheClientInterface) GetWithExpiration(k string) (any, time.Time, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWithExpiration", k)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(time.Time)
 	ret2, _ := ret[2].(bool)
 	return ret0, ret1, ret2
@@ -90,7 +90,7 @@ func (mr *MockGoCacheClientInterfaceMockRecorder) GetWithExpiration(k interface{
 }
 
 // Set mocks base method.
-func (m *MockGoCacheClientInterface) Set(k string, x interface{}, d time.Duration) {
+func (m *MockGoCacheClientInterface) Set(k string, x any, d time.Duration) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Set", k, x, d)
 }

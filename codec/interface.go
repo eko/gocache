@@ -4,16 +4,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/eko/gocache/v2/store"
+	"github.com/eko/gocache/v3/store"
 )
 
 // CodecInterface represents an instance of a cache codec
 type CodecInterface interface {
-	Get(ctx context.Context, key interface{}) (interface{}, error)
-	GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error)
-	Set(ctx context.Context, key interface{}, value interface{}, options *store.Options) error
-	Delete(ctx context.Context, key interface{}) error
-	Invalidate(ctx context.Context, options store.InvalidateOptions) error
+	Get(ctx context.Context, key any) (any, error)
+	GetWithTTL(ctx context.Context, key any) (any, time.Duration, error)
+	Set(ctx context.Context, key any, value any, options ...store.Option) error
+	Delete(ctx context.Context, key any) error
+	Invalidate(ctx context.Context, options ...store.InvalidateOption) error
 	Clear(ctx context.Context) error
 
 	GetStore() store.StoreInterface

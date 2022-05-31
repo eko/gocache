@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
-	mocksStore "github.com/eko/gocache/v2/test/mocks/store/clients"
+	mocksStore "github.com/eko/gocache/v3/test/mocks/store/clients"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,15 +17,14 @@ func TestNewMemcache(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
-	options := &Options{Expiration: 3 * time.Second}
 
 	// When
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// Then
 	assert.IsType(t, new(MemcacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, options, store.options)
+	assert.Equal(t, &options{expiration: 3 * time.Second}, store.options)
 }
 
 func TestMemcacheGet(t *testing.T) {
@@ -33,8 +32,6 @@ func TestMemcacheGet(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	ctx := context.Background()
-
-	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -44,7 +41,7 @@ func TestMemcacheGet(t *testing.T) {
 		Value: cacheValue,
 	}, nil)
 
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
 	value, err := store.Get(ctx, cacheKey)
@@ -60,8 +57,6 @@ func TestMemcacheGetWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := &Options{Expiration: 3 * time.Second}
-
 	cacheKey := "my-key"
 
 	expectedErr := errors.New("An unexpected error occurred")
@@ -69,7 +64,7 @@ func TestMemcacheGetWhenError(t *testing.T) {
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(nil, expectedErr)
 
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
 	value, err := store.Get(ctx, cacheKey)
@@ -85,8 +80,6 @@ func TestMemcacheGetWithTTL(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := &Options{Expiration: 3 * time.Second}
-
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
@@ -96,7 +89,7 @@ func TestMemcacheGetWithTTL(t *testing.T) {
 		Expiration: int32(5),
 	}, nil)
 
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
@@ -118,8 +111,7 @@ func TestMemcacheGetWithTTLWhenMissingItem(t *testing.T) {
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(nil, nil)
 
-	options := &Options{Expiration: 3 * time.Second}
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
@@ -136,8 +128,6 @@ func TestMemcacheGetWithTTLWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := &Options{Expiration: 3 * time.Second}
-
 	cacheKey := "my-key"
 
 	expectedErr := errors.New("An unexpected error occurred")
@@ -145,7 +135,7 @@ func TestMemcacheGetWithTTLWhenError(t *testing.T) {
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(nil, expectedErr)
 
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
@@ -162,8 +152,6 @@ func TestMemcacheSet(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := &Options{Expiration: 3 * time.Second}
-
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
@@ -174,12 +162,10 @@ func TestMemcacheSet(t *testing.T) {
 		Expiration: int32(5),
 	}).Return(nil)
 
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, &Options{
-		Expiration: 5 * time.Second,
-	})
+	err := store.Set(ctx, cacheKey, cacheValue, WithExpiration(5*time.Second))
 
 	// Then
 	assert.Nil(t, err)
@@ -191,8 +177,6 @@ func TestMemcacheSetWhenNoOptionsGiven(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := &Options{Expiration: 3 * time.Second}
-
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
@@ -203,10 +187,10 @@ func TestMemcacheSetWhenNoOptionsGiven(t *testing.T) {
 		Expiration: int32(3),
 	}).Return(nil)
 
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue)
 
 	// Then
 	assert.Nil(t, err)
@@ -217,8 +201,6 @@ func TestMemcacheSetWhenError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	ctx := context.Background()
-
-	options := &Options{Expiration: 3 * time.Second}
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -232,10 +214,10 @@ func TestMemcacheSetWhenError(t *testing.T) {
 		Expiration: int32(3),
 	}).Return(expectedErr)
 
-	store := NewMemcache(client, options)
+	store := NewMemcache(client, WithExpiration(3*time.Second))
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue)
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -261,10 +243,10 @@ func TestMemcacheSetWithTags(t *testing.T) {
 		Expiration: int32(TagKeyExpiry.Seconds()),
 	}).Return(nil)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, WithTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -285,10 +267,10 @@ func TestMemcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 		Value: []byte("my-key,a-second-key"),
 	}, nil)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
-	err := store.Set(ctx, cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, WithTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -305,7 +287,7 @@ func TestMemcacheDelete(t *testing.T) {
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().Delete(cacheKey).Return(nil)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
 	err := store.Delete(ctx, cacheKey)
@@ -327,7 +309,7 @@ func TestMemcacheDeleteWhenError(t *testing.T) {
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().Delete(cacheKey).Return(expectedErr)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
 	err := store.Delete(ctx, cacheKey)
@@ -342,10 +324,6 @@ func TestMemcacheInvalidate(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
-
 	cacheKeys := &memcache.Item{
 		Value: []byte("a23fdf987h2svc23,jHG2372x38hf74"),
 	}
@@ -355,10 +333,10 @@ func TestMemcacheInvalidate(t *testing.T) {
 	client.EXPECT().Delete("a23fdf987h2svc23").Return(nil)
 	client.EXPECT().Delete("jHG2372x38hf74").Return(nil)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
-	err := store.Invalidate(ctx, options)
+	err := store.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -370,10 +348,6 @@ func TestMemcacheInvalidateWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
-
 	cacheKeys := &memcache.Item{
 		Value: []byte("a23fdf987h2svc23,jHG2372x38hf74"),
 	}
@@ -383,10 +357,10 @@ func TestMemcacheInvalidateWhenError(t *testing.T) {
 	client.EXPECT().Delete("a23fdf987h2svc23").Return(errors.New("Unexpected error"))
 	client.EXPECT().Delete("jHG2372x38hf74").Return(nil)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
-	err := store.Invalidate(ctx, options)
+	err := store.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -401,7 +375,7 @@ func TestMemcacheClear(t *testing.T) {
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().FlushAll().Return(nil)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
 	err := store.Clear(ctx)
@@ -421,7 +395,7 @@ func TestMemcacheClearWhenError(t *testing.T) {
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().FlushAll().Return(expectedErr)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When
 	err := store.Clear(ctx)
@@ -436,7 +410,7 @@ func TestMemcacheGetType(t *testing.T) {
 
 	client := mocksStore.NewMockMemcacheClientInterface(ctrl)
 
-	store := NewMemcache(client, nil)
+	store := NewMemcache(client)
 
 	// When - Then
 	assert.Equal(t, MemcacheType, store.GetType())

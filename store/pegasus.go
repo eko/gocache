@@ -33,7 +33,7 @@ var (
 
 // OptionsPegasus is options of Pegasus
 type OptionsPegasus struct {
-	Options
+	*options
 	MetaServers []string
 
 	TableName         string
@@ -128,7 +128,7 @@ func (p *PegasusStore) Close() error {
 }
 
 // Get returns data stored from a given key
-func (p *PegasusStore) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (p *PegasusStore) Get(ctx context.Context, key any) (any, error) {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	defer table.Close()
 	if err != nil {
@@ -146,7 +146,7 @@ func (p *PegasusStore) Get(ctx context.Context, key interface{}) (interface{}, e
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (p *PegasusStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (p *PegasusStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	defer table.Close()
 	if err != nil {
@@ -170,10 +170,8 @@ func (p *PegasusStore) GetWithTTL(ctx context.Context, key interface{}) (interfa
 }
 
 // Set defines data in Pegasus for given key identifier
-func (p *PegasusStore) Set(ctx context.Context, key, value interface{}, options *Options) error {
-	if options == nil {
-		options = &Options{}
-	}
+func (p *PegasusStore) Set(ctx context.Context, key, value any, options ...Option) error {
+	opts := applyOptions(options...)
 
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	defer table.Close()
@@ -181,12 +179,12 @@ func (p *PegasusStore) Set(ctx context.Context, key, value interface{}, options 
 		return err
 	}
 
-	err = table.SetTTL(ctx, []byte(cast.ToString(key)), empty, []byte(cast.ToString(value)), options.Expiration)
+	err = table.SetTTL(ctx, []byte(cast.ToString(key)), empty, []byte(cast.ToString(value)), opts.expiration)
 	if err != nil {
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		if err = p.setTags(ctx, key, tags); err != nil {
 			return err
 		}
@@ -194,7 +192,7 @@ func (p *PegasusStore) Set(ctx context.Context, key, value interface{}, options 
 	return nil
 }
 
-func (p *PegasusStore) setTags(ctx context.Context, key interface{}, tags []string) error {
+func (p *PegasusStore) setTags(ctx context.Context, key any, tags []string) error {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(PegasusTagPattern, tag)
 		var cacheKeys = []string{}
@@ -217,9 +215,7 @@ func (p *PegasusStore) setTags(ctx context.Context, key interface{}, tags []stri
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		if err := p.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
-			Expiration: 720 * time.Hour,
-		}); err != nil {
+		if err := p.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), WithExpiration(720*time.Hour)); err != nil {
 			return err
 		}
 	}
@@ -228,7 +224,7 @@ func (p *PegasusStore) setTags(ctx context.Context, key interface{}, tags []stri
 }
 
 // Delete removes data from Pegasus for given key identifier
-func (p *PegasusStore) Delete(ctx context.Context, key interface{}) error {
+func (p *PegasusStore) Delete(ctx context.Context, key any) error {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	defer table.Close()
 	if err != nil {
@@ -239,8 +235,9 @@ func (p *PegasusStore) Delete(ctx context.Context, key interface{}) error {
 }
 
 // Invalidate invalidates some cache data in Pegasus for given options
-func (p *PegasusStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (p *PegasusStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(PegasusTagPattern, tag)
 			result, err := p.Get(ctx, tagKey)

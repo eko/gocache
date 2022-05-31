@@ -23,9 +23,7 @@ func BenchmarkBigcacheSet(b *testing.B) {
 				key := fmt.Sprintf("test-%d", n)
 				value := []byte(fmt.Sprintf("value-%d", n))
 
-				store.Set(ctx, key, value, &Options{
-					Tags: []string{fmt.Sprintf("tag-%d", n)},
-				})
+				store.Set(ctx, key, value, WithTags([]string{fmt.Sprintf("tag-%d", n)}))
 			}
 		})
 	}

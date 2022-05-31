@@ -1,4 +1,4 @@
-module github.com/eko/gocache/v2
+module github.com/eko/gocache/v3
 
 go 1.18
 
@@ -17,6 +17,7 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.7.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
+	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 

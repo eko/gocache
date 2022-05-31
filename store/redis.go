@@ -13,10 +13,10 @@ type RedisClientInterface interface {
 	Get(ctx context.Context, key string) *redis.StringCmd
 	TTL(ctx context.Context, key string) *redis.DurationCmd
 	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
-	Set(ctx context.Context, key string, values interface{}, expiration time.Duration) *redis.StatusCmd
+	Set(ctx context.Context, key string, values any, expiration time.Duration) *redis.StatusCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	FlushAll(ctx context.Context) *redis.StatusCmd
-	SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd
+	SAdd(ctx context.Context, key string, members ...any) *redis.IntCmd
 	SMembers(ctx context.Context, key string) *redis.StringSliceCmd
 }
 
@@ -30,23 +30,19 @@ const (
 // RedisStore is a store for Redis
 type RedisStore struct {
 	client  RedisClientInterface
-	options *Options
+	options *options
 }
 
 // NewRedis creates a new store to Redis instance(s)
-func NewRedis(client RedisClientInterface, options *Options) *RedisStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewRedis(client RedisClientInterface, options ...Option) *RedisStore {
 	return &RedisStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
 // Get returns data stored from a given key
-func (s *RedisStore) Get(ctx context.Context, key interface{}) (interface{}, error) {
+func (s *RedisStore) Get(ctx context.Context, key any) (any, error) {
 	object, err := s.client.Get(ctx, key.(string)).Result()
 	if err == redis.Nil {
 		return nil, NotFoundWithCause(err)
@@ -55,7 +51,7 @@ func (s *RedisStore) Get(ctx context.Context, key interface{}) (interface{}, err
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *RedisStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
+func (s *RedisStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	object, err := s.client.Get(ctx, key.(string)).Result()
 	if err == redis.Nil {
 		return nil, 0, NotFoundWithCause(err)
@@ -73,24 +69,22 @@ func (s *RedisStore) GetWithTTL(ctx context.Context, key interface{}) (interface
 }
 
 // Set defines data in Redis for given key identifier
-func (s *RedisStore) Set(ctx context.Context, key interface{}, value interface{}, options *Options) error {
-	if options == nil {
-		options = s.options
-	}
+func (s *RedisStore) Set(ctx context.Context, key any, value any, options ...Option) error {
+	opts := applyOptionsWithDefault(s.options, options...)
 
-	err := s.client.Set(ctx, key.(string), value, options.ExpirationValue()).Err()
+	err := s.client.Set(ctx, key.(string), value, opts.expiration).Err()
 	if err != nil {
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
+	if tags := opts.tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
 	return nil
 }
 
-func (s *RedisStore) setTags(ctx context.Context, key interface{}, tags []string) {
+func (s *RedisStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(RedisTagPattern, tag)
 		s.client.SAdd(ctx, tagKey, key.(string))
@@ -99,14 +93,16 @@ func (s *RedisStore) setTags(ctx context.Context, key interface{}, tags []string
 }
 
 // Delete removes data from Redis for given key identifier
-func (s *RedisStore) Delete(ctx context.Context, key interface{}) error {
+func (s *RedisStore) Delete(ctx context.Context, key any) error {
 	_, err := s.client.Del(ctx, key.(string)).Result()
 	return err
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *RedisStore) Invalidate(ctx context.Context, options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *RedisStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RedisTagPattern, tag)
 			cacheKeys, err := s.client.SMembers(ctx, tagKey).Result()
