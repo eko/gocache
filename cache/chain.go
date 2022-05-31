@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -72,12 +73,20 @@ func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
 
 // Set sets a value in available caches
 func (c *ChainCache[T]) Set(ctx context.Context, key any, object T, options ...store.Option) error {
+	errs := []error{}
 	for _, cache := range c.caches {
 		err := cache.Set(ctx, key, object, options...)
 		if err != nil {
 			storeType := cache.GetCodec().GetStore().GetType()
-			return fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err)
+			errs = append(errs, fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err))
 		}
+	}
+	if len(errs) > 0 {
+		errStr := ""
+		for k, v := range errs {
+			errStr += fmt.Sprintf("error %d of %d: %v", k+1, len(errs), v.Error())
+		}
+		return errors.New(errStr)
 	}
 
 	return nil
