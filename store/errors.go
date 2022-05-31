@@ -1,15 +1,16 @@
 package store
 
-const NOT_FOUND_ERR string = "Value not found in store"
+const NOT_FOUND_ERR string = "value not found in store"
 
 type NotFound struct {
 	cause error
 }
 
 func NotFoundWithCause(e error) error {
-	return NotFound{
+	err := NotFound{
 		cause: e,
 	}
+	return &err
 }
 
 func (e NotFound) Cause() error {

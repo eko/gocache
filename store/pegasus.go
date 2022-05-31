@@ -140,7 +140,7 @@ func (p *PegasusStore) Get(ctx context.Context, key any) (any, error) {
 		return nil, err
 	}
 	if value == nil {
-		return nil, NotFound{}
+		return nil, &NotFound{}
 	}
 	return value, nil
 }
@@ -158,7 +158,7 @@ func (p *PegasusStore) GetWithTTL(ctx context.Context, key any) (any, time.Durat
 		return nil, 0, err
 	}
 	if value == nil {
-		return nil, 0, NotFound{}
+		return nil, 0, &NotFound{}
 	}
 
 	ttl, err := table.TTL(ctx, []byte(cast.ToString(key)), empty)

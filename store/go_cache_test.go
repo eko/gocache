@@ -67,7 +67,7 @@ func TestGoCacheGetWhenError(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("Value not found in GoCache store"), err)
+	assert.Equal(t, errors.New("value not found in store"), err)
 }
 
 func TestGoCacheGetWithTTL(t *testing.T) {
@@ -111,7 +111,7 @@ func TestGoCacheGetWithTTLWhenError(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("Value not found in GoCache store"), err)
+	assert.Equal(t, errors.New("value not found in store"), err)
 	assert.Equal(t, 0*time.Second, ttl)
 }
 

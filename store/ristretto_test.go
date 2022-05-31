@@ -67,7 +67,7 @@ func TestRistrettoGetWhenError(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("Value not found in Ristretto store"), err)
+	assert.IsType(t, &NotFound{}, err)
 }
 
 func TestRistrettoGetWithTTL(t *testing.T) {
@@ -111,7 +111,7 @@ func TestRistrettoGetWithTTLWhenError(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("Value not found in Ristretto store"), err)
+	assert.Equal(t, errors.New("value not found in store"), err)
 	assert.Equal(t, 0*time.Second, ttl)
 }
 

@@ -14,6 +14,13 @@ func TestNotFoundIs(t *testing.T) {
 	assert.True(t, errors.Is(err, NotFound{}))
 	assert.True(t, errors.Is(err, redis.Nil))
 
-	err = NotFound{}
-	assert.True(t, errors.Is(err, NotFound{}))
+	err2 := &NotFound{}
+	assert.True(t, errors.Is(err2, &NotFound{}))
+
+	_, ok := err.(*NotFound)
+	assert.True(t, ok)
+
+	assert.True(t, err.Error() == NotFound{}.Error())
+	assert.True(t, err == NotFound{})
+
 }
