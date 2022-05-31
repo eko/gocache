@@ -47,12 +47,19 @@ func NewRedis(client RedisClientInterface, options *Options) *RedisStore {
 
 // Get returns data stored from a given key
 func (s *RedisStore) Get(ctx context.Context, key interface{}) (interface{}, error) {
-	return s.client.Get(ctx, key.(string)).Result()
+	object, err := s.client.Get(ctx, key.(string)).Result()
+	if err == redis.Nil {
+		return nil, NotFoundWithCause(err)
+	}
+	return object, err
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *RedisStore) GetWithTTL(ctx context.Context, key interface{}) (interface{}, time.Duration, error) {
 	object, err := s.client.Get(ctx, key.(string)).Result()
+	if err == redis.Nil {
+		return nil, 0, NotFoundWithCause(err)
+	}
 	if err != nil {
 		return nil, 0, err
 	}

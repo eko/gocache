@@ -49,7 +49,7 @@ func (s *GoCacheStore) Get(_ context.Context, key interface{}) (interface{}, err
 	keyStr := key.(string)
 	value, exists := s.client.Get(keyStr)
 	if !exists {
-		err = errors.New("Value not found in GoCache store")
+		err = NotFoundWithCause(errors.New("Value not found in GoCache store"))
 	}
 
 	return value, err
@@ -59,7 +59,7 @@ func (s *GoCacheStore) Get(_ context.Context, key interface{}) (interface{}, err
 func (s *GoCacheStore) GetWithTTL(_ context.Context, key interface{}) (interface{}, time.Duration, error) {
 	data, t, exists := s.client.GetWithExpiration(key.(string))
 	if !exists {
-		return data, 0, errors.New("Value not found in GoCache store")
+		return data, 0, NotFoundWithCause(errors.New("Value not found in GoCache store"))
 	}
 	duration := t.Sub(time.Now())
 	return data, duration, nil
