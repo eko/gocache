@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -83,7 +84,7 @@ func (c *ChainCache) Set(ctx context.Context, key, object interface{}, options *
 	if len(errs) > 0 {
 		errStr := ""
 		for k, v := range errs {
-			errStr += fmt.Sprintf("Error %d of %d: %v", k, len(errs), v.Error())
+			errStr += fmt.Sprintf("error %d of %d: %v", k+1, len(errs), v.Error())
 		}
 		return errors.New(errStr)
 	}

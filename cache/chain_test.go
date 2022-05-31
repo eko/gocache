@@ -434,3 +434,37 @@ func TestCacheChecksum(t *testing.T) {
 		assert.Equal(t, tc.expectedHash, value)
 	}
 }
+
+func TestChainSetWhenErrorInChain(t *testing.T) {
+
+	// Given
+	ctrl := gomock.NewController(t)
+	store1 := mocksCache.NewMockSetterCacheInterface(ctrl)
+
+	store1.EXPECT().GetType().AnyTimes().Return("store1")
+	codec1 := mocksCodec.NewMockCodecInterface(ctrl)
+	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
+	store1.EXPECT().GetCodec().AnyTimes().Return(codec1)
+
+	ctx := context.Background()
+	key := "test-key"
+	value := "test-value"
+	interError := errors.New("An issue occurred with the cache")
+	store1.EXPECT().Set(ctx, key, value, nil).DoAndReturn(func(_, _, _, _ interface{}) error {
+		return interError
+	})
+
+	store2 := mocksCache.NewMockSetterCacheInterface(ctrl)
+
+	cache := NewChain(store1, store2)
+
+	// assert store2 set is called
+	store2.EXPECT().Set(ctx, key, value, nil).Return(nil)
+
+	// When - Then
+	err := cache.Set(ctx, key, value, nil)
+
+	expErr := errors.New("error 1 of 1: Unable to set item into cache with store 'store1': An issue occurred with the cache")
+	// Then
+	assert.Equal(t, expErr, err)
+}
