@@ -3,12 +3,13 @@ package cache
 import (
 	"context"
 	"errors"
-	"testing"
-	"time"
-
+	"github.com/eko/gocache/v3/store"
 	mocksCache "github.com/eko/gocache/v3/test/mocks/cache"
 	"github.com/golang/mock/gomock"
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
+	"testing"
+	"time"
 )
 
 func TestNewLoadable(t *testing.T) {
@@ -99,7 +100,7 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	// Cache 1
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("Unable to find in cache 1"))
-	cache1.EXPECT().Set(ctx, "my-key", cacheValue, nil).AnyTimes().Return(nil)
+	cache1.EXPECT().Set(ctx, "my-key", cacheValue).AnyTimes().Return(nil)
 
 	loadFunc := func(_ context.Context, key any) (any, error) {
 		return cacheValue, nil
@@ -272,4 +273,28 @@ func TestLoadableGetType(t *testing.T) {
 
 	// When - Then
 	assert.Equal(t, LoadableType, cache.GetType())
+}
+
+func TestLoadableGocache(t *testing.T) {
+	gocacheClient := gocache.New(5*time.Second, 5*time.Second)
+	gocacheStore := store.NewGoCache(gocacheClient, store.WithExpiration(5*time.Second))
+
+	cacheValue := "my-value"
+	loadFunc := func(ctx context.Context, accountID any) (string, error) {
+		return cacheValue, nil
+	}
+
+	cache := NewLoadable[string](loadFunc, New[string](gocacheStore))
+
+	// When
+	value, err := cache.Get(context.Background(), "my-key")
+
+	// Wait for data to be processed
+	for len(cache.setChannel) > 0 {
+		time.Sleep(1 * time.Millisecond)
+	}
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
 }
