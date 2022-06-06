@@ -46,7 +46,7 @@ func (c *LoadableCache[T]) setter() {
 	defer c.setterWg.Done()
 
 	for item := range c.setChannel {
-		c.Set(context.Background(), item.key, item.value, nil)
+		c.Set(context.Background(), item.key, item.value)
 	}
 }
 
