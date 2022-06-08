@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -111,7 +110,7 @@ func TestRistrettoGetWithTTLWhenError(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("value not found in store"), err)
+	assert.IsType(t, &NotFound{}, err)
 	assert.Equal(t, 0*time.Second, ttl)
 }
 
