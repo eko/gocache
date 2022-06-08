@@ -239,6 +239,7 @@ func TestChainSetWhenErrorOnSetting(t *testing.T) {
 
 	// Cache 2
 	cache2 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
+	cache2.EXPECT().Set(ctx, "my-key", cacheValue)
 
 	cache := NewChain[any](cache1, cache2)
 
@@ -247,7 +248,7 @@ func TestChainSetWhenErrorOnSetting(t *testing.T) {
 
 	// Then
 	assert.Error(t, err)
-	assert.Equal(t, err.Error(), fmt.Sprintf("Unable to set item into cache with store 'store1': %s", expectedErr.Error()))
+	assert.Equal(t, fmt.Sprintf("error 1 of 1: Unable to set item into cache with store 'store1': %s", expectedErr.Error()), err.Error())
 }
 
 func TestChainDelete(t *testing.T) {
