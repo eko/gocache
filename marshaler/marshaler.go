@@ -2,10 +2,13 @@ package marshaler
 
 import (
 	"context"
+	"reflect"
+	"unsafe"
+
+	"github.com/vmihailenco/msgpack"
 
 	"github.com/eko/gocache/v2/cache"
 	"github.com/eko/gocache/v2/store"
-	"github.com/vmihailenco/msgpack"
 )
 
 // Marshaler is the struct that marshal and unmarshal cache values
@@ -31,7 +34,7 @@ func (c *Marshaler) Get(ctx context.Context, key interface{}, returnObj interfac
 	case []byte:
 		err = msgpack.Unmarshal(v, returnObj)
 	case string:
-		err = msgpack.Unmarshal([]byte(v), returnObj)
+		err = msgpack.Unmarshal(string2Bytes(v), returnObj)
 	}
 
 	if err != nil {
@@ -64,4 +67,13 @@ func (c *Marshaler) Invalidate(ctx context.Context, options store.InvalidateOpti
 // Clear reset all cache data
 func (c *Marshaler) Clear(ctx context.Context) error {
 	return c.cache.Clear(ctx)
+}
+
+// Source: https://groups.google.com/g/golang-nuts/c/Zsfk-VMd_fU/m/O1ru4fO-BgAJ
+func string2Bytes(s string) []byte {
+	const max = 0x7fff0000
+	if len(s) > max {
+		panic("string too long")
+	}
+	return (*[max]byte)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data))[:len(s):len(s)]
 }
