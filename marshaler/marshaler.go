@@ -69,12 +69,11 @@ func (c *Marshaler) Clear(ctx context.Context) error {
 	return c.cache.Clear(ctx)
 }
 
+// Source: https://groups.google.com/g/golang-nuts/c/Zsfk-VMd_fU/m/O1ru4fO-BgAJ
 func string2Bytes(s string) []byte {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
+	const max = 0x7fff0000
+	if len(s) > max {
+		panic("string too long")
 	}
-	return *(*[]byte)(unsafe.Pointer(&bh))
+	return (*[max]byte)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data))[:len(s):len(s)]
 }
