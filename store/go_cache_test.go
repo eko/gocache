@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -67,7 +66,7 @@ func TestGoCacheGetWhenError(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("value not found in store"), err)
+	assert.ErrorIs(t, err, NotFound{})
 }
 
 func TestGoCacheGetWithTTL(t *testing.T) {
@@ -111,7 +110,7 @@ func TestGoCacheGetWithTTLWhenError(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("value not found in store"), err)
+	assert.ErrorIs(t, err, NotFound{})
 	assert.Equal(t, 0*time.Second, ttl)
 }
 

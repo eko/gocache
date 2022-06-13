@@ -127,10 +127,9 @@ func TestFreecacheGetWithTTLWhenMissingItem(t *testing.T) {
 	ctx := context.Background()
 
 	cacheKey := "my-key"
-	expectedErr := errors.New("value not found in store")
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
-	client.EXPECT().Get([]byte(cacheKey)).Return(nil, expectedErr)
+	client.EXPECT().Get([]byte(cacheKey)).Return(nil, NotFound{})
 
 	store := NewFreecache(client, WithExpiration(3*time.Second))
 
@@ -138,7 +137,7 @@ func TestFreecacheGetWithTTLWhenMissingItem(t *testing.T) {
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
-	assert.Equal(t, expectedErr, err)
+	assert.ErrorIs(t, err, NotFound{})
 	assert.Nil(t, value)
 	assert.Equal(t, 0*time.Second, ttl)
 }
@@ -151,11 +150,10 @@ func TestFreecacheGetWithTTLWhenErrorAtTTL(t *testing.T) {
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	expectedErr := errors.New("value not found in store")
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Get([]byte(cacheKey)).Return(cacheValue, nil)
-	client.EXPECT().TTL([]byte(cacheKey)).Return(uint32(0), expectedErr)
+	client.EXPECT().TTL([]byte(cacheKey)).Return(uint32(0), NotFound{})
 
 	store := NewFreecache(client, WithExpiration(3*time.Second))
 
@@ -163,7 +161,7 @@ func TestFreecacheGetWithTTLWhenErrorAtTTL(t *testing.T) {
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
-	assert.Equal(t, expectedErr, err)
+	assert.ErrorIs(t, err, NotFound{})
 	assert.Nil(t, value)
 	assert.Equal(t, 0*time.Second, ttl)
 }
