@@ -43,7 +43,7 @@ func (s *RistrettoStore) Get(_ context.Context, key any) (any, error) {
 
 	value, exists := s.client.Get(key)
 	if !exists {
-		err = errors.New("Value not found in Ristretto store")
+		err = NotFoundWithCause(errors.New("Value not found in Ristretto store"))
 	}
 
 	return value, err

@@ -48,7 +48,7 @@ func (f *FreecacheStore) Get(_ context.Context, key any) (any, error) {
 	if k, ok := key.(string); ok {
 		result, err = f.client.Get([]byte(k))
 		if err != nil {
-			return nil, errors.New("value not found in Freecache store")
+			return nil, NotFoundWithCause(errors.New("value not found in Freecache store"))
 		}
 		return result, err
 	}
@@ -61,12 +61,12 @@ func (f *FreecacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durat
 	if k, ok := key.(string); ok {
 		result, err := f.client.Get([]byte(k))
 		if err != nil {
-			return nil, 0, errors.New("value not found in Freecache store")
+			return nil, 0, NotFoundWithCause(errors.New("value not found in Freecache store"))
 		}
 
 		ttl, err := f.client.TTL([]byte(k))
 		if err != nil {
-			return nil, 0, errors.New("value not found in Freecache store")
+			return nil, 0, NotFoundWithCause(errors.New("value not found in Freecache store"))
 		}
 
 		return result, time.Duration(ttl) * time.Second, err

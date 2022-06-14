@@ -43,12 +43,19 @@ func NewRedisCluster(client RedisClusterClientInterface, options ...Option) *Red
 
 // Get returns data stored from a given key
 func (s *RedisClusterStore) Get(ctx context.Context, key any) (any, error) {
-	return s.clusclient.Get(ctx, key.(string)).Result()
+	object, err := s.clusclient.Get(ctx, key.(string)).Result()
+	if err == redis.Nil {
+		return nil, NotFoundWithCause(err)
+	}
+	return object, err
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *RedisClusterStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	object, err := s.clusclient.Get(ctx, key.(string)).Result()
+	if err == redis.Nil {
+		return nil, 0, NotFoundWithCause(err)
+	}
 	if err != nil {
 		return nil, 0, err
 	}
