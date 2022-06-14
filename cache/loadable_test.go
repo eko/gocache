@@ -3,13 +3,14 @@ package cache
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/eko/gocache/v3/store"
 	mocksCache "github.com/eko/gocache/v3/test/mocks/cache"
 	"github.com/golang/mock/gomock"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestNewLoadable(t *testing.T) {
@@ -48,7 +49,7 @@ func TestLoadableGetWhenAlreadyInCache(t *testing.T) {
 	cache1.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
 
 	loadFunc := func(_ context.Context, key any) (any, error) {
-		return nil, errors.New("Should not be called")
+		return nil, errors.New("should not be called")
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -69,10 +70,10 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 
 	// Cache
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
-	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("Unable to find in cache 1"))
+	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
 
 	loadFunc := func(_ context.Context, key any) (any, error) {
-		return nil, errors.New("An error has occurred while loading data from custom source")
+		return nil, errors.New("an error has occurred while loading data from custom source")
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -82,7 +83,7 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 
 	// Then
 	assert.Nil(t, value)
-	assert.Equal(t, errors.New("An error has occurred while loading data from custom source"), err)
+	assert.Equal(t, errors.New("an error has occurred while loading data from custom source"), err)
 }
 
 func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
@@ -99,7 +100,7 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 
 	// Cache 1
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
-	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("Unable to find in cache 1"))
+	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue).AnyTimes().Return(nil)
 
 	loadFunc := func(_ context.Context, key any) (any, error) {
@@ -149,7 +150,7 @@ func TestLoadableDeleteWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to delete key")
+	expectedErr := errors.New("unable to delete key")
 
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
@@ -195,7 +196,7 @@ func TestLoadableInvalidateWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unexpected error when invalidating data")
+	expectedErr := errors.New("unexpected error when invalidating data")
 
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(expectedErr)
@@ -241,7 +242,7 @@ func TestLoadableClearWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unexpected error when invalidating data")
+	expectedErr := errors.New("unexpected error when invalidating data")
 
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(expectedErr)

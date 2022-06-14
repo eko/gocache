@@ -112,7 +112,7 @@ func TestGetWhenNotFoundInStore(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to find item in store")
+	expectedErr := errors.New("unable to find item in store")
 
 	cache := mocksCache.NewMockCacheInterface[any](ctrl)
 	cache.EXPECT().Get(ctx, "my-key").Return(nil, expectedErr)
@@ -191,7 +191,7 @@ func TestSetWhenError(t *testing.T) {
 
 	cacheValue := "test"
 
-	expectedErr := errors.New("An unexpected error occurred")
+	expectedErr := errors.New("an unexpected error occurred")
 
 	cache := mocksCache.NewMockCacheInterface[any](ctrl)
 	cache.EXPECT().Set(
@@ -234,7 +234,7 @@ func TestDeleteWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to delete key")
+	expectedErr := errors.New("unable to delete key")
 
 	cache := mocksCache.NewMockCacheInterface[any](ctrl)
 	cache.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
@@ -274,7 +274,7 @@ func TestInvalidatingWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unexpected error when invalidating data")
+	expectedErr := errors.New("unexpected error when invalidating data")
 
 	cache := mocksCache.NewMockCacheInterface[any](ctrl)
 	cache.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{Tags: []string{"tag1"}}).Return(expectedErr)
@@ -312,7 +312,7 @@ func TestClearWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("An unexpected error occurred")
+	expectedErr := errors.New("an unexpected error occurred")
 
 	cache := mocksCache.NewMockCacheInterface[any](ctrl)
 	cache.EXPECT().Clear(ctx).Return(expectedErr)

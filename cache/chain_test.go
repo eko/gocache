@@ -112,7 +112,7 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
-		errors.New("Unable to find in cache 1"))
+		errors.New("unable to find in cache 1"))
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue, &store.OptionsMatcher{}).AnyTimes().Return(nil)
 
 	// Cache 2
@@ -156,7 +156,7 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().GetCodec().Return(codec1)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
-		errors.New("Unable to find in cache 1"))
+		errors.New("unable to find in cache 1"))
 
 	// Cache 2
 	store2 := mocksStore.NewMockStoreInterface(ctrl)
@@ -168,7 +168,7 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	cache2 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().GetCodec().Return(codec2)
 	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
-		errors.New("Unable to find in cache 2"))
+		errors.New("unable to find in cache 2"))
 
 	cache := NewChain[any](cache1, cache2)
 
@@ -179,7 +179,7 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Then
-	assert.Equal(t, errors.New("Unable to find in cache 2"), err)
+	assert.Equal(t, errors.New("unable to find in cache 2"), err)
 	assert.Equal(t, nil, value)
 }
 
@@ -224,7 +224,7 @@ func TestChainSetWhenErrorOnSetting(t *testing.T) {
 		Hello: "world",
 	}
 
-	expectedErr := errors.New("An unexpected error occurred while setting data")
+	expectedErr := errors.New("an unexpected error occurred while setting data")
 
 	// Cache 1
 	store1 := mocksStore.NewMockStoreInterface(ctrl)
@@ -282,7 +282,7 @@ func TestChainDeleteWhenError(t *testing.T) {
 
 	// Cache 1
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
-	cache1.EXPECT().Delete(ctx, "my-key").Return(errors.New("An error has occurred while deleting key"))
+	cache1.EXPECT().Delete(ctx, "my-key").Return(errors.New("an error has occurred while deleting key"))
 
 	// Cache 2
 	cache2 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
@@ -328,7 +328,7 @@ func TestChainInvalidateWhenError(t *testing.T) {
 
 	// Cache 1
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
-	cache1.EXPECT().Invalidate(ctx).Return(errors.New("An unexpected error has occurred while invalidation data"))
+	cache1.EXPECT().Invalidate(ctx).Return(errors.New("an unexpected error has occurred while invalidation data"))
 
 	// Cache 2
 	cache2 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
@@ -374,7 +374,7 @@ func TestChainClearWhenError(t *testing.T) {
 
 	// Cache 1
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
-	cache1.EXPECT().Clear(ctx).Return(errors.New("An unexpected error has occurred while invalidation data"))
+	cache1.EXPECT().Clear(ctx).Return(errors.New("an unexpected error has occurred while invalidation data"))
 
 	// Cache 2
 	cache2 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
@@ -435,7 +435,7 @@ func TestChainSetWhenErrorInChain(t *testing.T) {
 	ctx := context.Background()
 	key := "test-key"
 	value := "test-value"
-	interError := errors.New("An issue occurred with the cache")
+	interError := errors.New("an issue occurred with the cache")
 	store1.EXPECT().Set(ctx, key, value, nil).DoAndReturn(func(_, _, _, _ interface{}) error {
 		return interError
 	})
@@ -450,7 +450,7 @@ func TestChainSetWhenErrorInChain(t *testing.T) {
 	// When - Then
 	err := cache.Set(ctx, key, value, nil)
 
-	expErr := errors.New("error 1 of 1: Unable to set item into cache with store 'store1': An issue occurred with the cache")
+	expErr := errors.New("error 1 of 1: Unable to set item into cache with store 'store1': an issue occurred with the cache")
 	// Then
 	assert.Equal(t, expErr, err)
 }
