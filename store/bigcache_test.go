@@ -56,7 +56,7 @@ func TestBigcacheGetWhenError(t *testing.T) {
 
 	cacheKey := "my-key"
 
-	expectedErr := errors.New("An unexpected error occurred")
+	expectedErr := errors.New("an unexpected error occurred")
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(nil, expectedErr)
@@ -102,7 +102,7 @@ func TestBigcacheGetWithTTLWhenError(t *testing.T) {
 
 	cacheKey := "my-key"
 
-	expectedErr := errors.New("An unexpected error occurred")
+	expectedErr := errors.New("an unexpected error occurred")
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(nil, expectedErr)
@@ -171,7 +171,7 @@ func TestBigcacheSetWhenError(t *testing.T) {
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	expectedErr := errors.New("An unexpected error occurred")
+	expectedErr := errors.New("an unexpected error occurred")
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 	client.EXPECT().Set(cacheKey, cacheValue).Return(expectedErr)
@@ -257,7 +257,7 @@ func TestBigcacheDeleteWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to delete key")
+	expectedErr := errors.New("unable to delete key")
 
 	cacheKey := "my-key"
 
@@ -305,7 +305,7 @@ func TestBigcacheInvalidateWhenError(t *testing.T) {
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, nil)
-	client.EXPECT().Delete("a23fdf987h2svc23").Return(errors.New("Unexpected error"))
+	client.EXPECT().Delete("a23fdf987h2svc23").Return(errors.New("unexpected error"))
 	client.EXPECT().Delete("jHG2372x38hf74").Return(nil)
 
 	store := NewBigcache(client)
@@ -341,7 +341,7 @@ func TestBigcacheClearWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("An unexpected error occurred")
+	expectedErr := errors.New("an unexpected error occurred")
 
 	client := mocksStore.NewMockBigcacheClientInterface(ctrl)
 	client.EXPECT().Reset().Return(expectedErr)

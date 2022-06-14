@@ -104,7 +104,7 @@ func TestGetWithTTLWhenMiss(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to find in store")
+	expectedErr := errors.New("unable to find in store")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 	store.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second, expectedErr)
@@ -137,7 +137,7 @@ func TestGetWhenMiss(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to find in store")
+	expectedErr := errors.New("unable to find in store")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Get(ctx, "my-key").Return(nil, expectedErr)
@@ -212,7 +212,7 @@ func TestSetWhenError(t *testing.T) {
 		Hello: "world",
 	}
 
-	expectedErr := errors.New("Unable to set value in store")
+	expectedErr := errors.New("unable to set value in store")
 
 	mockedStore := mocksStore.NewMockStoreInterface(ctrl)
 	mockedStore.EXPECT().Set(ctx, "my-key", cacheValue, store.OptionsMatcher{
@@ -274,7 +274,7 @@ func TesDeleteWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to delete key")
+	expectedErr := errors.New("unable to delete key")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
@@ -336,7 +336,7 @@ func TestInvalidateWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unexpected error when invalidating data")
+	expectedErr := errors.New("unexpected error when invalidating data")
 
 	mockedStore := mocksStore.NewMockStoreInterface(ctrl)
 	mockedStore.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{
@@ -398,7 +398,7 @@ func TestClearWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unexpected error when clearing cache")
+	expectedErr := errors.New("unexpected error when clearing cache")
 
 	store := mocksStore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Clear(ctx).Return(expectedErr)

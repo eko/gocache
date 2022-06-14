@@ -52,7 +52,7 @@ func (s *MemcacheStore) Get(_ context.Context, key any) (any, error) {
 		return nil, err
 	}
 	if item == nil {
-		return nil, NotFoundWithCause(errors.New("Unable to retrieve data from memcache"))
+		return nil, NotFoundWithCause(errors.New("unable to retrieve data from memcache"))
 	}
 
 	return item.Value, err
@@ -65,7 +65,7 @@ func (s *MemcacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durati
 		return nil, 0, err
 	}
 	if item == nil {
-		return nil, 0, NotFoundWithCause(errors.New("Unable to retrieve data from memcache"))
+		return nil, 0, NotFoundWithCause(errors.New("unable to retrieve data from memcache"))
 	}
 
 	return item.Value, time.Duration(item.Expiration) * time.Second, err

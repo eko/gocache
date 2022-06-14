@@ -151,7 +151,7 @@ func TestMetricDeleteWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unable to delete key")
+	expectedErr := errors.New("unable to delete key")
 
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
@@ -193,7 +193,7 @@ func TestMetricInvalidateWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unexpected error while invalidating data")
+	expectedErr := errors.New("unexpected error while invalidating data")
 
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(expectedErr)
@@ -235,7 +235,7 @@ func TestMetricClearWhenError(t *testing.T) {
 
 	ctx := context.Background()
 
-	expectedErr := errors.New("Unexpected error while clearing cache")
+	expectedErr := errors.New("unexpected error while clearing cache")
 
 	cache1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(expectedErr)
