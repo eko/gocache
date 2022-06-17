@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis/v8/internal/pool"
+	"github.com/go-redis/redis/v9/internal/pool"
 )
 
 // Limiter is the interface of a rate limiter or a circuit breaker.
@@ -51,6 +51,9 @@ type Options struct {
 	// or the User Password when connecting to a Redis 6.0 instance, or greater,
 	// that is using the Redis ACL system.
 	Password string
+	// CredentialsProvider allows the username and password to be updated
+	// before reconnecting. It should return the current username and password.
+	CredentialsProvider func() (username string, password string)
 
 	// Database to be selected after connecting to the server.
 	DB int
@@ -267,7 +270,10 @@ func setupTCPConn(u *url.URL) (*Options, error) {
 	}
 
 	if u.Scheme == "rediss" {
-		o.TLSConfig = &tls.Config{ServerName: h}
+		o.TLSConfig = &tls.Config{
+			ServerName: h,
+			MinVersion: tls.VersionTLS12,
+		}
 	}
 
 	return setupConnParams(u, o)

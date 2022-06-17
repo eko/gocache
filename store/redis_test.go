@@ -6,7 +6,7 @@ import (
 	"time"
 
 	mocksStore "github.com/eko/gocache/v3/test/mocks/store/clients"
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v9"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

@@ -14,10 +14,10 @@ import (
 	"github.com/cespare/xxhash/v2"
 	rendezvous "github.com/dgryski/go-rendezvous" //nolint
 
-	"github.com/go-redis/redis/v8/internal"
-	"github.com/go-redis/redis/v8/internal/hashtag"
-	"github.com/go-redis/redis/v8/internal/pool"
-	"github.com/go-redis/redis/v8/internal/rand"
+	"github.com/go-redis/redis/v9/internal"
+	"github.com/go-redis/redis/v9/internal/hashtag"
+	"github.com/go-redis/redis/v9/internal/pool"
+	"github.com/go-redis/redis/v9/internal/rand"
 )
 
 var errRingShardsDown = errors.New("redis: all ring shards are down")
@@ -309,7 +309,7 @@ func (c *ringShards) Random() (*ringShard, error) {
 	return c.GetByKey(strconv.Itoa(rand.Int()))
 }
 
-// heartbeat monitors state of each shard in the ring.
+// Heartbeat monitors state of each shard in the ring.
 func (c *ringShards) Heartbeat(frequency time.Duration) {
 	ticker := time.NewTicker(frequency)
 	defer ticker.Stop()

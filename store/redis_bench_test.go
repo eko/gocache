@@ -6,7 +6,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v9"
 )
 
 func BenchmarkRedisSet(b *testing.B) {

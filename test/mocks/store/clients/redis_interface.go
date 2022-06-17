@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	redis "github.com/go-redis/redis/v8"
+	redis "github.com/go-redis/redis/v9"
 	gomock "github.com/golang/mock/gomock"
 )
 

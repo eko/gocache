@@ -7,14 +7,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/go-redis/redis/v8/internal"
-	"github.com/go-redis/redis/v8/internal/pool"
-	"github.com/go-redis/redis/v8/internal/proto"
+	"github.com/go-redis/redis/v9/internal"
+	"github.com/go-redis/redis/v9/internal/pool"
+	"github.com/go-redis/redis/v9/internal/proto"
 )
 
 // Nil reply returned by Redis when key does not exist.
 const Nil = proto.Nil
 
+// SetLogger set custom log
 func SetLogger(logger internal.Logging) {
 	internal.Logger = logger
 }
@@ -217,22 +218,30 @@ func (c *baseClient) initConn(ctx context.Context, cn *pool.Conn) error {
 	}
 	cn.Inited = true
 
-	if c.opt.Password == "" &&
-		c.opt.DB == 0 &&
-		!c.opt.readOnly &&
-		c.opt.OnConnect == nil {
-		return nil
+	username, password := c.opt.Username, c.opt.Password
+	if c.opt.CredentialsProvider != nil {
+		username, password = c.opt.CredentialsProvider()
 	}
 
 	connPool := pool.NewSingleConnPool(c.connPool, cn)
 	conn := newConn(ctx, c.opt, connPool)
 
+	var auth bool
+
+	// For redis-server <6.0 that does not support the Hello command,
+	// we continue to provide services with RESP2.
+	if err := conn.Hello(ctx, 3, username, password, "").Err(); err == nil {
+		auth = true
+	} else if err.Error() != "ERR unknown command 'hello'" {
+		return err
+	}
+
 	_, err := conn.Pipelined(ctx, func(pipe Pipeliner) error {
-		if c.opt.Password != "" {
-			if c.opt.Username != "" {
-				pipe.AuthACL(ctx, c.opt.Username, c.opt.Password)
+		if !auth && password != "" {
+			if username != "" {
+				pipe.AuthACL(ctx, username, password)
 			} else {
-				pipe.Auth(ctx, c.opt.Password)
+				pipe.Auth(ctx, password)
 			}
 		}
 
@@ -497,11 +506,12 @@ func wrapMultiExec(ctx context.Context, cmds []Cmder) []Cmder {
 }
 
 func txPipelineReadQueued(rd *proto.Reader, statusCmd *StatusCmd, cmds []Cmder) error {
-	// Parse queued replies.
+	// Parse +OK.
 	if err := statusCmd.readReply(rd); err != nil {
 		return err
 	}
 
+	// Parse +QUEUED.
 	for range cmds {
 		if err := statusCmd.readReply(rd); err != nil && !isRedisError(err) {
 			return err
@@ -517,14 +527,8 @@ func txPipelineReadQueued(rd *proto.Reader, statusCmd *StatusCmd, cmds []Cmder) 
 		return err
 	}
 
-	switch line[0] {
-	case proto.ErrorReply:
-		return proto.ParseErrorReply(line)
-	case proto.ArrayReply:
-		// ok
-	default:
-		err := fmt.Errorf("redis: expected '*', but got line %q", line)
-		return err
+	if line[0] != proto.RespArray {
+		return fmt.Errorf("redis: expected '*', but got line %q", line)
 	}
 
 	return nil
@@ -532,9 +536,11 @@ func txPipelineReadQueued(rd *proto.Reader, statusCmd *StatusCmd, cmds []Cmder) 
 
 //------------------------------------------------------------------------------
 
-// Client is a Redis client representing a pool of zero or more
-// underlying connections. It's safe for concurrent use by multiple
-// goroutines.
+// Client is a Redis client representing a pool of zero or more underlying connections.
+// It's safe for concurrent use by multiple goroutines.
+//
+// Client creates and frees connections automatically; it also maintains a free pool
+// of idle connections. You can control the pool size with Config.PoolSize option.
 type Client struct {
 	*baseClient
 	cmdable
