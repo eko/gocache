@@ -26,10 +26,8 @@ const (
 	DefaultScanNum           = 100
 )
 
-var (
-	// empty represent empty sort key, more info reference: https://github.com/XiaoMi/pegasus-go-client/blob/f3b6b08bc4c227982bb5b73106329435fda97a38/pegasus/table_connector.go#L83
-	empty = []byte("-")
-)
+// empty represent empty sort key, more info reference: https://github.com/XiaoMi/pegasus-go-client/blob/f3b6b08bc4c227982bb5b73106329435fda97a38/pegasus/table_connector.go#L83
+var empty = []byte("-")
 
 // OptionsPegasus is options of Pegasus
 type OptionsPegasus struct {
@@ -194,8 +192,8 @@ func (p *PegasusStore) Set(ctx context.Context, key, value any, options ...Optio
 
 func (p *PegasusStore) setTags(ctx context.Context, key any, tags []string) error {
 	for _, tag := range tags {
-		var tagKey = fmt.Sprintf(PegasusTagPattern, tag)
-		var cacheKeys = []string{}
+		tagKey := fmt.Sprintf(PegasusTagPattern, tag)
+		cacheKeys := []string{}
 
 		if result, err := p.Get(ctx, tagKey); err == nil {
 			if bytes, ok := result.([]byte); ok {
@@ -203,7 +201,7 @@ func (p *PegasusStore) setTags(ctx context.Context, key any, tags []string) erro
 			}
 		}
 
-		var alreadyInserted = false
+		alreadyInserted := false
 		for _, cacheKey := range cacheKeys {
 			if cacheKey == key.(string) {
 				alreadyInserted = true
@@ -239,13 +237,13 @@ func (p *PegasusStore) Invalidate(ctx context.Context, options ...InvalidateOpti
 	opts := applyInvalidateOptions(options...)
 	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
-			var tagKey = fmt.Sprintf(PegasusTagPattern, tag)
+			tagKey := fmt.Sprintf(PegasusTagPattern, tag)
 			result, err := p.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
 
-			var cacheKeys = []string{}
+			cacheKeys := []string{}
 			if bytes, ok := result.([]byte); ok {
 				cacheKeys = strings.Split(string(bytes), ",")
 			}

@@ -248,7 +248,6 @@ func TestFreecacheSetInvalidSize(t *testing.T) {
 	s := NewFreecache(client, WithExpiration(6*time.Second))
 	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second))
 	assert.NotNil(t, err)
-
 }
 
 func TestFreecacheSetInvalidKey(t *testing.T) {

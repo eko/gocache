@@ -84,8 +84,8 @@ func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options ...
 
 func (s *BigcacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
-		var tagKey = fmt.Sprintf(BigcacheTagPattern, tag)
-		var cacheKeys = []string{}
+		tagKey := fmt.Sprintf(BigcacheTagPattern, tag)
+		cacheKeys := []string{}
 
 		if result, err := s.Get(ctx, tagKey); err == nil {
 			if bytes, ok := result.([]byte); ok {
@@ -93,7 +93,7 @@ func (s *BigcacheStore) setTags(ctx context.Context, key any, tags []string) {
 			}
 		}
 
-		var alreadyInserted = false
+		alreadyInserted := false
 		for _, cacheKey := range cacheKeys {
 			if cacheKey == key.(string) {
 				alreadyInserted = true
@@ -120,13 +120,13 @@ func (s *BigcacheStore) Invalidate(ctx context.Context, options ...InvalidateOpt
 
 	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
-			var tagKey = fmt.Sprintf(BigcacheTagPattern, tag)
+			tagKey := fmt.Sprintf(BigcacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
 
-			var cacheKeys = []string{}
+			cacheKeys := []string{}
 			if bytes, ok := result.([]byte); ok {
 				cacheKeys = strings.Split(string(bytes), ",")
 			}

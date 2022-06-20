@@ -98,7 +98,7 @@ func (s *MemcacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		currentTag := tag
 		group.Go(func() error {
-			var tagKey = fmt.Sprintf(MemcacheTagPattern, currentTag)
+			tagKey := fmt.Sprintf(MemcacheTagPattern, currentTag)
 
 			var err error
 			for i := 0; i < 3; i++ {
@@ -167,13 +167,13 @@ func (s *MemcacheStore) Invalidate(ctx context.Context, options ...InvalidateOpt
 
 	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
-			var tagKey = fmt.Sprintf(MemcacheTagPattern, tag)
+			tagKey := fmt.Sprintf(MemcacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
 
-			var cacheKeys = []string{}
+			cacheKeys := []string{}
 			if bytes, ok := result.([]byte); ok {
 				cacheKeys = strings.Split(string(bytes), ",")
 			}
