@@ -96,11 +96,11 @@ func (c *Cache[T]) GetType() string {
 // the key if type is string or by computing a checksum of key structure
 // if its type is other than string
 func (c *Cache[T]) getCacheKey(key any) string {
-	switch key.(type) {
+	switch v := key.(type) {
 	case string:
-		return key.(string)
+		return v
 	case CacheKeyGenerator:
-		return key.(CacheKeyGenerator).GetCacheKey()
+		return v.GetCacheKey()
 	default:
 		return checksum(key)
 	}

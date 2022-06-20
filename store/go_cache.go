@@ -57,7 +57,7 @@ func (s *GoCacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duratio
 	if !exists {
 		return data, 0, NotFoundWithCause(errors.New("value not found in GoCache store"))
 	}
-	duration := t.Sub(time.Now())
+	duration := time.Until(t)
 	return data, duration, nil
 }
 

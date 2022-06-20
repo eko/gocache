@@ -59,10 +59,10 @@ func NewPegasus(ctx context.Context, options *OptionsPegasus) (*PegasusStore, er
 		MetaServers: options.MetaServers,
 	})
 	table, err := client.OpenTable(ctx, options.TableName)
-	defer table.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer table.Close()
 
 	return &PegasusStore{
 		client:  client,
@@ -128,10 +128,10 @@ func (p *PegasusStore) Close() error {
 // Get returns data stored from a given key
 func (p *PegasusStore) Get(ctx context.Context, key any) (any, error) {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
-	defer table.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer table.Close()
 
 	value, err := table.Get(ctx, []byte(cast.ToString(key)), empty)
 	if err != nil {
@@ -146,10 +146,10 @@ func (p *PegasusStore) Get(ctx context.Context, key any) (any, error) {
 // GetWithTTL returns data stored from a given key and its corresponding TTL
 func (p *PegasusStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
-	defer table.Close()
 	if err != nil {
 		return nil, 0, err
 	}
+	defer table.Close()
 
 	value, err := table.Get(ctx, []byte(cast.ToString(key)), empty)
 	if err != nil {
@@ -172,10 +172,10 @@ func (p *PegasusStore) Set(ctx context.Context, key, value any, options ...Optio
 	opts := applyOptions(options...)
 
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
-	defer table.Close()
 	if err != nil {
 		return err
 	}
+	defer table.Close()
 
 	err = table.SetTTL(ctx, []byte(cast.ToString(key)), empty, []byte(cast.ToString(value)), opts.expiration)
 	if err != nil {
@@ -224,10 +224,10 @@ func (p *PegasusStore) setTags(ctx context.Context, key any, tags []string) erro
 // Delete removes data from Pegasus for given key identifier
 func (p *PegasusStore) Delete(ctx context.Context, key any) error {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
-	defer table.Close()
 	if err != nil {
 		return err
 	}
+	defer table.Close()
 
 	return table.Del(ctx, []byte(cast.ToString(key)), empty)
 }
@@ -262,10 +262,10 @@ func (p *PegasusStore) Invalidate(ctx context.Context, options ...InvalidateOpti
 // Clear resets all data in the store
 func (p *PegasusStore) Clear(ctx context.Context) error {
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
-	defer table.Close()
 	if err != nil {
 		return err
 	}
+	defer table.Close()
 
 	// init full scan
 	scanners, err := table.GetUnorderedScanners(ctx, p.options.TablePartitionNum, &pegasus.ScannerOptions{
@@ -280,7 +280,7 @@ func (p *PegasusStore) Clear(ctx context.Context) error {
 	// full scan and delete
 	for _, scanner := range scanners {
 		// Iterates sequentially.
-		for true {
+		for {
 			completed, hashKey, _, _, err := scanner.Next(ctx)
 			if err != nil {
 				return err
