@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -25,45 +26,39 @@ const (
 // BigcacheStore is a store for Bigcache
 type BigcacheStore struct {
 	client  BigcacheClientInterface
-	options *Options
+	options *options
 }
 
 // NewBigcache creates a new store to Bigcache instance(s)
-func NewBigcache(client BigcacheClientInterface, options *Options) *BigcacheStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewBigcache(client BigcacheClientInterface, options ...Option) *BigcacheStore {
 	return &BigcacheStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
 // Get returns data stored from a given key
-func (s *BigcacheStore) Get(key interface{}) (interface{}, error) {
+func (s *BigcacheStore) Get(_ context.Context, key any) (any, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
 		return nil, err
 	}
 	if item == nil {
-		return nil, errors.New("Unable to retrieve data from bigcache")
+		return nil, NotFoundWithCause(errors.New("unable to retrieve data from bigcache"))
 	}
 
 	return item, err
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *BigcacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
-	item, err := s.Get(key)
+func (s *BigcacheStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
+	item, err := s.Get(ctx, key)
 	return item, 0, err
 }
 
 // Set defines data in Bigcache for given key identifier
-func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options) error {
-	if options == nil {
-		options = s.options
-	}
+func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
+	opts := applyOptionsWithDefault(s.options, options...)
 
 	var val []byte
 	switch v := value.(type) {
@@ -80,19 +75,19 @@ func (s *BigcacheStore) Set(key interface{}, value interface{}, options *Options
 		return err
 	}
 
-	if tags := options.TagsValue(); len(tags) > 0 {
-		s.setTags(key, tags)
+	if tags := opts.tags; len(tags) > 0 {
+		s.setTags(ctx, key, tags)
 	}
 
 	return nil
 }
 
-func (s *BigcacheStore) setTags(key interface{}, tags []string) {
+func (s *BigcacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(BigcacheTagPattern, tag)
 		var cacheKeys = []string{}
 
-		if result, err := s.Get(tagKey); err == nil {
+		if result, err := s.Get(ctx, tagKey); err == nil {
 			if bytes, ok := result.([]byte); ok {
 				cacheKeys = strings.Split(string(bytes), ",")
 			}
@@ -110,23 +105,23 @@ func (s *BigcacheStore) setTags(key interface{}, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{
-			Expiration: 720 * time.Hour,
-		})
+		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), WithExpiration(720*time.Hour))
 	}
 }
 
 // Delete removes data from Bigcache for given key identifier
-func (s *BigcacheStore) Delete(key interface{}) error {
+func (s *BigcacheStore) Delete(_ context.Context, key any) error {
 	return s.client.Delete(key.(string))
 }
 
 // Invalidate invalidates some cache data in Bigcache for given options
-func (s *BigcacheStore) Invalidate(options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (s *BigcacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(BigcacheTagPattern, tag)
-			result, err := s.Get(tagKey)
+			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
@@ -137,7 +132,7 @@ func (s *BigcacheStore) Invalidate(options InvalidateOptions) error {
 			}
 
 			for _, cacheKey := range cacheKeys {
-				s.Delete(cacheKey)
+				s.Delete(ctx, cacheKey)
 			}
 		}
 	}
@@ -146,7 +141,7 @@ func (s *BigcacheStore) Invalidate(options InvalidateOptions) error {
 }
 
 // Clear resets all data in the store
-func (s *BigcacheStore) Clear() error {
+func (s *BigcacheStore) Clear(_ context.Context) error {
 	return s.client.Reset()
 }
 

@@ -1,12 +1,13 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
 	"time"
 
-	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
+	mocksStore "github.com/eko/gocache/v3/test/mocks/store/clients"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,54 +15,52 @@ import (
 func TestNewFreecache(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 
 	// When
-	store := NewFreecache(client, options)
+	store := NewFreecache(client, WithExpiration(6*time.Second))
 
 	// Then
 	assert.IsType(t, new(FreecacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, options, store.options)
+	assert.Equal(t, &options{
+		expiration: 6 * time.Second,
+	}, store.options)
 }
 
 func TestNewFreecacheDefaultOptions(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 
 	// When
-	store := NewFreecache(client, nil)
+	store := NewFreecache(client)
 
 	// Then
 	assert.IsType(t, new(FreecacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, &Options{}, store.options)
+	assert.Equal(t, new(options), store.options)
 }
 
 func TestFreecacheGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Get([]byte("key1")).Return([]byte("val1"), nil)
 	client.EXPECT().Get([]byte("key2")).Return([]byte("val2"), nil)
 
-	s := NewFreecache(client, nil)
+	s := NewFreecache(client)
 
-	value, err := s.Get("key1")
+	value, err := s.Get(ctx, "key1")
 	assert.Nil(t, err)
 	assert.Equal(t, []byte("val1"), value)
 
-	value, err = s.Get("key2")
+	value, err = s.Get(ctx, "key2")
 	assert.Nil(t, err)
 	assert.Equal(t, []byte("val2"), value)
 }
@@ -69,28 +68,30 @@ func TestFreecacheGet(t *testing.T) {
 func TestFreecacheGetNotFound(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
-	client.EXPECT().Get([]byte("key1")).Return(nil, errors.New("value not found in Freecache store"))
+	client.EXPECT().Get([]byte("key1")).Return(nil, errors.New("value not found in store"))
 
-	s := NewFreecache(client, nil)
+	s := NewFreecache(client)
 
-	value, err := s.Get("key1")
-	assert.EqualError(t, err, "value not found in Freecache store")
+	value, err := s.Get(ctx, "key1")
+	assert.EqualError(t, err, "value not found in store")
 	assert.Nil(t, value)
 }
 
 func TestFreecacheGetWithInvalidKey(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 
-	s := NewFreecache(client, nil)
+	s := NewFreecache(client)
 
-	value, err := s.Get([]byte("key1"))
+	value, err := s.Get(ctx, []byte("key1"))
 	assert.Error(t, err, "key type not supported by Freecache store")
 	assert.Nil(t, value)
 }
@@ -98,7 +99,8 @@ func TestFreecacheGetWithInvalidKey(t *testing.T) {
 func TestFreecacheGetWithTTL(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -107,11 +109,10 @@ func TestFreecacheGetWithTTL(t *testing.T) {
 	client.EXPECT().Get([]byte(cacheKey)).Return(cacheValue, nil)
 	client.EXPECT().TTL([]byte(cacheKey)).Return(uint32(5), nil)
 
-	options := &Options{Expiration: 3 * time.Second}
-	store := NewFreecache(client, options)
+	store := NewFreecache(client, WithExpiration(3*time.Second))
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -122,22 +123,21 @@ func TestFreecacheGetWithTTL(t *testing.T) {
 func TestFreecacheGetWithTTLWhenMissingItem(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
-	expectedErr := errors.New("value not found in Freecache store")
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
-	client.EXPECT().Get([]byte(cacheKey)).Return(nil, expectedErr)
+	client.EXPECT().Get([]byte(cacheKey)).Return(nil, NotFound{})
 
-	options := &Options{Expiration: 3 * time.Second}
-	store := NewFreecache(client, options)
+	store := NewFreecache(client, WithExpiration(3*time.Second))
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
-	assert.Equal(t, expectedErr, err)
+	assert.ErrorIs(t, err, NotFound{})
 	assert.Nil(t, value)
 	assert.Equal(t, 0*time.Second, ttl)
 }
@@ -145,24 +145,23 @@ func TestFreecacheGetWithTTLWhenMissingItem(t *testing.T) {
 func TestFreecacheGetWithTTLWhenErrorAtTTL(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	expectedErr := errors.New("value not found in Freecache store")
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Get([]byte(cacheKey)).Return(cacheValue, nil)
-	client.EXPECT().TTL([]byte(cacheKey)).Return(uint32(0), expectedErr)
+	client.EXPECT().TTL([]byte(cacheKey)).Return(uint32(0), NotFound{})
 
-	options := &Options{Expiration: 3 * time.Second}
-	store := NewFreecache(client, options)
+	store := NewFreecache(client, WithExpiration(3*time.Second))
 
 	// When
-	value, ttl, err := store.GetWithTTL(cacheKey)
+	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
-	assert.Equal(t, expectedErr, err)
+	assert.ErrorIs(t, err, NotFound{})
 	assert.Nil(t, value)
 	assert.Equal(t, 0*time.Second, ttl)
 }
@@ -170,13 +169,14 @@ func TestFreecacheGetWithTTLWhenErrorAtTTL(t *testing.T) {
 func TestFreecacheGetWithTTLWhenInvalidKey(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 
-	s := NewFreecache(client, nil)
+	s := NewFreecache(client)
 
-	value, ttl, err := s.GetWithTTL([]byte("key1"))
+	value, ttl, err := s.GetWithTTL(ctx, []byte("key1"))
 	assert.Error(t, err, "key type not supported by Freecache store")
 	assert.Nil(t, value)
 	assert.Equal(t, 0*time.Second, ttl)
@@ -185,26 +185,25 @@ func TestFreecacheGetWithTTLWhenInvalidKey(t *testing.T) {
 func TestFreecacheSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Set([]byte(cacheKey), cacheValue, 6).Return(nil)
 
-	s := NewFreecache(client, options)
-	err := s.Set(cacheKey, cacheValue, options)
+	s := NewFreecache(client, WithExpiration(6*time.Second))
+	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second))
 	assert.Nil(t, err)
 }
 
 func TestFreecacheSetWithDefaultOptions(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
@@ -212,46 +211,42 @@ func TestFreecacheSetWithDefaultOptions(t *testing.T) {
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Set([]byte(cacheKey), cacheValue, 0).Return(nil)
 
-	s := NewFreecache(client, nil)
-	err := s.Set(cacheKey, cacheValue, nil)
+	s := NewFreecache(client)
+	err := s.Set(ctx, cacheKey, cacheValue)
 	assert.Nil(t, err)
 }
 
 func TestFreecacheSetInvalidValue(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 	expectedErr := errors.New("value type not supported by Freecache store")
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 
-	s := NewFreecache(client, options)
-	err := s.Set(cacheKey, cacheValue, options)
+	s := NewFreecache(client, WithExpiration(6*time.Second))
+	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second))
 	assert.Equal(t, expectedErr, err)
 }
 
 func TestFreecacheSetInvalidSize(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 	expectedErr := fmt.Errorf("size of key: %v, value: %v, err: %v", cacheKey, cacheValue, errors.New(""))
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Set([]byte(cacheKey), cacheValue, 6).Return(expectedErr)
 
-	s := NewFreecache(client, options)
-	err := s.Set(cacheKey, cacheValue, options)
+	s := NewFreecache(client, WithExpiration(6*time.Second))
+	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second))
 	assert.NotNil(t, err)
 
 }
@@ -259,97 +254,92 @@ func TestFreecacheSetInvalidSize(t *testing.T) {
 func TestFreecacheSetInvalidKey(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := 1
 	cacheValue := []byte("my-cache-value")
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 
 	expectedErr := errors.New("key type not supported by Freecache store")
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 
-	s := NewFreecache(client, options)
-	err := s.Set(cacheKey, cacheValue, options)
+	s := NewFreecache(client, WithExpiration(6*time.Second))
+	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second))
 	assert.Equal(t, expectedErr, err)
 }
 
 func TestFreecacheDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "key"
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Del(gomock.Any()).Return(true)
 
-	s := NewFreecache(client, nil)
-	err := s.Delete(cacheKey)
+	s := NewFreecache(client)
+	err := s.Delete(ctx, cacheKey)
 	assert.Nil(t, err)
 }
 
 func TestFreecacheDeleteFailed(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "key"
 	expectedErr := fmt.Errorf("failed to delete key %v", cacheKey)
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Del(gomock.Any()).Return(false)
 
-	s := NewFreecache(client, nil)
-	err := s.Delete(cacheKey)
+	s := NewFreecache(client)
+	err := s.Delete(ctx, cacheKey)
 	assert.Equal(t, expectedErr, err)
 }
 
 func TestFreecacheDeleteInvalidKey(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := 1
 	expectedErr := errors.New("key type not supported by Freecache store")
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 
-	s := NewFreecache(client, nil)
-	err := s.Delete(cacheKey)
+	s := NewFreecache(client)
+	err := s.Delete(ctx, cacheKey)
 	assert.Equal(t, expectedErr, err)
 }
 
 func TestFreecacheSetWithTags(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	options := &Options{
-		Expiration: 6 * time.Second,
-		Tags:       []string{"tag1"},
-	}
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Set([]byte(cacheKey), cacheValue, 6).Return(nil)
-	client.EXPECT().Get([]byte("freecache_tag_tag1")).MaxTimes(1).Return(nil, errors.New("value not found in Freecache store"))
+	client.EXPECT().Get([]byte("freecache_tag_tag1")).MaxTimes(1).Return(nil, errors.New("value not found in store"))
 	client.EXPECT().Set([]byte("freecache_tag_tag1"), []byte("my-key"), 2592000).Return(nil)
 
-	s := NewFreecache(client, options)
-	err := s.Set(cacheKey, cacheValue, options)
+	s := NewFreecache(client, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
+	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
 	assert.Nil(t, err)
 }
 
 func TestFreecacheInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
+	ctx := context.Background()
 
 	cacheKeys := []byte("my-key")
 
@@ -358,12 +348,10 @@ func TestFreecacheInvalidate(t *testing.T) {
 	client.EXPECT().Del([]byte("my-key")).Return(true)
 	client.EXPECT().Del([]byte("freecache_tag_tag1")).Return(true)
 
-	s := NewFreecache(client, &Options{
-		Expiration: 6 * time.Second,
-	})
+	s := NewFreecache(client, WithExpiration(6*time.Second))
 
 	// When
-	err := s.Invalidate(options)
+	err := s.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -372,14 +360,11 @@ func TestFreecacheInvalidate(t *testing.T) {
 func TestFreecacheTagsAlreadyPresent(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	options := &Options{
-		Expiration: 6 * time.Second,
-		Tags:       []string{"tag1"},
-	}
 
 	oldCacheKeys := []byte("key1,key2")
 
@@ -388,22 +373,19 @@ func TestFreecacheTagsAlreadyPresent(t *testing.T) {
 	client.EXPECT().Get([]byte("freecache_tag_tag1")).MaxTimes(1).Return(oldCacheKeys, nil)
 	client.EXPECT().Set([]byte("freecache_tag_tag1"), []byte("key1,key2,my-key"), 2592000).Return(nil)
 
-	s := NewFreecache(client, options)
-	err := s.Set(cacheKey, cacheValue, options)
+	s := NewFreecache(client, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
+	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
 	assert.Nil(t, err)
 }
 
 func TestFreecacheTagsRefreshTime(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
-	options := &Options{
-		Expiration: 6 * time.Second,
-		Tags:       []string{"tag1"},
-	}
 
 	oldCacheKeys := []byte("my-key")
 
@@ -412,19 +394,16 @@ func TestFreecacheTagsRefreshTime(t *testing.T) {
 	client.EXPECT().Get([]byte("freecache_tag_tag1")).MaxTimes(1).Return(oldCacheKeys, nil)
 	client.EXPECT().Set([]byte("freecache_tag_tag1"), []byte("my-key"), 2592000).Return(nil)
 
-	s := NewFreecache(client, options)
-	err := s.Set(cacheKey, cacheValue, options)
+	s := NewFreecache(client, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
+	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
 	assert.Nil(t, err)
 }
 
 func TestFreecacheInvalidateMultipleKeys(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
+	ctx := context.Background()
 
 	cacheKeys := []byte("my-key,key1,key2")
 
@@ -435,12 +414,10 @@ func TestFreecacheInvalidateMultipleKeys(t *testing.T) {
 	client.EXPECT().Del([]byte("key2")).Return(true)
 	client.EXPECT().Del([]byte("freecache_tag_tag1")).Return(true)
 
-	s := NewFreecache(client, &Options{
-		Expiration: 6 * time.Second,
-	})
+	s := NewFreecache(client, WithExpiration(6*time.Second))
 
 	// When
-	err := s.Invalidate(options)
+	err := s.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -449,11 +426,8 @@ func TestFreecacheInvalidateMultipleKeys(t *testing.T) {
 func TestFreecacheFailedInvalidateMultipleKeys(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
+	ctx := context.Background()
 
 	cacheKeys := []byte("my-key,key1,key2")
 
@@ -461,12 +435,10 @@ func TestFreecacheFailedInvalidateMultipleKeys(t *testing.T) {
 	client.EXPECT().Get([]byte("freecache_tag_tag1")).Return(cacheKeys, nil)
 	client.EXPECT().Del([]byte("my-key")).Return(false)
 
-	s := NewFreecache(client, &Options{
-		Expiration: 6 * time.Second,
-	})
+	s := NewFreecache(client, WithExpiration(6*time.Second))
 
 	// When
-	err := s.Invalidate(options)
+	err := s.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.EqualError(t, err, "failed to delete key my-key")
@@ -475,11 +447,8 @@ func TestFreecacheFailedInvalidateMultipleKeys(t *testing.T) {
 func TestFreecacheFailedInvalidatePattern(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
+	ctx := context.Background()
 
 	cacheKeys := []byte("my-key,key1,key2")
 
@@ -490,12 +459,10 @@ func TestFreecacheFailedInvalidatePattern(t *testing.T) {
 	client.EXPECT().Del([]byte("key2")).Return(true)
 	client.EXPECT().Del([]byte("freecache_tag_tag1")).Return(false)
 
-	s := NewFreecache(client, &Options{
-		Expiration: 6 * time.Second,
-	})
+	s := NewFreecache(client, WithExpiration(6*time.Second))
 
 	// When
-	err := s.Invalidate(options)
+	err := s.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.EqualError(t, err, "failed to delete key freecache_tag_tag1")
@@ -504,17 +471,16 @@ func TestFreecacheFailedInvalidatePattern(t *testing.T) {
 func TestFreecacheClearAll(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 	client.EXPECT().Clear()
 
-	s := NewFreecache(client, &Options{
-		Expiration: 6 * time.Second,
-	})
+	s := NewFreecache(client)
 
 	// When
-	err := s.Clear()
+	err := s.Clear(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -523,13 +489,10 @@ func TestFreecacheClearAll(t *testing.T) {
 func TestFreecacheGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockFreecacheClientInterface(ctrl)
 
-	s := NewFreecache(client, &Options{
-		Expiration: 6 * time.Second,
-	})
+	s := NewFreecache(client)
 
 	// When
 	ty := s.GetType()

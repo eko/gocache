@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/codec"
-	mocksCodec "github.com/eko/gocache/test/mocks/codec"
-	mocksStore "github.com/eko/gocache/test/mocks/store"
+	"github.com/eko/gocache/v3/codec"
+	mocksCodec "github.com/eko/gocache/v3/test/mocks/codec"
+	mocksStore "github.com/eko/gocache/v3/test/mocks/store"
 	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -47,7 +47,6 @@ func TestRecord(t *testing.T) {
 func TestRecordFromCodec(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	redisStore := mocksStore.NewMockStoreInterface(ctrl)
 	redisStore.EXPECT().GetType().Return("redis")

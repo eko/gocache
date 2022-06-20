@@ -5,11 +5,12 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 	time "time"
 
-	codec "github.com/eko/gocache/codec"
-	store "github.com/eko/gocache/store"
+	codec "github.com/eko/gocache/v3/codec"
+	store "github.com/eko/gocache/v3/store"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -37,46 +38,46 @@ func (m *MockCodecInterface) EXPECT() *MockCodecInterfaceMockRecorder {
 }
 
 // Clear mocks base method.
-func (m *MockCodecInterface) Clear() error {
+func (m *MockCodecInterface) Clear(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Clear")
+	ret := m.ctrl.Call(m, "Clear", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Clear indicates an expected call of Clear.
-func (mr *MockCodecInterfaceMockRecorder) Clear() *gomock.Call {
+func (mr *MockCodecInterfaceMockRecorder) Clear(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clear", reflect.TypeOf((*MockCodecInterface)(nil).Clear))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clear", reflect.TypeOf((*MockCodecInterface)(nil).Clear), ctx)
 }
 
 // Delete mocks base method.
-func (m *MockCodecInterface) Delete(key interface{}) error {
+func (m *MockCodecInterface) Delete(ctx context.Context, key any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", key)
+	ret := m.ctrl.Call(m, "Delete", ctx, key)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockCodecInterfaceMockRecorder) Delete(key interface{}) *gomock.Call {
+func (mr *MockCodecInterfaceMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockCodecInterface)(nil).Delete), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockCodecInterface)(nil).Delete), ctx, key)
 }
 
 // Get mocks base method.
-func (m *MockCodecInterface) Get(key interface{}) (interface{}, error) {
+func (m *MockCodecInterface) Get(ctx context.Context, key any) (any, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(interface{})
+	ret := m.ctrl.Call(m, "Get", ctx, key)
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockCodecInterfaceMockRecorder) Get(key interface{}) *gomock.Call {
+func (mr *MockCodecInterfaceMockRecorder) Get(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCodecInterface)(nil).Get), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCodecInterface)(nil).Get), ctx, key)
 }
 
 // GetStats mocks base method.
@@ -108,45 +109,55 @@ func (mr *MockCodecInterfaceMockRecorder) GetStore() *gomock.Call {
 }
 
 // GetWithTTL mocks base method.
-func (m *MockCodecInterface) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+func (m *MockCodecInterface) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWithTTL", key)
-	ret0, _ := ret[0].(interface{})
+	ret := m.ctrl.Call(m, "GetWithTTL", ctx, key)
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(time.Duration)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
 // GetWithTTL indicates an expected call of GetWithTTL.
-func (mr *MockCodecInterfaceMockRecorder) GetWithTTL(key interface{}) *gomock.Call {
+func (mr *MockCodecInterfaceMockRecorder) GetWithTTL(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithTTL", reflect.TypeOf((*MockCodecInterface)(nil).GetWithTTL), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithTTL", reflect.TypeOf((*MockCodecInterface)(nil).GetWithTTL), ctx, key)
 }
 
 // Invalidate mocks base method.
-func (m *MockCodecInterface) Invalidate(options store.InvalidateOptions) error {
+func (m *MockCodecInterface) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Invalidate", options)
+	varargs := []interface{}{ctx}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Invalidate", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Invalidate indicates an expected call of Invalidate.
-func (mr *MockCodecInterfaceMockRecorder) Invalidate(options interface{}) *gomock.Call {
+func (mr *MockCodecInterfaceMockRecorder) Invalidate(ctx interface{}, options ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockCodecInterface)(nil).Invalidate), options)
+	varargs := append([]interface{}{ctx}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockCodecInterface)(nil).Invalidate), varargs...)
 }
 
 // Set mocks base method.
-func (m *MockCodecInterface) Set(key, value interface{}, options *store.Options) error {
+func (m *MockCodecInterface) Set(ctx context.Context, key, value any, options ...store.Option) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", key, value, options)
+	varargs := []interface{}{ctx, key, value}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Set", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Set indicates an expected call of Set.
-func (mr *MockCodecInterfaceMockRecorder) Set(key, value, options interface{}) *gomock.Call {
+func (mr *MockCodecInterfaceMockRecorder) Set(ctx, key, value interface{}, options ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCodecInterface)(nil).Set), key, value, options)
+	varargs := append([]interface{}{ctx, key, value}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCodecInterface)(nil).Set), varargs...)
 }

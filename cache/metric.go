@@ -1,8 +1,10 @@
 package cache
 
 import (
-	"github.com/eko/gocache/metrics"
-	"github.com/eko/gocache/store"
+	"context"
+
+	"github.com/eko/gocache/v3/metrics"
+	"github.com/eko/gocache/v3/store"
 )
 
 const (
@@ -11,22 +13,22 @@ const (
 )
 
 // MetricCache is the struct that specifies metrics available for different caches
-type MetricCache struct {
+type MetricCache[T any] struct {
 	metrics metrics.MetricsInterface
-	cache   CacheInterface
+	cache   CacheInterface[T]
 }
 
 // NewMetric creates a new cache with metrics and a given cache storage
-func NewMetric(metrics metrics.MetricsInterface, cache CacheInterface) *MetricCache {
-	return &MetricCache{
+func NewMetric[T any](metrics metrics.MetricsInterface, cache CacheInterface[T]) *MetricCache[T] {
+	return &MetricCache[T]{
 		metrics: metrics,
 		cache:   cache,
 	}
 }
 
 // Get obtains a value from cache and also records metrics
-func (c *MetricCache) Get(key interface{}) (interface{}, error) {
-	result, err := c.cache.Get(key)
+func (c *MetricCache[T]) Get(ctx context.Context, key any) (T, error) {
+	result, err := c.cache.Get(ctx, key)
 
 	c.updateMetrics(c.cache)
 
@@ -34,39 +36,39 @@ func (c *MetricCache) Get(key interface{}) (interface{}, error) {
 }
 
 // Set sets a value from the cache
-func (c *MetricCache) Set(key, object interface{}, options *store.Options) error {
-	return c.cache.Set(key, object, options)
+func (c *MetricCache[T]) Set(ctx context.Context, key any, object T, options ...store.Option) error {
+	return c.cache.Set(ctx, key, object, options...)
 }
 
 // Delete removes a value from the cache
-func (c *MetricCache) Delete(key interface{}) error {
-	return c.cache.Delete(key)
+func (c *MetricCache[T]) Delete(ctx context.Context, key any) error {
+	return c.cache.Delete(ctx, key)
 }
 
 // Invalidate invalidates cache item from given options
-func (c *MetricCache) Invalidate(options store.InvalidateOptions) error {
-	return c.cache.Invalidate(options)
+func (c *MetricCache[T]) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
+	return c.cache.Invalidate(ctx, options...)
 }
 
 // Clear resets all cache data
-func (c *MetricCache) Clear() error {
-	return c.cache.Clear()
+func (c *MetricCache[T]) Clear(ctx context.Context) error {
+	return c.cache.Clear(ctx)
 }
 
 // Get obtains a value from cache and also records metrics
-func (c *MetricCache) updateMetrics(cache CacheInterface) {
+func (c *MetricCache[T]) updateMetrics(cache CacheInterface[T]) {
 	switch current := cache.(type) {
-	case *ChainCache:
+	case *ChainCache[T]:
 		for _, cache := range current.GetCaches() {
 			c.updateMetrics(cache)
 		}
 
-	case SetterCacheInterface:
+	case SetterCacheInterface[T]:
 		c.metrics.RecordFromCodec(current.GetCodec())
 	}
 }
 
 // GetType returns the cache type
-func (c *MetricCache) GetType() string {
+func (c *MetricCache[T]) GetType() string {
 	return MetricType
 }

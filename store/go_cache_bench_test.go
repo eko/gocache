@@ -1,14 +1,18 @@
 package store
 
 import (
+	"context"
 	"fmt"
-	"github.com/patrickmn/go-cache"
 	"math"
 	"testing"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 )
 
 func BenchmarkGoCacheSet(b *testing.B) {
+	ctx := context.Background()
+
 	client := cache.New(10*time.Second, 30*time.Second)
 
 	store := NewGoCache(client, nil)
@@ -20,15 +24,15 @@ func BenchmarkGoCacheSet(b *testing.B) {
 				key := fmt.Sprintf("test-%d", n)
 				value := []byte(fmt.Sprintf("value-%d", n))
 
-				store.Set(key, value, &Options{
-					Tags: []string{fmt.Sprintf("tag-%d", n)},
-				})
+				store.Set(ctx, key, value, WithTags([]string{fmt.Sprintf("tag-%d", n)}))
 			}
 		})
 	}
 }
 
 func BenchmarkGoCacheGet(b *testing.B) {
+	ctx := context.Background()
+
 	client := cache.New(10*time.Second, 30*time.Second)
 
 	store := NewGoCache(client, nil)
@@ -36,13 +40,13 @@ func BenchmarkGoCacheGet(b *testing.B) {
 	key := "test"
 	value := []byte("value")
 
-	store.Set(key, value, nil)
+	store.Set(ctx, key, value, nil)
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
 		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 			for i := 0; i < b.N*n; i++ {
-				_, _ = store.Get(key)
+				_, _ = store.Get(ctx, key)
 			}
 		})
 	}

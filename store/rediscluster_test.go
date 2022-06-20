@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	mocksStore "github.com/eko/gocache/test/mocks/store/clients"
+	mocksStore "github.com/eko/gocache/v3/test/mocks/store/clients"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -14,34 +14,31 @@ import (
 func TestNewRedisCluster(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 
 	// When
-	store := NewRedisCluster(client, options)
+	store := NewRedisCluster(client, WithExpiration(6*time.Second))
 
 	// Then
 	assert.IsType(t, new(RedisClusterStore), store)
 	assert.Equal(t, client, store.clusclient)
-	assert.Equal(t, options, store.options)
+	assert.Equal(t, &options{expiration: 6 * time.Second}, store.options)
 }
 
 func TestRedisClusterGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	client.EXPECT().Get(context.Background(), "my-key").Return(&redis.StringCmd{})
+	client.EXPECT().Get(ctx, "my-key").Return(&redis.StringCmd{})
 
-	store := NewRedisCluster(client, nil)
+	store := NewRedisCluster(client)
 
 	// When
-	value, err := store.Get("my-key")
+	value, err := store.Get(ctx, "my-key")
 
 	// Then
 	assert.Nil(t, err)
@@ -51,23 +48,19 @@ func TestRedisClusterGet(t *testing.T) {
 func TestRedisClusterSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	client.EXPECT().Set(context.Background(), "my-key", cacheValue, 5*time.Second).Return(&redis.StatusCmd{})
+	client.EXPECT().Set(ctx, "my-key", cacheValue, 5*time.Second).Return(&redis.StatusCmd{})
 
-	store := NewRedisCluster(client, options)
+	store := NewRedisCluster(client, WithExpiration(6*time.Second))
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{
-		Expiration: 5 * time.Second,
-	})
+	err := store.Set(ctx, cacheKey, cacheValue, WithExpiration(5*time.Second))
 
 	// Then
 	assert.Nil(t, err)
@@ -76,21 +69,19 @@ func TestRedisClusterSet(t *testing.T) {
 func TestRedisClusterSetWhenNoOptionsGiven(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
-	options := &Options{
-		Expiration: 6 * time.Second,
-	}
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	client.EXPECT().Set(context.Background(), "my-key", cacheValue, 6*time.Second).Return(&redis.StatusCmd{})
+	client.EXPECT().Set(ctx, "my-key", cacheValue, 6*time.Second).Return(&redis.StatusCmd{})
 
-	store := NewRedisCluster(client, options)
+	store := NewRedisCluster(client, WithExpiration(6*time.Second))
 
 	// When
-	err := store.Set(cacheKey, cacheValue, nil)
+	err := store.Set(ctx, cacheKey, cacheValue)
 
 	// Then
 	assert.Nil(t, err)
@@ -99,20 +90,21 @@ func TestRedisClusterSetWhenNoOptionsGiven(t *testing.T) {
 func TestRedisClusterSetWithTags(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	client.EXPECT().Set(context.Background(), cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
-	client.EXPECT().SAdd(context.Background(), "gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
-	client.EXPECT().Expire(context.Background(), "gocache_tag_tag1", 720*time.Hour).Return(&redis.BoolCmd{})
+	client.EXPECT().Set(ctx, cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
+	client.EXPECT().SAdd(ctx, "gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
+	client.EXPECT().Expire(ctx, "gocache_tag_tag1", 720*time.Hour).Return(&redis.BoolCmd{})
 
-	store := NewRedisCluster(client, nil)
+	store := NewRedisCluster(client)
 
 	// When
-	err := store.Set(cacheKey, cacheValue, &Options{Tags: []string{"tag1"}})
+	err := store.Set(ctx, cacheKey, cacheValue, WithTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -121,17 +113,18 @@ func TestRedisClusterSetWithTags(t *testing.T) {
 func TestRedisClusterDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	cacheKey := "my-key"
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	client.EXPECT().Del(context.Background(), "my-key").Return(&redis.IntCmd{})
+	client.EXPECT().Del(ctx, "my-key").Return(&redis.IntCmd{})
 
-	store := NewRedisCluster(client, nil)
+	store := NewRedisCluster(client)
 
 	// When
-	err := store.Delete(cacheKey)
+	err := store.Delete(ctx, cacheKey)
 
 	// Then
 	assert.Nil(t, err)
@@ -140,22 +133,19 @@ func TestRedisClusterDelete(t *testing.T) {
 func TestRedisClusterInvalidate(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
-	options := InvalidateOptions{
-		Tags: []string{"tag1"},
-	}
+	ctx := context.Background()
 
 	cacheKeys := &redis.StringSliceCmd{}
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	client.EXPECT().SMembers(context.Background(), "gocache_tag_tag1").Return(cacheKeys)
-	client.EXPECT().Del(context.Background(), "gocache_tag_tag1").Return(&redis.IntCmd{})
+	client.EXPECT().SMembers(ctx, "gocache_tag_tag1").Return(cacheKeys)
+	client.EXPECT().Del(ctx, "gocache_tag_tag1").Return(&redis.IntCmd{})
 
-	store := NewRedisCluster(client, nil)
+	store := NewRedisCluster(client)
 
 	// When
-	err := store.Invalidate(options)
+	err := store.Invalidate(ctx, WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -164,15 +154,16 @@ func TestRedisClusterInvalidate(t *testing.T) {
 func TestRedisClusterClear(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+
+	ctx := context.Background()
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
-	client.EXPECT().FlushAll(context.Background()).Return(&redis.StatusCmd{})
+	client.EXPECT().FlushAll(ctx).Return(&redis.StatusCmd{})
 
-	store := NewRedisCluster(client, nil)
+	store := NewRedisCluster(client)
 
 	// When
-	err := store.Clear()
+	err := store.Clear(ctx)
 
 	// Then
 	assert.Nil(t, err)
@@ -181,11 +172,10 @@ func TestRedisClusterClear(t *testing.T) {
 func TestRedisClusterGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	client := mocksStore.NewMockRedisClusterClientInterface(ctrl)
 
-	store := NewRedisCluster(client, nil)
+	store := NewRedisCluster(client)
 
 	// When - Then
 	assert.Equal(t, RedisClusterType, store.GetType())

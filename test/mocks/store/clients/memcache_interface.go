@@ -34,6 +34,34 @@ func (m *MockMemcacheClientInterface) EXPECT() *MockMemcacheClientInterfaceMockR
 	return m.recorder
 }
 
+// Add mocks base method.
+func (m *MockMemcacheClientInterface) Add(item *memcache.Item) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Add", item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Add indicates an expected call of Add.
+func (mr *MockMemcacheClientInterfaceMockRecorder) Add(item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockMemcacheClientInterface)(nil).Add), item)
+}
+
+// CompareAndSwap mocks base method.
+func (m *MockMemcacheClientInterface) CompareAndSwap(item *memcache.Item) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CompareAndSwap", item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CompareAndSwap indicates an expected call of CompareAndSwap.
+func (mr *MockMemcacheClientInterfaceMockRecorder) CompareAndSwap(item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompareAndSwap", reflect.TypeOf((*MockMemcacheClientInterface)(nil).CompareAndSwap), item)
+}
+
 // Delete mocks base method.
 func (m *MockMemcacheClientInterface) Delete(item string) error {
 	m.ctrl.T.Helper()

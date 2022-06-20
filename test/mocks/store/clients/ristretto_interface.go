@@ -47,7 +47,7 @@ func (mr *MockRistrettoClientInterfaceMockRecorder) Clear() *gomock.Call {
 }
 
 // Del mocks base method.
-func (m *MockRistrettoClientInterface) Del(key interface{}) {
+func (m *MockRistrettoClientInterface) Del(key any) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Del", key)
 }
@@ -59,10 +59,10 @@ func (mr *MockRistrettoClientInterfaceMockRecorder) Del(key interface{}) *gomock
 }
 
 // Get mocks base method.
-func (m *MockRistrettoClientInterface) Get(key interface{}) (interface{}, bool) {
+func (m *MockRistrettoClientInterface) Get(key any) (any, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -74,7 +74,7 @@ func (mr *MockRistrettoClientInterfaceMockRecorder) Get(key interface{}) *gomock
 }
 
 // SetWithTTL mocks base method.
-func (m *MockRistrettoClientInterface) SetWithTTL(key, value interface{}, cost int64, ttl time.Duration) bool {
+func (m *MockRistrettoClientInterface) SetWithTTL(key, value any, cost int64, ttl time.Duration) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetWithTTL", key, value, cost, ttl)
 	ret0, _ := ret[0].(bool)

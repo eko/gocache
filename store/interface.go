@@ -1,16 +1,17 @@
 package store
 
 import (
+	"context"
 	"time"
 )
 
 // StoreInterface is the interface for all available stores
 type StoreInterface interface {
-	Get(key interface{}) (interface{}, error)
-	GetWithTTL(key interface{}) (interface{}, time.Duration, error)
-	Set(key interface{}, value interface{}, options *Options) error
-	Delete(key interface{}) error
-	Invalidate(options InvalidateOptions) error
-	Clear() error
+	Get(ctx context.Context, key any) (any, error)
+	GetWithTTL(ctx context.Context, key any) (any, time.Duration, error)
+	Set(ctx context.Context, key any, value any, options ...Option) error
+	Delete(ctx context.Context, key any) error
+	Invalidate(ctx context.Context, options ...InvalidateOption) error
+	Clear(ctx context.Context) error
 	GetType() string
 }

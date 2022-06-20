@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,29 +30,25 @@ type FreecacheClientInterface interface {
 //FreecacheStore is a store for freecache
 type FreecacheStore struct {
 	client  FreecacheClientInterface
-	options *Options
+	options *options
 }
 
 // NewFreecache creates a new store to freecache instance(s)
-func NewFreecache(client FreecacheClientInterface, options *Options) *FreecacheStore {
-	if options == nil {
-		options = &Options{}
-	}
-
+func NewFreecache(client FreecacheClientInterface, options ...Option) *FreecacheStore {
 	return &FreecacheStore{
 		client:  client,
-		options: options,
+		options: applyOptions(options...),
 	}
 }
 
 // Get returns data stored from a given key. It returns the value or not found error
-func (f *FreecacheStore) Get(key interface{}) (interface{}, error) {
+func (f *FreecacheStore) Get(_ context.Context, key any) (any, error) {
 	var err error
-	var result interface{}
+	var result any
 	if k, ok := key.(string); ok {
 		result, err = f.client.Get([]byte(k))
 		if err != nil {
-			return nil, errors.New("value not found in Freecache store")
+			return nil, NotFoundWithCause(errors.New("value not found in Freecache store"))
 		}
 		return result, err
 	}
@@ -60,16 +57,16 @@ func (f *FreecacheStore) Get(key interface{}) (interface{}, error) {
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (f *FreecacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration, error) {
+func (f *FreecacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duration, error) {
 	if k, ok := key.(string); ok {
 		result, err := f.client.Get([]byte(k))
 		if err != nil {
-			return nil, 0, errors.New("value not found in Freecache store")
+			return nil, 0, NotFoundWithCause(errors.New("value not found in Freecache store"))
 		}
 
 		ttl, err := f.client.TTL([]byte(k))
 		if err != nil {
-			return nil, 0, errors.New("value not found in Freecache store")
+			return nil, 0, NotFoundWithCause(errors.New("value not found in Freecache store"))
 		}
 
 		return result, time.Duration(ttl) * time.Second, err
@@ -82,14 +79,12 @@ func (f *FreecacheStore) GetWithTTL(key interface{}) (interface{}, time.Duration
 // If the key is larger than 65535 or value is larger than 1/1024 of the cache size,
 // the entry will not be written to the cache. expireSeconds <= 0 means no expire,
 // but it can be evicted when cache is full.
-func (f *FreecacheStore) Set(key interface{}, value interface{}, options *Options) error {
+func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
 	var err error
 	var val []byte
 
 	// Using default options set during cache initialization
-	if options == nil {
-		options = f.options
-	}
+	opts := applyOptionsWithDefault(f.options, options...)
 
 	//type check for value, as freecache only supports value of type []byte
 	switch v := value.(type) {
@@ -100,22 +95,22 @@ func (f *FreecacheStore) Set(key interface{}, value interface{}, options *Option
 	}
 
 	if k, ok := key.(string); ok {
-		err = f.client.Set([]byte(k), val, int(options.Expiration.Seconds()))
+		err = f.client.Set([]byte(k), val, int(opts.expiration.Seconds()))
 		if err != nil {
 			return fmt.Errorf("size of key: %v, value: %v, err: %v", k, len(val), err)
 		}
-		if tags := options.TagsValue(); len(tags) > 0 {
-			f.setTags(key, tags)
+		if tags := opts.tags; len(tags) > 0 {
+			f.setTags(ctx, key, tags)
 		}
 		return nil
 	}
 	return errors.New("key type not supported by Freecache store")
 }
 
-func (f *FreecacheStore) setTags(key interface{}, tags []string) {
+func (f *FreecacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		var tagKey = fmt.Sprintf(FreecacheTagPattern, tag)
-		var cacheKeys = f.getCacheKeysForTag(tagKey)
+		var cacheKeys = f.getCacheKeysForTag(ctx, tagKey)
 
 		var alreadyInserted = false
 		for _, cacheKey := range cacheKeys {
@@ -129,13 +124,13 @@ func (f *FreecacheStore) setTags(key interface{}, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		f.Set(tagKey, []byte(strings.Join(cacheKeys, ",")), &Options{Expiration: 720 * time.Hour})
+		f.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), WithExpiration(720*time.Hour))
 	}
 }
 
-func (f *FreecacheStore) getCacheKeysForTag(tagKey string) []string {
+func (f *FreecacheStore) getCacheKeysForTag(ctx context.Context, tagKey string) []string {
 	var cacheKeys = []string{}
-	if result, err := f.Get(tagKey); err == nil && result != nil {
+	if result, err := f.Get(ctx, tagKey); err == nil && result != nil {
 		if str, ok := result.([]byte); ok {
 			cacheKeys = strings.Split(string(str), ",")
 		}
@@ -144,7 +139,7 @@ func (f *FreecacheStore) getCacheKeysForTag(tagKey string) []string {
 }
 
 // Delete deletes an item in the cache by key and returns err or nil if a delete occurred
-func (f *FreecacheStore) Delete(key interface{}) error {
+func (f *FreecacheStore) Delete(_ context.Context, key any) error {
 	if v, ok := key.(string); ok {
 		if f.client.Del([]byte(v)) {
 			return nil
@@ -156,20 +151,22 @@ func (f *FreecacheStore) Delete(key interface{}) error {
 }
 
 // Invalidate invalidates some cache data in freecache for given options
-func (f *FreecacheStore) Invalidate(options InvalidateOptions) error {
-	if tags := options.TagsValue(); len(tags) > 0 {
+func (f *FreecacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
+	opts := applyInvalidateOptions(options...)
+
+	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
 			var tagKey = fmt.Sprintf(FreecacheTagPattern, tag)
-			var cacheKeys = f.getCacheKeysForTag(tagKey)
+			var cacheKeys = f.getCacheKeysForTag(ctx, tagKey)
 
 			for _, cacheKey := range cacheKeys {
-				err := f.Delete(cacheKey)
+				err := f.Delete(ctx, cacheKey)
 				if err != nil {
 					return err
 				}
 			}
 
-			err := f.Delete(tagKey)
+			err := f.Delete(ctx, tagKey)
 			if err != nil {
 				return err
 			}
@@ -180,7 +177,7 @@ func (f *FreecacheStore) Invalidate(options InvalidateOptions) error {
 }
 
 // Clear resets all data in the store
-func (f *FreecacheStore) Clear() error {
+func (f *FreecacheStore) Clear(_ context.Context) error {
 	f.client.Clear()
 	return nil
 }
