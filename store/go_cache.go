@@ -57,13 +57,12 @@ func (s *GoCacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duratio
 	if !exists {
 		return data, 0, NotFoundWithCause(errors.New("value not found in GoCache store"))
 	}
-	duration := t.Sub(time.Now())
+	duration := time.Until(t)
 	return data, duration, nil
 }
 
 // Set defines data in GoCache memoey cache for given key identifier
 func (s *GoCacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
-
 	opts := applyOptions(options...)
 	if opts == nil {
 		opts = s.options
@@ -80,7 +79,7 @@ func (s *GoCacheStore) Set(ctx context.Context, key any, value any, options ...O
 
 func (s *GoCacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
-		var tagKey = fmt.Sprintf(GoCacheTagPattern, tag)
+		tagKey := fmt.Sprintf(GoCacheTagPattern, tag)
 		var cacheKeys map[string]struct{}
 
 		if result, err := s.Get(ctx, tagKey); err == nil {
@@ -120,7 +119,7 @@ func (s *GoCacheStore) Invalidate(ctx context.Context, options ...InvalidateOpti
 
 	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
-			var tagKey = fmt.Sprintf(GoCacheTagPattern, tag)
+			tagKey := fmt.Sprintf(GoCacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil

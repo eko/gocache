@@ -27,7 +27,7 @@ type FreecacheClientInterface interface {
 	Clear()
 }
 
-//FreecacheStore is a store for freecache
+// FreecacheStore is a store for freecache
 type FreecacheStore struct {
 	client  FreecacheClientInterface
 	options *options
@@ -86,7 +86,7 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ..
 	// Using default options set during cache initialization
 	opts := applyOptionsWithDefault(f.options, options...)
 
-	//type check for value, as freecache only supports value of type []byte
+	// type check for value, as freecache only supports value of type []byte
 	switch v := value.(type) {
 	case []byte:
 		val = v
@@ -109,10 +109,10 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ..
 
 func (f *FreecacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
-		var tagKey = fmt.Sprintf(FreecacheTagPattern, tag)
-		var cacheKeys = f.getCacheKeysForTag(ctx, tagKey)
+		tagKey := fmt.Sprintf(FreecacheTagPattern, tag)
+		cacheKeys := f.getCacheKeysForTag(ctx, tagKey)
 
-		var alreadyInserted = false
+		alreadyInserted := false
 		for _, cacheKey := range cacheKeys {
 			if cacheKey == key.(string) {
 				alreadyInserted = true
@@ -129,7 +129,7 @@ func (f *FreecacheStore) setTags(ctx context.Context, key any, tags []string) {
 }
 
 func (f *FreecacheStore) getCacheKeysForTag(ctx context.Context, tagKey string) []string {
-	var cacheKeys = []string{}
+	cacheKeys := []string{}
 	if result, err := f.Get(ctx, tagKey); err == nil && result != nil {
 		if str, ok := result.([]byte); ok {
 			cacheKeys = strings.Split(string(str), ",")
@@ -147,7 +147,6 @@ func (f *FreecacheStore) Delete(_ context.Context, key any) error {
 		return fmt.Errorf("failed to delete key %v", key)
 	}
 	return errors.New("key type not supported by Freecache store")
-
 }
 
 // Invalidate invalidates some cache data in freecache for given options
@@ -156,8 +155,8 @@ func (f *FreecacheStore) Invalidate(ctx context.Context, options ...InvalidateOp
 
 	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
-			var tagKey = fmt.Sprintf(FreecacheTagPattern, tag)
-			var cacheKeys = f.getCacheKeysForTag(ctx, tagKey)
+			tagKey := fmt.Sprintf(FreecacheTagPattern, tag)
+			cacheKeys := f.getCacheKeysForTag(ctx, tagKey)
 
 			for _, cacheKey := range cacheKeys {
 				err := f.Delete(ctx, cacheKey)

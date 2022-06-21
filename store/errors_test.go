@@ -9,7 +9,6 @@ import (
 )
 
 func TestNotFoundIs(t *testing.T) {
-
 	err := NotFoundWithCause(redis.Nil)
 	assert.True(t, errors.Is(err, NotFound{}))
 	assert.True(t, errors.Is(err, redis.Nil))

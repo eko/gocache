@@ -78,8 +78,8 @@ func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ..
 
 func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
-		var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
-		var cacheKeys = []string{}
+		tagKey := fmt.Sprintf(RistrettoTagPattern, tag)
+		cacheKeys := []string{}
 
 		if result, err := s.Get(ctx, tagKey); err == nil {
 			if bytes, ok := result.([]byte); ok {
@@ -87,7 +87,7 @@ func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
 			}
 		}
 
-		var alreadyInserted = false
+		alreadyInserted := false
 		for _, cacheKey := range cacheKeys {
 			if cacheKey == key.(string) {
 				alreadyInserted = true
@@ -115,13 +115,13 @@ func (s *RistrettoStore) Invalidate(ctx context.Context, options ...InvalidateOp
 
 	if tags := opts.tags; len(tags) > 0 {
 		for _, tag := range tags {
-			var tagKey = fmt.Sprintf(RistrettoTagPattern, tag)
+			tagKey := fmt.Sprintf(RistrettoTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)
 			if err != nil {
 				return nil
 			}
 
-			var cacheKeys = []string{}
+			cacheKeys := []string{}
 			if bytes, ok := result.([]byte); ok {
 				cacheKeys = strings.Split(string(bytes), ",")
 			}

@@ -168,7 +168,7 @@ func TestGoCacheSetWithTags(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Set(cacheKey, cacheValue, 0*time.Second)
 	client.EXPECT().Get("gocache_tag_tag1").Return(nil, true)
-	var cacheKeys = map[string]struct{}{"my-key": {}}
+	cacheKeys := map[string]struct{}{"my-key": {}}
 	client.EXPECT().Set("gocache_tag_tag1", cacheKeys, 720*time.Hour)
 
 	store := NewGoCache(client)
@@ -192,7 +192,7 @@ func TestGoCacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Set(cacheKey, cacheValue, 0*time.Second)
 
-	var cacheKeys = map[string]struct{}{"my-key": {}, "a-second-key": {}}
+	cacheKeys := map[string]struct{}{"my-key": {}, "a-second-key": {}}
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, true)
 
 	store := NewGoCache(client)
@@ -230,7 +230,7 @@ func TestGoCacheInvalidate(t *testing.T) {
 
 	ctx := context.Background()
 
-	var cacheKeys = map[string]struct{}{"a23fdf987h2svc23": {}, "jHG2372x38hf74": {}}
+	cacheKeys := map[string]struct{}{"a23fdf987h2svc23": {}, "jHG2372x38hf74": {}}
 
 	client := mocksStore.NewMockGoCacheClientInterface(ctrl)
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, true)
@@ -304,7 +304,6 @@ func TestGoCacheSetTagsConcurrency(t *testing.T) {
 
 	for i := 0; i < 200; i++ {
 		go func(i int) {
-
 			key := fmt.Sprintf("%d", i)
 
 			err := store.Set(

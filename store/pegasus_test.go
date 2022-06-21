@@ -31,8 +31,8 @@ func TestNewPegasus(t *testing.T) {
 		ctx := context.Background()
 
 		p, err := NewPegasus(ctx, testPegasusOptions())
-		defer p.Close()
 		So(err, ShouldBeNil)
+		defer p.Close()
 	})
 }
 

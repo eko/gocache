@@ -10,9 +10,7 @@ const (
 	namespaceCache = "cache"
 )
 
-var (
-	cacheCollector *prometheus.GaugeVec = initCacheCollector(namespaceCache)
-)
+var cacheCollector *prometheus.GaugeVec = initCacheCollector(namespaceCache)
 
 // Prometheus represents the prometheus struct for collecting metrics
 type Prometheus struct {

@@ -422,7 +422,6 @@ func TestCacheChecksum(t *testing.T) {
 }
 
 func TestChainSetWhenErrorInChain(t *testing.T) {
-
 	// Given
 	ctrl := gomock.NewController(t)
 	store1 := mocksCache.NewMockSetterCacheInterface[any](ctrl)
