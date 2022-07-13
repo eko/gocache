@@ -30,7 +30,7 @@ type FreecacheClientInterface interface {
 // FreecacheStore is a store for freecache
 type FreecacheStore struct {
 	client  FreecacheClientInterface
-	options *options
+	options *Options
 }
 
 // NewFreecache creates a new store to freecache instance(s)

@@ -24,7 +24,7 @@ func TestNewMemcache(t *testing.T) {
 	// Then
 	assert.IsType(t, new(MemcacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, &options{expiration: 3 * time.Second}, store.options)
+	assert.Equal(t, &Options{expiration: 3 * time.Second}, store.options)
 }
 
 func TestMemcacheGet(t *testing.T) {

@@ -23,7 +23,7 @@ func TestNewBigcache(t *testing.T) {
 	// Then
 	assert.IsType(t, new(BigcacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, new(options), store.options)
+	assert.Equal(t, new(Options), store.options)
 }
 
 func TestBigcacheGet(t *testing.T) {

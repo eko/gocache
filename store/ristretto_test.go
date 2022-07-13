@@ -23,7 +23,7 @@ func TestNewRistretto(t *testing.T) {
 	// Then
 	assert.IsType(t, new(RistrettoStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, &options{cost: 8}, store.options)
+	assert.Equal(t, &Options{cost: 8}, store.options)
 }
 
 func TestRistrettoGet(t *testing.T) {

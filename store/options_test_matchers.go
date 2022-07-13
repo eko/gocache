@@ -16,7 +16,7 @@ type OptionsMatcher struct {
 func (m OptionsMatcher) Matches(x interface{}) bool {
 	switch values := x.(type) {
 	case []Option:
-		opts := &options{}
+		opts := &Options{}
 		for _, value := range values {
 			value(opts)
 		}
