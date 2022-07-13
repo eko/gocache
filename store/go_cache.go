@@ -28,7 +28,7 @@ type GoCacheClientInterface interface {
 type GoCacheStore struct {
 	mu      sync.RWMutex
 	client  GoCacheClientInterface
-	options *options
+	options *Options
 }
 
 // NewGoCache creates a new store to GoCache (memory) library instance

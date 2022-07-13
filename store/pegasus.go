@@ -31,7 +31,7 @@ var empty = []byte("-")
 
 // OptionsPegasus is options of Pegasus
 type OptionsPegasus struct {
-	*options
+	*Options
 	MetaServers []string
 
 	TableName         string

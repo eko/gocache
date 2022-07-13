@@ -26,7 +26,7 @@ type RistrettoClientInterface interface {
 // RistrettoStore is a store for Ristretto (memory) library
 type RistrettoStore struct {
 	client  RistrettoClientInterface
-	options *options
+	options *Options
 }
 
 // NewRistretto creates a new store to Ristretto (memory) library instance

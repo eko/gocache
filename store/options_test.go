@@ -9,7 +9,7 @@ import (
 
 func TestOptionsCostValue(t *testing.T) {
 	// Given
-	options := &options{
+	options := &Options{
 		cost: 7,
 	}
 
@@ -19,7 +19,7 @@ func TestOptionsCostValue(t *testing.T) {
 
 func TestOptionsExpirationValue(t *testing.T) {
 	// Given
-	options := &options{
+	options := &Options{
 		expiration: 25 * time.Second,
 	}
 
@@ -29,7 +29,7 @@ func TestOptionsExpirationValue(t *testing.T) {
 
 func TestOptionsTagsValue(t *testing.T) {
 	// Given
-	options := &options{
+	options := &Options{
 		tags: []string{"tag1", "tag2", "tag3"},
 	}
 

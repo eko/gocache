@@ -30,7 +30,7 @@ const (
 // RedisStore is a store for Redis
 type RedisStore struct {
 	client  RedisClientInterface
-	options *options
+	options *Options
 }
 
 // NewRedis creates a new store to Redis instance(s)

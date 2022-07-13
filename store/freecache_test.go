@@ -24,7 +24,7 @@ func TestNewFreecache(t *testing.T) {
 	// Then
 	assert.IsType(t, new(FreecacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, &options{
+	assert.Equal(t, &Options{
 		expiration: 6 * time.Second,
 	}, store.options)
 }
@@ -41,7 +41,7 @@ func TestNewFreecacheDefaultOptions(t *testing.T) {
 	// Then
 	assert.IsType(t, new(FreecacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, new(options), store.options)
+	assert.Equal(t, new(Options), store.options)
 }
 
 func TestFreecacheGet(t *testing.T) {

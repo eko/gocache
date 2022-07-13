@@ -34,7 +34,7 @@ const (
 // MemcacheStore is a store for Memcache
 type MemcacheStore struct {
 	client  MemcacheClientInterface
-	options *options
+	options *Options
 }
 
 // NewMemcache creates a new store to Memcache instance(s)

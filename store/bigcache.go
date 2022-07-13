@@ -26,7 +26,7 @@ const (
 // BigcacheStore is a store for Bigcache
 type BigcacheStore struct {
 	client  BigcacheClientInterface
-	options *options
+	options *Options
 }
 
 // NewBigcache creates a new store to Bigcache instance(s)

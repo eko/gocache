@@ -23,7 +23,7 @@ func TestNewRedisCluster(t *testing.T) {
 	// Then
 	assert.IsType(t, new(RedisClusterStore), store)
 	assert.Equal(t, client, store.clusclient)
-	assert.Equal(t, &options{expiration: 6 * time.Second}, store.options)
+	assert.Equal(t, &Options{expiration: 6 * time.Second}, store.options)
 }
 
 func TestRedisClusterGet(t *testing.T) {
