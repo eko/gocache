@@ -274,6 +274,7 @@ func TestRistrettoInvalidate(t *testing.T) {
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, true)
 	client.EXPECT().Del("a23fdf987h2svc23")
 	client.EXPECT().Del("jHG2372x38hf74")
+	client.EXPECT().Del("gocache_tag_tag1")
 
 	store := NewRistretto(client, nil)
 

@@ -253,6 +253,9 @@ func (p *PegasusStore) Invalidate(ctx context.Context, options InvalidateOptions
 					return err
 				}
 			}
+			if err := p.Delete(ctx, tagKey); err != nil {
+				return err
+			}
 		}
 	}
 
