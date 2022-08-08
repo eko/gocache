@@ -184,6 +184,7 @@ func (s *MemcacheStore) Invalidate(ctx context.Context, options InvalidateOption
 			for _, cacheKey := range cacheKeys {
 				s.Delete(ctx, cacheKey)
 			}
+			s.Delete(ctx, tagKey)
 		}
 	}
 

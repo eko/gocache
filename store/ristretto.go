@@ -135,6 +135,7 @@ func (s *RistrettoStore) Invalidate(ctx context.Context, options InvalidateOptio
 			for _, cacheKey := range cacheKeys {
 				s.Delete(ctx, cacheKey)
 			}
+			s.Delete(ctx, tagKey)
 		}
 	}
 

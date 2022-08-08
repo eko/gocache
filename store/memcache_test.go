@@ -354,6 +354,7 @@ func TestMemcacheInvalidate(t *testing.T) {
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, nil)
 	client.EXPECT().Delete("a23fdf987h2svc23").Return(nil)
 	client.EXPECT().Delete("jHG2372x38hf74").Return(nil)
+	client.EXPECT().Delete("gocache_tag_tag1").Return(nil)
 
 	store := NewMemcache(client, nil)
 
@@ -382,6 +383,7 @@ func TestMemcacheInvalidateWhenError(t *testing.T) {
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, nil)
 	client.EXPECT().Delete("a23fdf987h2svc23").Return(errors.New("Unexpected error"))
 	client.EXPECT().Delete("jHG2372x38hf74").Return(nil)
+	client.EXPECT().Delete("gocache_tag_tag1").Return(nil)
 
 	store := NewMemcache(client, nil)
 

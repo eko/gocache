@@ -249,6 +249,7 @@ func TestGoCacheInvalidate(t *testing.T) {
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, true)
 	client.EXPECT().Delete("a23fdf987h2svc23")
 	client.EXPECT().Delete("jHG2372x38hf74")
+	client.EXPECT().Delete("gocache_tag_tag1")
 
 	store := NewGoCache(client, nil)
 
