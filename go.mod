@@ -6,7 +6,7 @@ require (
 	github.com/XiaoMi/pegasus-go-client v0.0.0-20210427083443-f3b6b08bc4c2
 	github.com/allegro/bigcache/v3 v3.0.2
 	github.com/bradfitz/gomemcache v0.0.0-20220106215444-fb4bf637b56d
-	github.com/coocood/freecache v1.2.1
+	github.com/coocood/freecache v1.2.2
 	github.com/dgraph-io/ristretto v0.1.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0

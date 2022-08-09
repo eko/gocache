@@ -28,7 +28,7 @@ github.com/cenkalti/backoff/v4
 # github.com/cespare/xxhash/v2 v2.1.2
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
-# github.com/coocood/freecache v1.2.1
+# github.com/coocood/freecache v1.2.2
 ## explicit; go 1.13
 github.com/coocood/freecache
 # github.com/davecgh/go-spew v1.1.1
