@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Options represents a store option function.
+// Option represents a store option function.
 type Option func(o *Options)
 
 type Options struct {
@@ -18,10 +18,11 @@ func (o *Options) isEmpty() bool {
 }
 
 func applyOptionsWithDefault(defaultOptions *Options, opts ...Option) *Options {
-	returnedOptions := applyOptions(opts...)
+	returnedOptions := &Options{}
+	*returnedOptions = *defaultOptions
 
-	if returnedOptions.isEmpty() {
-		returnedOptions = defaultOptions
+	for _, opt := range opts {
+		opt(returnedOptions)
 	}
 
 	return returnedOptions
