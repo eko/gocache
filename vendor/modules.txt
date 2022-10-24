@@ -124,7 +124,7 @@ github.com/smartystreets/goconvey/convey/reporting
 # github.com/spf13/cast v1.5.0
 ## explicit; go 1.18
 github.com/spf13/cast
-# github.com/stretchr/testify v1.8.0
+# github.com/stretchr/testify v1.8.1
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 # github.com/vmihailenco/msgpack v4.0.4+incompatible
