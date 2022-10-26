@@ -111,9 +111,9 @@ func (s *RistrettoStore) Delete(_ context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Redis for given options
 func (s *RistrettoStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RistrettoTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

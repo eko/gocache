@@ -116,9 +116,9 @@ func (s *BigcacheStore) Delete(_ context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Bigcache for given options
 func (s *BigcacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(BigcacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

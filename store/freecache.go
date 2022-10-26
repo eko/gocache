@@ -151,9 +151,9 @@ func (f *FreecacheStore) Delete(_ context.Context, key any) error {
 
 // Invalidate invalidates some cache data in freecache for given options
 func (f *FreecacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(FreecacheTagPattern, tag)
 			cacheKeys := f.getCacheKeysForTag(ctx, tagKey)

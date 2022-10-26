@@ -1,28 +1,28 @@
 package store
 
 // InvalidateOption represents a cache invalidation function.
-type InvalidateOption func(o *invalidateOptions)
+type InvalidateOption func(o *InvalidateOptions)
 
-type invalidateOptions struct {
-	tags []string
+type InvalidateOptions struct {
+	Tags []string
 }
 
-func (o *invalidateOptions) isEmpty() bool {
-	return len(o.tags) == 0
+func (o *InvalidateOptions) isEmpty() bool {
+	return len(o.Tags) == 0
 }
 
-func applyInvalidateOptionsWithDefault(defaultOptions *invalidateOptions, opts ...InvalidateOption) *invalidateOptions {
-	returnedOptions := applyInvalidateOptions(opts...)
+func ApplyInvalidateOptionsWithDefault(defaultOptions *InvalidateOptions, opts ...InvalidateOption) *InvalidateOptions {
+	returnedOptions := ApplyInvalidateOptions(opts...)
 
-	if returnedOptions == new(invalidateOptions) {
+	if returnedOptions == new(InvalidateOptions) {
 		returnedOptions = defaultOptions
 	}
 
 	return returnedOptions
 }
 
-func applyInvalidateOptions(opts ...InvalidateOption) *invalidateOptions {
-	o := &invalidateOptions{}
+func ApplyInvalidateOptions(opts ...InvalidateOption) *InvalidateOptions {
+	o := &InvalidateOptions{}
 
 	for _, opt := range opts {
 		opt(o)
@@ -33,7 +33,7 @@ func applyInvalidateOptions(opts ...InvalidateOption) *invalidateOptions {
 
 // WithInvalidateTags allows setting the invalidate tags.
 func WithInvalidateTags(tags []string) InvalidateOption {
-	return func(o *invalidateOptions) {
-		o.tags = tags
+	return func(o *InvalidateOptions) {
+		o.Tags = tags
 	}
 }

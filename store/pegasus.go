@@ -234,8 +234,8 @@ func (p *PegasusStore) Delete(ctx context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Pegasus for given options
 func (p *PegasusStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
-	if tags := opts.tags; len(tags) > 0 {
+	opts := ApplyInvalidateOptions(options...)
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(PegasusTagPattern, tag)
 			result, err := p.Get(ctx, tagKey)

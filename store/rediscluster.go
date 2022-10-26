@@ -100,9 +100,9 @@ func (s *RedisClusterStore) Delete(ctx context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Redis for given options
 func (s *RedisClusterStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RedisTagPattern, tag)
 			cacheKeys, err := s.clusclient.SMembers(ctx, tagKey).Result()

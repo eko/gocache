@@ -45,12 +45,12 @@ type InvalidateOptionsMatcher struct {
 func (m InvalidateOptionsMatcher) Matches(x interface{}) bool {
 	switch values := x.(type) {
 	case []InvalidateOption:
-		opts := &invalidateOptions{}
+		opts := &InvalidateOptions{}
 		for _, value := range values {
 			value(opts)
 		}
 
-		return slices.Equal(opts.tags, m.Tags)
+		return slices.Equal(opts.Tags, m.Tags)
 	}
 
 	return false
