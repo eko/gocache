@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/XiaoMi/pegasus-go-client v0.0.0-20210427083443-f3b6b08bc4c2
-	github.com/allegro/bigcache/v3 v3.0.2
+	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20220106215444-fb4bf637b56d
 	github.com/coocood/freecache v1.2.3
 	github.com/dgraph-io/ristretto v0.1.1
