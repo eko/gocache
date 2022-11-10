@@ -561,6 +561,26 @@ func (c *Client) replace(rw *bufio.ReadWriter, item *Item) error {
 	return c.populateOne(rw, "replace", item)
 }
 
+// Append appends the given item to the existing item, if a value already
+// exists for its key. ErrNotStored is returned if that condition is not met.
+func (c *Client) Append(item *Item) error {
+	return c.onItem(item, (*Client).append)
+}
+
+func (c *Client) append(rw *bufio.ReadWriter, item *Item) error {
+	return c.populateOne(rw, "append", item)
+}
+
+// Prepend prepends the given item to the existing item, if a value already
+// exists for its key. ErrNotStored is returned if that condition is not met.
+func (c *Client) Prepend(item *Item) error {
+	return c.onItem(item, (*Client).prepend)
+}
+
+func (c *Client) prepend(rw *bufio.ReadWriter, item *Item) error {
+	return c.populateOne(rw, "prepend", item)
+}
+
 // CompareAndSwap writes the given item that was previously returned
 // by Get, if the value was neither modified or evicted between the
 // Get and the CompareAndSwap calls. The item's Key should not change

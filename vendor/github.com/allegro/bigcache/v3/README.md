@@ -1,4 +1,4 @@
-# BigCache [![Build Status](https://github.com/allegro/bigcache/workflows/build/badge.svg)](https://github.com/allegro/bigcache/actions?query=workflow%3Abuild)&nbsp;[![Coverage Status](https://coveralls.io/repos/github/allegro/bigcache/badge.svg?branch=master)](https://coveralls.io/github/allegro/bigcache?branch=master)&nbsp;[![GoDoc](https://godoc.org/github.com/allegro/bigcache?status.svg)](https://godoc.org/github.com/allegro/bigcache)&nbsp;[![Go Report Card](https://goreportcard.com/badge/github.com/allegro/bigcache)](https://goreportcard.com/report/github.com/allegro/bigcache)
+# BigCache [![Build Status](https://github.com/allegro/bigcache/workflows/build/badge.svg)](https://github.com/allegro/bigcache/actions?query=workflow%3Abuild)&nbsp;[![Coverage Status](https://coveralls.io/repos/github/allegro/bigcache/badge.svg?branch=master)](https://coveralls.io/github/allegro/bigcache?branch=master)&nbsp;[![GoDoc](https://godoc.org/github.com/allegro/bigcache/v3?status.svg)](https://godoc.org/github.com/allegro/bigcache/v3)&nbsp;[![Go Report Card](https://goreportcard.com/badge/github.com/allegro/bigcache/v3)](https://goreportcard.com/report/github.com/allegro/bigcache/v3)
 
 Fast, concurrent, evicting in-memory cache written to keep big number of entries without impact on performance.
 BigCache keeps entries on heap but omits GC for them. To achieve that, operations on byte slices take place,
@@ -11,9 +11,13 @@ Requires Go 1.12 or newer.
 ### Simple initialization
 
 ```go
-import "github.com/allegro/bigcache/v3"
+import (
+	"fmt"
+	"context"
+	"github.com/allegro/bigcache/v3"
+)
 
-cache, _ := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
+cache, _ := bigcache.New(context.Background(), bigcache.DefaultConfig(10 * time.Minute))
 
 cache.Set("my-unique-key", []byte("value"))
 
@@ -71,7 +75,7 @@ config := bigcache.Config {
 		OnRemoveWithReason: nil,
 	}
 
-cache, initErr := bigcache.NewBigCache(config)
+cache, initErr := bigcache.New(context.Background(), config)
 if initErr != nil {
 	log.Fatal(initErr)
 }

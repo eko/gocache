@@ -329,7 +329,7 @@ func TestFreecacheSetWithTags(t *testing.T) {
 	client.EXPECT().Get([]byte("freecache_tag_tag1")).MaxTimes(1).Return(nil, errors.New("value not found in store"))
 	client.EXPECT().Set([]byte("freecache_tag_tag1"), []byte("my-key"), 2592000).Return(nil)
 
-	s := NewFreecache(client, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
+	s := NewFreecache(client, WithExpiration(6*time.Second))
 	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
 	assert.Nil(t, err)
 }
@@ -372,7 +372,7 @@ func TestFreecacheTagsAlreadyPresent(t *testing.T) {
 	client.EXPECT().Get([]byte("freecache_tag_tag1")).MaxTimes(1).Return(oldCacheKeys, nil)
 	client.EXPECT().Set([]byte("freecache_tag_tag1"), []byte("key1,key2,my-key"), 2592000).Return(nil)
 
-	s := NewFreecache(client, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
+	s := NewFreecache(client, WithExpiration(6*time.Second))
 	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
 	assert.Nil(t, err)
 }
@@ -393,7 +393,7 @@ func TestFreecacheTagsRefreshTime(t *testing.T) {
 	client.EXPECT().Get([]byte("freecache_tag_tag1")).MaxTimes(1).Return(oldCacheKeys, nil)
 	client.EXPECT().Set([]byte("freecache_tag_tag1"), []byte("my-key"), 2592000).Return(nil)
 
-	s := NewFreecache(client, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
+	s := NewFreecache(client, WithExpiration(6*time.Second))
 	err := s.Set(ctx, cacheKey, cacheValue, WithExpiration(6*time.Second), WithTags([]string{"tag1"}))
 	assert.Nil(t, err)
 }
