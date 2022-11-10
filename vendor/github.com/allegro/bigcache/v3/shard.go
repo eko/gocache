@@ -30,6 +30,7 @@ type cacheShard struct {
 
 	hashmapStats map[uint64]uint32
 	stats        Stats
+	cleanEnabled bool
 }
 
 func (s *cacheShard) getWithInfo(key string, hashedKey uint64) (entry []byte, resp Response, err error) {
@@ -50,12 +51,11 @@ func (s *cacheShard) getWithInfo(key string, hashedKey uint64) (entry []byte, re
 	}
 
 	entry = readEntry(wrappedEntry)
-	oldestTimeStamp := readTimestampFromEntry(wrappedEntry)
-	s.lock.RUnlock()
-	s.hit(hashedKey)
-	if currentTime-oldestTimeStamp >= s.lifeWindow {
+	if s.isExpired(wrappedEntry, currentTime) {
 		resp.EntryStatus = Expired
 	}
+	s.lock.RUnlock()
+	s.hit(hashedKey)
 	return entry, resp, nil
 }
 
@@ -130,8 +130,10 @@ func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
 		}
 	}
 
-	if oldestEntry, err := s.entries.Peek(); err == nil {
-		s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+	if !s.cleanEnabled {
+		if oldestEntry, err := s.entries.Peek(); err == nil {
+			s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+		}
 	}
 
 	w := wrapEntry(currentTimestamp, hashedKey, key, entry, &s.entryBuffer)
@@ -152,8 +154,10 @@ func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
 func (s *cacheShard) addNewWithoutLock(key string, hashedKey uint64, entry []byte) error {
 	currentTimestamp := uint64(s.clock.Epoch())
 
-	if oldestEntry, err := s.entries.Peek(); err == nil {
-		s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+	if !s.cleanEnabled {
+		if oldestEntry, err := s.entries.Peek(); err == nil {
+			s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+		}
 	}
 
 	w := wrapEntry(currentTimestamp, hashedKey, key, entry, &s.entryBuffer)
@@ -176,8 +180,10 @@ func (s *cacheShard) setWrappedEntryWithoutLock(currentTimestamp uint64, w []byt
 		}
 	}
 
-	if oldestEntry, err := s.entries.Peek(); err == nil {
-		s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+	if !s.cleanEnabled {
+		if oldestEntry, err := s.entries.Peek(); err == nil {
+			s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+		}
 	}
 
 	for {
@@ -268,12 +274,19 @@ func (s *cacheShard) del(hashedKey uint64) error {
 }
 
 func (s *cacheShard) onEvict(oldestEntry []byte, currentTimestamp uint64, evict func(reason RemoveReason) error) bool {
-	oldestTimestamp := readTimestampFromEntry(oldestEntry)
-	if currentTimestamp-oldestTimestamp > s.lifeWindow {
+	if s.isExpired(oldestEntry, currentTimestamp) {
 		evict(Expired)
 		return true
 	}
 	return false
+}
+
+func (s *cacheShard) isExpired(oldestEntry []byte, currentTimestamp uint64) bool {
+	oldestTimestamp := readTimestampFromEntry(oldestEntry)
+	if currentTimestamp <= oldestTimestamp { // if currentTimestamp < oldestTimestamp, the result will out of uint64 limits;
+		return false
+	}
+	return currentTimestamp-oldestTimestamp > s.lifeWindow
 }
 
 func (s *cacheShard) cleanUp(currentTimestamp uint64) {
@@ -337,6 +350,12 @@ func (s *cacheShard) reset(config Config) {
 	s.hashmap = make(map[uint64]uint32, config.initialShardSize())
 	s.entryBuffer = make([]byte, config.MaxEntrySize+headersSizeInBytes)
 	s.entries.Reset()
+	s.lock.Unlock()
+}
+
+func (s *cacheShard) resetStats() {
+	s.lock.Lock()
+	s.stats = Stats{}
 	s.lock.Unlock()
 }
 
@@ -430,5 +449,6 @@ func initNewShard(config Config, callback onRemoveCallback, clock clock) *cacheS
 		clock:        clock,
 		lifeWindow:   uint64(config.LifeWindow.Seconds()),
 		statsEnabled: config.StatsEnabled,
+		cleanEnabled: config.CleanWindow > 0,
 	}
 }
