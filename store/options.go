@@ -8,16 +8,16 @@ import (
 type Option func(o *Options)
 
 type Options struct {
-	cost       int64
-	expiration time.Duration
-	tags       []string
+	Cost       int64
+	Expiration time.Duration
+	Tags       []string
 }
 
-func (o *Options) isEmpty() bool {
-	return o.cost == 0 && o.expiration == 0 && len(o.tags) == 0
+func (o *Options) IsEmpty() bool {
+	return o.Cost == 0 && o.Expiration == 0 && len(o.Tags) == 0
 }
 
-func applyOptionsWithDefault(defaultOptions *Options, opts ...Option) *Options {
+func ApplyOptionsWithDefault(defaultOptions *Options, opts ...Option) *Options {
 	returnedOptions := &Options{}
 	*returnedOptions = *defaultOptions
 
@@ -28,7 +28,7 @@ func applyOptionsWithDefault(defaultOptions *Options, opts ...Option) *Options {
 	return returnedOptions
 }
 
-func applyOptions(opts ...Option) *Options {
+func ApplyOptions(opts ...Option) *Options {
 	o := &Options{}
 
 	for _, opt := range opts {
@@ -42,20 +42,20 @@ func applyOptions(opts ...Option) *Options {
 // Actually it seems to be used by Ristretto library only.
 func WithCost(cost int64) Option {
 	return func(o *Options) {
-		o.cost = cost
+		o.Cost = cost
 	}
 }
 
 // WithExpiration allows to specify an expiration time when setting a value.
 func WithExpiration(expiration time.Duration) Option {
 	return func(o *Options) {
-		o.expiration = expiration
+		o.Expiration = expiration
 	}
 }
 
 // WithTags allows to specify associated tags to the current value.
 func WithTags(tags []string) Option {
 	return func(o *Options) {
-		o.tags = tags
+		o.Tags = tags
 	}
 }

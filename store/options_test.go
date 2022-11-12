@@ -10,43 +10,43 @@ import (
 func TestOptionsCostValue(t *testing.T) {
 	// Given
 	options := &Options{
-		cost: 7,
+		Cost: 7,
 	}
 
 	// When - Then
-	assert.Equal(t, int64(7), options.cost)
+	assert.Equal(t, int64(7), options.Cost)
 }
 
 func TestOptionsExpirationValue(t *testing.T) {
 	// Given
 	options := &Options{
-		expiration: 25 * time.Second,
+		Expiration: 25 * time.Second,
 	}
 
 	// When - Then
-	assert.Equal(t, 25*time.Second, options.expiration)
+	assert.Equal(t, 25*time.Second, options.Expiration)
 }
 
 func TestOptionsTagsValue(t *testing.T) {
 	// Given
 	options := &Options{
-		tags: []string{"tag1", "tag2", "tag3"},
+		Tags: []string{"tag1", "tag2", "tag3"},
 	}
 
 	// When - Then
-	assert.Equal(t, []string{"tag1", "tag2", "tag3"}, options.tags)
+	assert.Equal(t, []string{"tag1", "tag2", "tag3"}, options.Tags)
 }
 
 func Test_applyOptionsWithDefault(t *testing.T) {
 	// Given
 	defaultOptions := &Options{
-		expiration: 25 * time.Second,
+		Expiration: 25 * time.Second,
 	}
 
 	// When
-	options := applyOptionsWithDefault(defaultOptions, WithCost(7))
+	options := ApplyOptionsWithDefault(defaultOptions, WithCost(7))
 
 	// Then
-	assert.Equal(t, int64(7), options.cost)
-	assert.Equal(t, 25*time.Second, options.expiration)
+	assert.Equal(t, int64(7), options.Cost)
+	assert.Equal(t, 25*time.Second, options.Expiration)
 }

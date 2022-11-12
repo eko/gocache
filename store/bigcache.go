@@ -33,7 +33,7 @@ type BigcacheStore struct {
 func NewBigcache(client BigcacheClientInterface, options ...Option) *BigcacheStore {
 	return &BigcacheStore{
 		client:  client,
-		options: applyOptions(options...),
+		options: ApplyOptions(options...),
 	}
 }
 
@@ -58,7 +58,7 @@ func (s *BigcacheStore) GetWithTTL(ctx context.Context, key any) (any, time.Dura
 
 // Set defines data in Bigcache for given key identifier
 func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
-	opts := applyOptionsWithDefault(s.options, options...)
+	opts := ApplyOptionsWithDefault(s.options, options...)
 
 	var val []byte
 	switch v := value.(type) {
@@ -75,7 +75,7 @@ func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options ...
 		return err
 	}
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 

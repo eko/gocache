@@ -33,7 +33,7 @@ type RistrettoStore struct {
 func NewRistretto(client RistrettoClientInterface, options ...Option) *RistrettoStore {
 	return &RistrettoStore{
 		client:  client,
-		options: applyOptions(options...),
+		options: ApplyOptions(options...),
 	}
 }
 
@@ -57,11 +57,11 @@ func (s *RistrettoStore) GetWithTTL(ctx context.Context, key any) (any, time.Dur
 
 // Set defines data in Ristretto memoey cache for given key identifier
 func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ...Option) error {
-	opts := applyOptionsWithDefault(s.options, options...)
+	opts := ApplyOptionsWithDefault(s.options, options...)
 
 	var err error
 
-	if set := s.client.SetWithTTL(key, value, opts.cost, opts.expiration); !set {
+	if set := s.client.SetWithTTL(key, value, opts.Cost, opts.Expiration); !set {
 		err = fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", value, key)
 	}
 
@@ -69,7 +69,7 @@ func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ..
 		return err
 	}
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 

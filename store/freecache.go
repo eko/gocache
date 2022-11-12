@@ -37,7 +37,7 @@ type FreecacheStore struct {
 func NewFreecache(client FreecacheClientInterface, options ...Option) *FreecacheStore {
 	return &FreecacheStore{
 		client:  client,
-		options: applyOptions(options...),
+		options: ApplyOptions(options...),
 	}
 }
 
@@ -75,7 +75,7 @@ func (f *FreecacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durat
 	return nil, 0, errors.New("key type not supported by Freecache store")
 }
 
-// Set sets a key, value and expiration for a cache entry and stores it in the cache.
+// Set sets a key, value and Expiration for a cache entry and stores it in the cache.
 // If the key is larger than 65535 or value is larger than 1/1024 of the cache size,
 // the entry will not be written to the cache. expireSeconds <= 0 means no expire,
 // but it can be evicted when cache is full.
@@ -84,7 +84,7 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ..
 	var val []byte
 
 	// Using default options set during cache initialization
-	opts := applyOptionsWithDefault(f.options, options...)
+	opts := ApplyOptionsWithDefault(f.options, options...)
 
 	// type check for value, as freecache only supports value of type []byte
 	switch v := value.(type) {
@@ -95,11 +95,11 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ..
 	}
 
 	if k, ok := key.(string); ok {
-		err = f.client.Set([]byte(k), val, int(opts.expiration.Seconds()))
+		err = f.client.Set([]byte(k), val, int(opts.Expiration.Seconds()))
 		if err != nil {
 			return fmt.Errorf("size of key: %v, value: %v, err: %v", k, len(val), err)
 		}
-		if tags := opts.tags; len(tags) > 0 {
+		if tags := opts.Tags; len(tags) > 0 {
 			f.setTags(ctx, key, tags)
 		}
 		return nil
