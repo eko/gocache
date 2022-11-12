@@ -75,7 +75,7 @@ func (f *FreecacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durat
 	return nil, 0, errors.New("key type not supported by Freecache store")
 }
 
-// Set sets a key, value and Expiration for a cache entry and stores it in the cache.
+// Set sets a key, value and expiration for a cache entry and stores it in the cache.
 // If the key is larger than 65535 or value is larger than 1/1024 of the cache size,
 // the entry will not be written to the cache. expireSeconds <= 0 means no expire,
 // but it can be evicted when cache is full.
