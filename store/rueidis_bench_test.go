@@ -3,18 +3,24 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/rueian/rueidis"
 	"math"
 	"testing"
-
-	"github.com/go-redis/redis/v8"
+	"time"
 )
 
-func BenchmarkRedisSet(b *testing.B) {
+func BenchmarkRueidisSet(b *testing.B) {
 	ctx := context.Background()
 
-	store := NewRedis(redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	}))
+	ruedisClient, _ := rueidis.NewClient(rueidis.ClientOption{
+		InitAddress: []string{"localhost:26379"},
+		Sentinel: rueidis.SentinelOption{
+			MasterSet: "mymaster",
+		},
+		SelectDB: 0,
+	})
+
+	store := NewRueidis(ruedisClient, nil, WithExpiration(time.Hour*4))
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
@@ -29,17 +35,23 @@ func BenchmarkRedisSet(b *testing.B) {
 	}
 }
 
-func BenchmarkRedisGet(b *testing.B) {
+func BenchmarkRueidisGet(b *testing.B) {
 	ctx := context.Background()
 
-	store := NewRedis(redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	}))
+	ruedisClient, _ := rueidis.NewClient(rueidis.ClientOption{
+		InitAddress: []string{"localhost:26379"},
+		Sentinel: rueidis.SentinelOption{
+			MasterSet: "mymaster",
+		},
+		SelectDB: 0,
+	})
+
+	store := NewRueidis(ruedisClient, nil, WithExpiration(time.Hour*4))
 
 	key := "test"
 	value := []byte("value")
 
-	store.Set(ctx, key, value)
+	_ = store.Set(ctx, key, value)
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
