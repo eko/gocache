@@ -35,7 +35,7 @@ type GoCacheStore struct {
 func NewGoCache(client GoCacheClientInterface, options ...Option) *GoCacheStore {
 	return &GoCacheStore{
 		client:  client,
-		options: applyOptions(options...),
+		options: ApplyOptions(options...),
 	}
 }
 
@@ -63,14 +63,14 @@ func (s *GoCacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duratio
 
 // Set defines data in GoCache memoey cache for given key identifier
 func (s *GoCacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
-	opts := applyOptions(options...)
+	opts := ApplyOptions(options...)
 	if opts == nil {
 		opts = s.options
 	}
 
-	s.client.Set(key.(string), value, opts.expiration)
+	s.client.Set(key.(string), value, opts.Expiration)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -115,9 +115,9 @@ func (s *GoCacheStore) Delete(_ context.Context, key any) error {
 
 // Invalidate invalidates some cache data in GoCache memoey cache for given options
 func (s *GoCacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(GoCacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

@@ -41,7 +41,7 @@ type MemcacheStore struct {
 func NewMemcache(client MemcacheClientInterface, options ...Option) *MemcacheStore {
 	return &MemcacheStore{
 		client:  client,
-		options: applyOptions(options...),
+		options: ApplyOptions(options...),
 	}
 }
 
@@ -73,12 +73,12 @@ func (s *MemcacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durati
 
 // Set defines data in Memcache for given key identifier
 func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options ...Option) error {
-	opts := applyOptionsWithDefault(s.options, options...)
+	opts := ApplyOptionsWithDefault(s.options, options...)
 
 	item := &memcache.Item{
 		Key:        key.(string),
 		Value:      value.([]byte),
-		Expiration: int32(opts.expiration.Seconds()),
+		Expiration: int32(opts.Expiration.Seconds()),
 	}
 
 	err := s.client.Set(item)
@@ -86,7 +86,7 @@ func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options ...
 		return err
 	}
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -163,9 +163,9 @@ func (s *MemcacheStore) Delete(_ context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Memcache for given options
 func (s *MemcacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(MemcacheTagPattern, tag)
 			result, err := s.Get(ctx, tagKey)

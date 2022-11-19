@@ -23,7 +23,7 @@ func TestNewGoCache(t *testing.T) {
 	// Then
 	assert.IsType(t, new(GoCacheStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, &Options{cost: 8}, store.options)
+	assert.Equal(t, &Options{Cost: 8}, store.options)
 }
 
 func TestGoCacheGet(t *testing.T) {

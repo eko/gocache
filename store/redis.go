@@ -37,7 +37,7 @@ type RedisStore struct {
 func NewRedis(client RedisClientInterface, options ...Option) *RedisStore {
 	return &RedisStore{
 		client:  client,
-		options: applyOptions(options...),
+		options: ApplyOptions(options...),
 	}
 }
 
@@ -70,14 +70,14 @@ func (s *RedisStore) GetWithTTL(ctx context.Context, key any) (any, time.Duratio
 
 // Set defines data in Redis for given key identifier
 func (s *RedisStore) Set(ctx context.Context, key any, value any, options ...Option) error {
-	opts := applyOptionsWithDefault(s.options, options...)
+	opts := ApplyOptionsWithDefault(s.options, options...)
 
-	err := s.client.Set(ctx, key.(string), value, opts.expiration).Err()
+	err := s.client.Set(ctx, key.(string), value, opts.Expiration).Err()
 	if err != nil {
 		return err
 	}
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -100,9 +100,9 @@ func (s *RedisStore) Delete(ctx context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Redis for given options
 func (s *RedisStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RedisTagPattern, tag)
 			cacheKeys, err := s.client.SMembers(ctx, tagKey).Result()

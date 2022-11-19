@@ -37,7 +37,7 @@ type RedisClusterStore struct {
 func NewRedisCluster(client RedisClusterClientInterface, options ...Option) *RedisClusterStore {
 	return &RedisClusterStore{
 		clusclient: client,
-		options:    applyOptions(options...),
+		options:    ApplyOptions(options...),
 	}
 }
 
@@ -70,14 +70,14 @@ func (s *RedisClusterStore) GetWithTTL(ctx context.Context, key any) (any, time.
 
 // Set defines data in Redis for given key identifier
 func (s *RedisClusterStore) Set(ctx context.Context, key any, value any, options ...Option) error {
-	opts := applyOptionsWithDefault(s.options, options...)
+	opts := ApplyOptionsWithDefault(s.options, options...)
 
-	err := s.clusclient.Set(ctx, key.(string), value, opts.expiration).Err()
+	err := s.clusclient.Set(ctx, key.(string), value, opts.Expiration).Err()
 	if err != nil {
 		return err
 	}
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
 
@@ -100,9 +100,9 @@ func (s *RedisClusterStore) Delete(ctx context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Redis for given options
 func (s *RedisClusterStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RedisTagPattern, tag)
 			cacheKeys, err := s.clusclient.SMembers(ctx, tagKey).Result()

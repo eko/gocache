@@ -37,7 +37,7 @@ type FreecacheStore struct {
 func NewFreecache(client FreecacheClientInterface, options ...Option) *FreecacheStore {
 	return &FreecacheStore{
 		client:  client,
-		options: applyOptions(options...),
+		options: ApplyOptions(options...),
 	}
 }
 
@@ -84,7 +84,7 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ..
 	var val []byte
 
 	// Using default options set during cache initialization
-	opts := applyOptionsWithDefault(f.options, options...)
+	opts := ApplyOptionsWithDefault(f.options, options...)
 
 	// type check for value, as freecache only supports value of type []byte
 	switch v := value.(type) {
@@ -95,11 +95,11 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ..
 	}
 
 	if k, ok := key.(string); ok {
-		err = f.client.Set([]byte(k), val, int(opts.expiration.Seconds()))
+		err = f.client.Set([]byte(k), val, int(opts.Expiration.Seconds()))
 		if err != nil {
 			return fmt.Errorf("size of key: %v, value: %v, err: %v", k, len(val), err)
 		}
-		if tags := opts.tags; len(tags) > 0 {
+		if tags := opts.Tags; len(tags) > 0 {
 			f.setTags(ctx, key, tags)
 		}
 		return nil
@@ -151,9 +151,9 @@ func (f *FreecacheStore) Delete(_ context.Context, key any) error {
 
 // Invalidate invalidates some cache data in freecache for given options
 func (f *FreecacheStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
+	opts := ApplyInvalidateOptions(options...)
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(FreecacheTagPattern, tag)
 			cacheKeys := f.getCacheKeysForTag(ctx, tagKey)

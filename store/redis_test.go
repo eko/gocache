@@ -23,7 +23,7 @@ func TestNewRedis(t *testing.T) {
 	// Then
 	assert.IsType(t, new(RedisStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, &Options{expiration: 6 * time.Second}, store.options)
+	assert.Equal(t, &Options{Expiration: 6 * time.Second}, store.options)
 }
 
 func TestRedisGet(t *testing.T) {

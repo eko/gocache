@@ -169,7 +169,7 @@ func (p *PegasusStore) GetWithTTL(ctx context.Context, key any) (any, time.Durat
 
 // Set defines data in Pegasus for given key identifier
 func (p *PegasusStore) Set(ctx context.Context, key, value any, options ...Option) error {
-	opts := applyOptions(options...)
+	opts := ApplyOptions(options...)
 
 	table, err := p.client.OpenTable(ctx, p.options.TableName)
 	if err != nil {
@@ -177,12 +177,12 @@ func (p *PegasusStore) Set(ctx context.Context, key, value any, options ...Optio
 	}
 	defer table.Close()
 
-	err = table.SetTTL(ctx, []byte(cast.ToString(key)), empty, []byte(cast.ToString(value)), opts.expiration)
+	err = table.SetTTL(ctx, []byte(cast.ToString(key)), empty, []byte(cast.ToString(value)), opts.Expiration)
 	if err != nil {
 		return err
 	}
 
-	if tags := opts.tags; len(tags) > 0 {
+	if tags := opts.Tags; len(tags) > 0 {
 		if err = p.setTags(ctx, key, tags); err != nil {
 			return err
 		}
@@ -234,8 +234,8 @@ func (p *PegasusStore) Delete(ctx context.Context, key any) error {
 
 // Invalidate invalidates some cache data in Pegasus for given options
 func (p *PegasusStore) Invalidate(ctx context.Context, options ...InvalidateOption) error {
-	opts := applyInvalidateOptions(options...)
-	if tags := opts.tags; len(tags) > 0 {
+	opts := ApplyInvalidateOptions(options...)
+	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(PegasusTagPattern, tag)
 			result, err := p.Get(ctx, tagKey)
