@@ -1,18 +1,25 @@
 .PHONY: mocks test benchmark-store
 
 mocks:
-	mockgen -source=cache/interface.go -destination=test/mocks/cache/cache_interface.go -package=mocks
-	mockgen -source=codec/interface.go -destination=test/mocks/codec/codec_interface.go -package=mocks
-	mockgen -source=metrics/interface.go -destination=test/mocks/metrics/metrics_interface.go -package=mocks
-	mockgen -source=store/interface.go -destination=test/mocks/store/store_interface.go -package=mocks
-	mockgen -source=store/bigcache.go -destination=test/mocks/store/clients/bigcache_interface.go -package=mocks
-	mockgen -source=store/memcache.go -destination=test/mocks/store/clients/memcache_interface.go -package=mocks
-	mockgen -source=store/redis.go -destination=test/mocks/store/clients/redis_interface.go -package=mocks
-	mockgen -source=store/rediscluster.go -destination=test/mocks/store/clients/rediscluster_interface.go -package=mocks
-	mockgen -source=store/ristretto.go -destination=test/mocks/store/clients/ristretto_interface.go -package=mocks
-	mockgen -source=store/freecache.go -destination=test/mocks/store/clients/freecache_interface.go -package=mocks
-	mockgen -source=store/go_cache.go -destination=test/mocks/store/clients/go_cache_interface.go -package=mocks
+	mockgen -source=cache/interface.go -destination=lib/cache/cache_mock.go -package=cache
+	mockgen -source=codec/interface.go -destination=lib/codec/codec_mock.go -package=codec
+	mockgen -source=metrics/interface.go -destination=lib/metrics/metrics_mock.go -package=metrics
+	mockgen -source=store/interface.go -destination=lib/store/store_mock.go -package=store
+	mockgen -source=store/bigcache/bigcache.go -destination=store/bigcache_mock.go -package=bigcache
+	mockgen -source=store/memcache/memcache.go -destination=store/memcache_mock.go -package=memcache
+	mockgen -source=store/redis/redis.go -destination=store/redis_mock.go -package=redis
+	mockgen -source=store/rediscluster/rediscluster.go -destination=store/rediscluster_mock.go -package=rediscluster
+	mockgen -source=store/ristretto/ristretto.go -destination=store/ristretto_mock.go -package=ristretto
+	mockgen -source=store/freecache/freecache.go -destination=store/freecache_mock.go -package=freecache
+	mockgen -source=store/go_cache/go_cache.go -destination=store/go_cache_mock.go -package=go_cache
+
 test:
-	GOGC=10 go test -p=4 ./...
-benchmark-store:
-	cd store && go test -bench=. -benchmem -benchtime=1s  -count=1 -run=none
+	cd lib; GOGC=10 go test -v -p=4 ./...
+	cd store/bigcache; GOGC=10 go test -v -p=4 ./...
+	cd store/freecache; GOGC=10 go test -v -p=4 ./...
+	cd store/go_cache; GOGC=10 go test -v -p=4 ./...
+	cd store/memcache; GOGC=10 go test -v -p=4 ./...
+	cd store/pegasus; GOGC=10 go test -v -p=4 ./...
+	cd store/redis; GOGC=10 go test -v -p=4 ./...
+	cd store/rediscluster; GOGC=10 go test -v -p=4 ./...
+	cd store/ristretto; GOGC=10 go test -v -p=4 ./...

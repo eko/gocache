@@ -37,6 +37,38 @@ Here is what it brings in detail:
 
 * [Prometheus](https://github.com/prometheus/client_golang)
 
+## Installation
+
+To begin working with the latest version of gocache, you can import the library in your project:
+
+```go
+go get github.com/eko/gocache/v4/lib
+```
+
+and then, import the store(s) you want to use between all available ones:
+
+```go
+go get github.com/eko/gocache/v4/store/bigcache
+go get github.com/eko/gocache/v4/store/freecache
+go get github.com/eko/gocache/v4/store/go_cache
+go get github.com/eko/gocache/v4/store/memcache
+go get github.com/eko/gocache/v4/store/pegasus
+go get github.com/eko/gocache/v4/store/redis
+go get github.com/eko/gocache/v4/store/rediscluster
+go get github.com/eko/gocache/v4/store/ristretto
+```
+
+Then, simply use the following import statements:
+
+```go
+import (
+	"github.com/eko/gocache/v4/lib/cache"
+	"github.com/eko/gocache/v4/store/redis"
+)
+```
+
+If you run into any errors, please be sure to run `go mod tidy` to clean your go.mod file.
+
 ## Available cache features in detail
 
 ### A simple cache
@@ -46,7 +78,7 @@ Here is a simple cache instantiation with Redis but you can also look at other a
 #### Memcache
 
 ```go
-memcacheStore := store.NewMemcache(
+memcacheStore := memcache_store.NewMemcache(
 	memcache.New("10.0.0.1:11211", "10.0.0.2:11211", "10.0.0.3:11212"),
 	store.WithExpiration(10*time.Second),
 )
@@ -70,7 +102,7 @@ cacheManager.Clear(ctx) // Clears the entire cache, in case you want to flush al
 
 ```go
 bigcacheClient, _ := bigcache.NewBigCache(bigcache.DefaultConfig(5 * time.Minute))
-bigcacheStore := store.NewBigcache(bigcacheClient)
+bigcacheStore := bigcache_store.NewBigcache(bigcacheClient)
 
 cacheManager := cache.New[[]byte](bigcacheStore)
 err := cacheManager.Set(ctx, "my-key", []byte("my-value"))
@@ -92,7 +124,7 @@ ristrettoCache, err := ristretto.NewCache(&ristretto.Config{
 if err != nil {
     panic(err)
 }
-ristrettoStore := store.NewRistretto(ristrettoCache)
+ristrettoStore := ristretto_store.NewRistretto(ristrettoCache)
 
 cacheManager := cache.New[string](ristrettoStore)
 err := cacheManager.Set(ctx, "my-key", "my-value", store.WithCost(2))
@@ -109,7 +141,7 @@ cacheManager.Delete(ctx, "my-key")
 
 ```go
 gocacheClient := gocache.New(5*time.Minute, 10*time.Minute)
-gocacheStore := store.NewGoCache(gocacheClient)
+gocacheStore := gocache_store.NewGoCache(gocacheClient)
 
 cacheManager := cache.New[[]byte](gocacheStore)
 err := cacheManager.Set(ctx, "my-key", []byte("my-value"))
@@ -127,7 +159,7 @@ fmt.Printf("%s", value)
 #### Redis
 
 ```go
-redisStore := store.NewRedis(redis.NewClient(&redis.Options{
+redisStore := redis_store.NewRedis(redis.NewClient(&redis.Options{
 	Addr: "127.0.0.1:6379",
 }))
 
@@ -151,7 +183,7 @@ switch err {
 #### Freecache
 
 ```go
-freecacheStore := store.NewFreecache(freecache.NewCache(1000), store.WithExpiration(10 * time.Second))
+freecacheStore := freecache_store.NewFreecache(freecache.NewCache(1000), store.WithExpiration(10 * time.Second))
 
 cacheManager := cache.New[[]byte](freecacheStore)
 err := cacheManager.Set(ctx, "by-key", []byte("my-value"), opts)
@@ -165,7 +197,7 @@ value := cacheManager.Get(ctx, "my-key")
 #### Pegasus
 
 ```go
-pegasusStore, err := store.NewPegasus(&store.OptionsPegasus{
+pegasusStore, err := pegasus_store.NewPegasus(&store.OptionsPegasus{
     MetaServers: []string{"127.0.0.1:34601", "127.0.0.1:34602", "127.0.0.1:34603"},
 })
 
@@ -197,8 +229,8 @@ if err != nil {
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 
 // Initialize stores
-ristrettoStore := store.NewRistretto(ristrettoCache)
-redisStore := store.NewRedis(redisClient, store.WithExpiration(5*time.Second))
+ristrettoStore := ristretto_store.NewRistretto(ristrettoCache)
+redisStore := redis_store.NewRedis(redisClient, store.WithExpiration(5*time.Second))
 
 // Initialize chained cache
 cacheManager := cache.NewChain[any](
@@ -223,7 +255,7 @@ type Book struct {
 
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient)
+redisStore := redis_store.NewRedis(redisClient)
 
 // Initialize a load function that loads your data from a custom source
 loadFunction := func(ctx context.Context, key any) (*Book, error) {
@@ -249,7 +281,7 @@ This cache will record metrics depending on the metric provider you pass to it. 
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient)
+redisStore := redis_store.NewRedis(redisClient)
 
 // Initializes Prometheus metrics service
 promMetrics := metrics.NewPrometheus("my-test-app")
@@ -270,7 +302,7 @@ Some caches like Redis stores and returns the value as a string so you have to m
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient)
+redisStore := redis_store.NewRedis(redisClient)
 
 // Initialize chained cache
 cacheManager := cache.NewMetric[any](
@@ -313,7 +345,7 @@ Here is an example on how to use it:
 ```go
 // Initialize Redis client and store
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
-redisStore := store.NewRedis(redisClient)
+redisStore := redis_store.NewRedis(redisClient)
 
 // Initialize chained cache
 cacheManager := cache.NewMetric[*Book](
@@ -353,13 +385,13 @@ package main
 
 import (
 	"log"
-	"github.com/eko/gocache/v3/generic"
-	"github.com/eko/gocache/v3/cache"
-	"github.com/eko/gocache/v3/store"
+	"github.com/eko/gocache/v4/lib/generic"
+	"github.com/eko/gocache/v4/lib/cache"
+	"github.com/eko/gocache/v4/lib/store"
 )
 
 func main() {
-	redisStore := store.NewRedis(redis.NewClient(&redis.Options{
+	redisStore := redis_store.NewRedis(redis.NewClient(&redis.Options{
 		Addr: "127.0.0.1:6379",
 	}), nil)
 
@@ -377,26 +409,6 @@ func main() {
 	fmt.Printf("%#+v\n", value)
 }
 ```
-
-## Installation
-
-To begin working with the latest version of go-cache, you can use the following command:
-
-```go
-go get github.com/eko/gocache/v3
-```
-
-To avoid any errors when trying to import your libraries use the following import statement:
-
-```go
-import (
-	"github.com/eko/gocache/v3/cache"
-	"github.com/eko/gocache/v3/store"
-)
-```
-
-If you run into any errors, please be sure to run `go mod tidy` to clean your go.mod file.
-
 
 ### Write your own custom cache
 
@@ -460,9 +472,9 @@ type CacheKeyGenerator interface {
 
 ## Run tests
 
-Generate mocks:
+To generate mocks usng mockgen library, run:
+
 ```bash
-$ go get github.com/golang/mock/mockgen
 $ make mocks
 ```
 
@@ -470,7 +482,6 @@ Test suite can be run with:
 
 ```bash
 $ make test # run unit test
-$ make benchmark-store # run benchmark test
 ```
 
 ## Community

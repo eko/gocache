@@ -9,19 +9,39 @@ on:
       - '*'
 
 jobs:
-  test:
+  test_lib:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         go_version: [ '1.18', '1.19' ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go_version }}
 
-      - name: Install go dependencies
-        run: go get -t -v ./...
+      - name: Run library go tests
+        run: cd lib; go test -v -race -cover -coverprofile=coverage.txt -covermode=atomic ./...
 
-      - name: Run go tests
-        run: go test -v -race -cover -coverprofile=coverage.txt -covermode=atomic ./...
+  test_stores:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go_version: [ '1.18', '1.19' ]
+        store:
+        - bigcache
+        - freecache
+        - go_cache
+        - memcache
+        - pegasus
+        - redis
+        - rediscluster
+        - ristretto
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go_version }}
+
+      - name: Run stores go tests
+        run: cd store/${{ matrix.store }}; go test -v -race ./...
