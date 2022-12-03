@@ -29,6 +29,7 @@ Here is what it brings in detail:
 * [Memory (go-cache)](https://github.com/patrickmn/go-cache) (patrickmn/go-cache)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis) (go-redis/redis)
+* [Redis (rueidis)](https://github.com/rueian/rueidis) (rueian/rueidis)
 * [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 * [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
 * More to come soon
@@ -55,6 +56,7 @@ go get github.com/eko/gocache/v4/store/memcache
 go get github.com/eko/gocache/v4/store/pegasus
 go get github.com/eko/gocache/v4/store/redis
 go get github.com/eko/gocache/v4/store/rediscluster
+go get github.com/eko/gocache/v4/store/rueidis
 go get github.com/eko/gocache/v4/store/ristretto
 ```
 
