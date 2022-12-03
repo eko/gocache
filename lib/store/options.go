@@ -8,9 +8,10 @@ import (
 type Option func(o *Options)
 
 type Options struct {
-	Cost       int64
-	Expiration time.Duration
-	Tags       []string
+	Cost                      int64
+	Expiration                time.Duration
+	Tags                      []string
+	ClientSideCacheExpiration time.Duration
 }
 
 func (o *Options) IsEmpty() bool {
@@ -57,5 +58,13 @@ func WithExpiration(expiration time.Duration) Option {
 func WithTags(tags []string) Option {
 	return func(o *Options) {
 		o.Tags = tags
+	}
+}
+
+// WithClientSideCaching allows setting the client side caching, enabled by default
+// Currently to be used by Rueidis(redis) library only.
+func WithClientSideCaching(clientSideCacheExpiration time.Duration) Option {
+	return func(o *Options) {
+		o.ClientSideCacheExpiration = clientSideCacheExpiration
 	}
 }
