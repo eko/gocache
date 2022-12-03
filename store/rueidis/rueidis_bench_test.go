@@ -22,7 +22,7 @@ func BenchmarkRueidisSet(b *testing.B) {
 		SelectDB: 0,
 	})
 
-	store := NewRueidis(ruedisClient, nil, lib_store.WithExpiration(time.Hour*4))
+	store := NewRueidis(ruedisClient, lib_store.WithExpiration(time.Hour*4))
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
@@ -48,7 +48,7 @@ func BenchmarkRueidisGet(b *testing.B) {
 		SelectDB: 0,
 	})
 
-	store := NewRueidis(ruedisClient, nil, lib_store.WithExpiration(time.Hour*4))
+	store := NewRueidis(ruedisClient, lib_store.WithExpiration(time.Hour*4))
 
 	key := "test"
 	value := []byte("value")

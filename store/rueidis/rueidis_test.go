@@ -21,12 +21,12 @@ func TestNewRueidis(t *testing.T) {
 	client := mock.NewClient(ctrl)
 
 	// When
-	store := NewRueidis(client, lib_store.WithExpiration(6*time.Second))
+	store := NewRueidis(client, lib_store.WithExpiration(6*time.Second), lib_store.WithClientSideCaching(time.Second*8))
 
 	// Then
 	assert.IsType(t, new(RueidisStore), store)
 	assert.Equal(t, client, store.client)
-	assert.Equal(t, &lib_store.Options{Expiration: 6 * time.Second}, store.options)
+	assert.Equal(t, &lib_store.Options{Expiration: 6 * time.Second, ClientSideCacheExpiration: time.Second * 8}, store.options)
 }
 
 func TestRueidisGet(t *testing.T) {
@@ -37,7 +37,7 @@ func TestRueidisGet(t *testing.T) {
 
 	// rueidis mock client
 	client := mock.NewClient(ctrl)
-	client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultExpiration).Return(mock.Result(mock.RedisString("")))
+	client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisString("")))
 
 	store := NewRueidis(client)
 
@@ -47,6 +47,26 @@ func TestRueidisGet(t *testing.T) {
 	// Then
 	assert.Nil(t, err)
 	assert.NotNil(t, value)
+}
+
+func TestRueidisGetNotFound(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	// rueidis mock client
+	client := mock.NewClient(ctrl)
+	client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisNil()))
+
+	store := NewRueidis(client)
+
+	// When
+	value, err := store.Get(ctx, "my-key")
+
+	// Then
+	assert.NotNil(t, err)
+	assert.Nil(t, value)
 }
 
 func TestRueidisSet(t *testing.T) {
@@ -62,7 +82,7 @@ func TestRueidisSet(t *testing.T) {
 	client := mock.NewClient(ctrl)
 	client.EXPECT().Do(ctx, mock.Match("SET", cacheKey, cacheValue, "EX", "10")).Return(mock.Result(mock.RedisString("")))
 
-	store := NewRueidis(client)
+	store := NewRueidis(client, lib_store.WithExpiration(time.Second*10))
 
 	// When
 	err := store.Set(ctx, cacheKey, cacheValue)
@@ -106,7 +126,7 @@ func TestRedisSetWithTags(t *testing.T) {
 	client.EXPECT().Do(ctx, mock.Match("SADD", "gocache_tag_tag1", "my-key")).Return(mock.Result(mock.RedisString("")))
 	client.EXPECT().Do(ctx, mock.Match("EXPIRE", "gocache_tag_tag1", "2592000")).Return(mock.Result(mock.RedisString("")))
 
-	store := NewRueidis(client)
+	store := NewRueidis(client, lib_store.WithExpiration(time.Second*10))
 
 	// When
 	err := store.Set(ctx, cacheKey, cacheValue, lib_store.WithTags([]string{"tag1"}))
@@ -142,7 +162,7 @@ func TestRedisInvalidate(t *testing.T) {
 	ctx := context.Background()
 
 	client := mock.NewClient(ctrl)
-	client.EXPECT().DoCache(ctx, mock.Match("SMEMBERS", "gocache_tag_tag1"), defaultExpiration).Return(mock.Result(mock.RedisArray()))
+	client.EXPECT().DoCache(ctx, mock.Match("SMEMBERS", "gocache_tag_tag1"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisArray()))
 	client.EXPECT().Do(ctx, mock.Match("DEL", "gocache_tag_tag1")).Return(mock.Result(mock.RedisInt64(1)))
 
 	store := NewRueidis(client)

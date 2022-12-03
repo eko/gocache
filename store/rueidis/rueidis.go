@@ -16,7 +16,7 @@ const (
 	// RueidisTagPattern represents the tag pattern to be used as a key in specified storage
 	RueidisTagPattern = "gocache_tag_%s"
 
-	defaultExpiration = 10 * time.Second
+	defaultClientSideCacheExpiration = 10 * time.Second
 )
 
 // RueidisStore is a store for Redis
@@ -29,16 +29,16 @@ type RueidisStore struct {
 
 // NewRueidis creates a new store to Redis instance(s)
 func NewRueidis(client rueidis.Client, options ...lib_store.Option) *RueidisStore {
-	// defaults client expiration to 10s
+	// defaults client side cache expiration to 10s
 	appliedOptions := lib_store.ApplyOptions(options...)
 
-	if appliedOptions.Expiration == 0 {
-		appliedOptions.Expiration = defaultExpiration
+	if appliedOptions.ClientSideCacheExpiration == 0 {
+		appliedOptions.ClientSideCacheExpiration = defaultClientSideCacheExpiration
 	}
 
 	return &RueidisStore{
 		client:      client,
-		cacheCompat: rueidiscompat.NewAdapter(client).Cache(appliedOptions.Expiration),
+		cacheCompat: rueidiscompat.NewAdapter(client).Cache(appliedOptions.ClientSideCacheExpiration),
 		compat:      rueidiscompat.NewAdapter(client),
 		options:     appliedOptions,
 	}
@@ -46,7 +46,7 @@ func NewRueidis(client rueidis.Client, options ...lib_store.Option) *RueidisStor
 
 // Get returns data stored from a given key
 func (s *RueidisStore) Get(ctx context.Context, key any) (any, error) {
-	object := s.client.DoCache(ctx, s.client.B().Get().Key(key.(string)).Cache(), s.options.Expiration)
+	object := s.client.DoCache(ctx, s.client.B().Get().Key(key.(string)).Cache(), s.options.ClientSideCacheExpiration)
 	if object.RedisError() != nil && object.RedisError().IsNil() {
 		return nil, lib_store.NotFoundWithCause(object.Error())
 	}
