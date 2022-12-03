@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 )
 
 const (

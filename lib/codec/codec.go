@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eko/gocache/v4/lib/store"
+	"github.com/eko/gocache/lib/v4/store"
 )
 
 // Stats allows to returns some statistics of codec usage

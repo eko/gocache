@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"github.com/eko/gocache/v4/lib/codec"
+	"github.com/eko/gocache/lib/v4/codec"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )

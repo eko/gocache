@@ -11,7 +11,7 @@ import (
 	"github.com/XiaoMi/pegasus-go-client/pegasus"
 	"github.com/spf13/cast"
 
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 )
 
 const (

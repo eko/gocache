@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/bradfitz/gomemcache/memcache"

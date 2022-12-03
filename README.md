@@ -43,29 +43,29 @@ Here is what it brings in detail:
 To begin working with the latest version of gocache, you can import the library in your project:
 
 ```go
-go get github.com/eko/gocache/v4/lib
+go get github.com/eko/gocache/lib/v4
 ```
 
 and then, import the store(s) you want to use between all available ones:
 
 ```go
-go get github.com/eko/gocache/v4/store/bigcache
-go get github.com/eko/gocache/v4/store/freecache
-go get github.com/eko/gocache/v4/store/go_cache
-go get github.com/eko/gocache/v4/store/memcache
-go get github.com/eko/gocache/v4/store/pegasus
-go get github.com/eko/gocache/v4/store/redis
-go get github.com/eko/gocache/v4/store/rediscluster
-go get github.com/eko/gocache/v4/store/rueidis
-go get github.com/eko/gocache/v4/store/ristretto
+go get github.com/eko/gocache/store/bigcache/v4
+go get github.com/eko/gocache/store/freecache/v4
+go get github.com/eko/gocache/store/go_cache/v4
+go get github.com/eko/gocache/store/memcache/v4
+go get github.com/eko/gocache/store/pegasus/v4
+go get github.com/eko/gocache/store/redis/v4
+go get github.com/eko/gocache/store/rediscluster/v4
+go get github.com/eko/gocache/store/rueidis/v4
+go get github.com/eko/gocache/store/ristretto/v4
 ```
 
 Then, simply use the following import statements:
 
 ```go
 import (
-	"github.com/eko/gocache/v4/lib/cache"
-	"github.com/eko/gocache/v4/store/redis"
+	"github.com/eko/gocache/lib/v4/cache"
+	"github.com/eko/gocache/store/redis/v4"
 )
 ```
 
@@ -387,9 +387,9 @@ package main
 
 import (
 	"log"
-	"github.com/eko/gocache/v4/lib/generic"
-	"github.com/eko/gocache/v4/lib/cache"
-	"github.com/eko/gocache/v4/lib/store"
+	"github.com/eko/gocache/lib/v4/generic"
+	"github.com/eko/gocache/lib/v4/cache"
+	"github.com/eko/gocache/lib/v4/store"
 )
 
 func main() {

@@ -1,10 +1,10 @@
-module github.com/eko/gocache/v4/store/pegasus
+module github.com/eko/gocache/store/pegasus/v4
 
 go 1.19
 
 require (
 	github.com/XiaoMi/pegasus-go-client v0.0.0-20220519103347-ba0e68465cd5
-	github.com/eko/gocache/v4/lib v0.0.0
+	github.com/eko/gocache/lib/v4 v4.1.1
 	github.com/smartystreets/assertions v1.13.0
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/spf13/cast v1.5.0
@@ -26,4 +26,4 @@ require (
 	k8s.io/apimachinery v0.0.0-20191123233150-4c4803ed55e3 // indirect
 )
 
-replace github.com/eko/gocache/v4/lib => ../../lib/
+replace github.com/eko/gocache/lib/v4 => ../../lib/

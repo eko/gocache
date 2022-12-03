@@ -1,9 +1,9 @@
-module github.com/eko/gocache/v4/store/go_cache
+module github.com/eko/gocache/store/go_cache/v4
 
 go 1.19
 
 require (
-	github.com/eko/gocache/v4/lib v0.0.0
+	github.com/eko/gocache/lib/v4 v4.1.1
 	github.com/golang/mock v1.6.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/stretchr/testify v1.8.1
@@ -18,4 +18,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/eko/gocache/v4/lib => ../../lib/
+replace github.com/eko/gocache/lib/v4 => ../../lib/

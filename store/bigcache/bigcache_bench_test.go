@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/allegro/bigcache/v3"
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 )
 
 func BenchmarkBigcacheSet(b *testing.B) {

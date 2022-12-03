@@ -6,7 +6,7 @@ import (
 	"math"
 	"testing"
 
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 )
 
 // run go test -bench='BenchmarkPegasusStore*' -benchtime=1s -count=1 -run=none

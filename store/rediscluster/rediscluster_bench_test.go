@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 	"github.com/go-redis/redis/v8"
 )
 

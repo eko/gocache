@@ -3,8 +3,8 @@ package cache
 import (
 	"context"
 
-	"github.com/eko/gocache/v4/lib/metrics"
-	"github.com/eko/gocache/v4/lib/store"
+	"github.com/eko/gocache/lib/v4/metrics"
+	"github.com/eko/gocache/lib/v4/store"
 )
 
 const (

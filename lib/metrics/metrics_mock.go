@@ -7,7 +7,7 @@ package metrics
 import (
 	reflect "reflect"
 
-	codec "github.com/eko/gocache/v4/lib/codec"
+	codec "github.com/eko/gocache/lib/v4/codec"
 	gomock "github.com/golang/mock/gomock"
 )
 

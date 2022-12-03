@@ -1,10 +1,10 @@
-module github.com/eko/gocache/v4/store/freecache
+module github.com/eko/gocache/store/freecache/v4
 
 go 1.19
 
 require (
 	github.com/coocood/freecache v1.2.3
-	github.com/eko/gocache/v4/lib v0.0.0
+	github.com/eko/gocache/lib/v4 v4.1.1
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.8.1
 )
@@ -17,4 +17,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/eko/gocache/v4/lib => ../../lib/
+replace github.com/eko/gocache/lib/v4 => ../../lib/

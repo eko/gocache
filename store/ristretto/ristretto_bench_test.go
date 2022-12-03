@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/dgraph-io/ristretto"
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 )
 
 func BenchmarkRistrettoSet(b *testing.B) {

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/v4/lib/codec"
-	"github.com/eko/gocache/v4/lib/store"
+	"github.com/eko/gocache/lib/v4/codec"
+	"github.com/eko/gocache/lib/v4/store"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

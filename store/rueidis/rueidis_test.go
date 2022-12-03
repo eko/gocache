@@ -8,7 +8,7 @@ import (
 	"github.com/rueian/rueidis"
 	"github.com/rueian/rueidis/mock"
 
-	lib_store "github.com/eko/gocache/v4/lib/store"
+	lib_store "github.com/eko/gocache/lib/v4/store"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
