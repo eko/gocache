@@ -21,10 +21,8 @@ const (
 
 // RueidisStore is a store for Redis
 type RueidisStore struct {
-	client      rueidis.Client
-	options     *lib_store.Options
-	cacheCompat rueidiscompat.CacheCompat
-	compat      rueidiscompat.Cmdable
+	client  rueidis.Client
+	options *lib_store.Options
 }
 
 // NewRueidis creates a new store to Redis instance(s)
@@ -37,43 +35,39 @@ func NewRueidis(client rueidis.Client, options ...lib_store.Option) *RueidisStor
 	}
 
 	return &RueidisStore{
-		client:      client,
-		cacheCompat: rueidiscompat.NewAdapter(client).Cache(appliedOptions.ClientSideCacheExpiration),
-		compat:      rueidiscompat.NewAdapter(client),
-		options:     appliedOptions,
+		client:  client,
+		options: appliedOptions,
 	}
 }
 
 // Get returns data stored from a given key
 func (s *RueidisStore) Get(ctx context.Context, key any) (any, error) {
-	object := s.client.DoCache(ctx, s.client.B().Get().Key(key.(string)).Cache(), s.options.ClientSideCacheExpiration)
-	if object.RedisError() != nil && object.RedisError().IsNil() {
-		return nil, lib_store.NotFoundWithCause(object.Error())
+	cmd := s.client.B().Get().Key(key.(string)).Cache()
+	res := s.client.DoCache(ctx, cmd, s.options.ClientSideCacheExpiration)
+	str, err := res.ToString()
+	if rueidis.IsRedisNil(err) {
+		err = lib_store.NotFoundWithCause(err)
 	}
-	return object, object.Error()
+	return str, err
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *RueidisStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
-	// get object first
-	object, err := s.Get(ctx, key)
-	if err != nil {
-		return nil, 0, err
+	cmd := s.client.B().Get().Key(key.(string)).Cache()
+	res := s.client.DoCache(ctx, cmd, s.options.ClientSideCacheExpiration)
+	str, err := res.ToString()
+	if rueidis.IsRedisNil(err) {
+		err = lib_store.NotFoundWithCause(err)
 	}
-
-	// get TTL and return
-	ttl, err := s.cacheCompat.TTL(ctx, key.(string)).Result()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return object, ttl, err
+	return str, time.Duration(res.CacheTTL()) * time.Second, err
 }
 
 // Set defines data in Redis for given key identifier
 func (s *RueidisStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
-	err := s.compat.Set(ctx, key.(string), value, opts.Expiration).Err()
+	ttl := int64(opts.Expiration.Seconds())
+	cmd := s.client.B().Set().Key(key.(string)).Value(value.(string)).ExSeconds(ttl).Build()
+	err := s.client.Do(ctx, cmd).Error()
 	if err != nil {
 		return err
 	}
@@ -86,17 +80,19 @@ func (s *RueidisStore) Set(ctx context.Context, key any, value any, options ...l
 }
 
 func (s *RueidisStore) setTags(ctx context.Context, key any, tags []string) {
+	ttl := 720 * time.Hour
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(RueidisTagPattern, tag)
-		s.compat.SAdd(ctx, tagKey, key.(string))
-		s.compat.Expire(ctx, tagKey, 720*time.Hour)
+		s.client.DoMulti(ctx,
+			s.client.B().Sadd().Key(tagKey).Member(key.(string)).Build(),
+			s.client.B().Expire().Key(tagKey).Seconds(int64(ttl.Seconds())).Build(),
+		)
 	}
 }
 
 // Delete removes data from Redis for given key identifier
 func (s *RueidisStore) Delete(ctx context.Context, key any) error {
-	_, err := s.compat.Del(ctx, key.(string)).Result()
-	return err
+	return s.client.Do(ctx, s.client.B().Del().Key(key.(string)).Build()).Error()
 }
 
 // Invalidate invalidates some cache data in Redis for given options
@@ -107,7 +103,7 @@ func (s *RueidisStore) Invalidate(ctx context.Context, options ...lib_store.Inva
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(RueidisTagPattern, tag)
 
-			cacheKeys, err := s.cacheCompat.SMembers(ctx, tagKey).Result()
+			cacheKeys, err := s.client.Do(ctx, s.client.B().Smembers().Key(tagKey).Build()).AsStrSlice()
 			if err != nil {
 				continue
 			}
@@ -130,9 +126,5 @@ func (s *RueidisStore) GetType() string {
 
 // Clear resets all data in the store
 func (s *RueidisStore) Clear(ctx context.Context) error {
-	if err := s.compat.FlushAll(ctx).Err(); err != nil {
-		return err
-	}
-
-	return nil
+	return rueidiscompat.NewAdapter(s.client).FlushAll(ctx).Err()
 }

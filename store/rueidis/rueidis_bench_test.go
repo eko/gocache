@@ -29,7 +29,7 @@ func BenchmarkRueidisSet(b *testing.B) {
 		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 			for i := 0; i < b.N*n; i++ {
 				key := fmt.Sprintf("test-%d", n)
-				value := []byte(fmt.Sprintf("value-%d", n))
+				value := fmt.Sprintf("value-%d", n)
 
 				store.Set(ctx, key, value, lib_store.WithTags([]string{fmt.Sprintf("tag-%d", n)}))
 			}
@@ -51,7 +51,7 @@ func BenchmarkRueidisGet(b *testing.B) {
 	store := NewRueidis(ruedisClient, lib_store.WithExpiration(time.Hour*4))
 
 	key := "test"
-	value := []byte("value")
+	value := "value"
 
 	_ = store.Set(ctx, key, value)
 

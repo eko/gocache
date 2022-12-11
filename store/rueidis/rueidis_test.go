@@ -37,7 +37,7 @@ func TestRueidisGet(t *testing.T) {
 
 	// rueidis mock client
 	client := mock.NewClient(ctrl)
-	client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisString("")))
+	client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisString("my-value")))
 
 	store := NewRueidis(client)
 
@@ -46,7 +46,7 @@ func TestRueidisGet(t *testing.T) {
 
 	// Then
 	assert.Nil(t, err)
-	assert.NotNil(t, value)
+	assert.Equal(t, value, "my-value")
 }
 
 func TestRueidisGetNotFound(t *testing.T) {
@@ -66,7 +66,7 @@ func TestRueidisGetNotFound(t *testing.T) {
 
 	// Then
 	assert.NotNil(t, err)
-	assert.Nil(t, value)
+	assert.Equal(t, value, "")
 }
 
 func TestRueidisSet(t *testing.T) {
@@ -123,8 +123,13 @@ func TestRedisSetWithTags(t *testing.T) {
 
 	client := mock.NewClient(ctrl)
 	client.EXPECT().Do(ctx, mock.Match("SET", cacheKey, cacheValue, "EX", "10")).Return(mock.Result(mock.RedisString("")))
-	client.EXPECT().Do(ctx, mock.Match("SADD", "gocache_tag_tag1", "my-key")).Return(mock.Result(mock.RedisString("")))
-	client.EXPECT().Do(ctx, mock.Match("EXPIRE", "gocache_tag_tag1", "2592000")).Return(mock.Result(mock.RedisString("")))
+	client.EXPECT().DoMulti(ctx,
+		mock.Match("SADD", "gocache_tag_tag1", "my-key"),
+		mock.Match("EXPIRE", "gocache_tag_tag1", "2592000"),
+	).Return([]rueidis.RedisResult{
+		mock.Result(mock.RedisString("")),
+		mock.Result(mock.RedisString("")),
+	})
 
 	store := NewRueidis(client, lib_store.WithExpiration(time.Second*10))
 
@@ -162,7 +167,7 @@ func TestRedisInvalidate(t *testing.T) {
 	ctx := context.Background()
 
 	client := mock.NewClient(ctrl)
-	client.EXPECT().DoCache(ctx, mock.Match("SMEMBERS", "gocache_tag_tag1"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisArray()))
+	client.EXPECT().Do(ctx, mock.Match("SMEMBERS", "gocache_tag_tag1")).Return(mock.Result(mock.RedisArray()))
 	client.EXPECT().Do(ctx, mock.Match("DEL", "gocache_tag_tag1")).Return(mock.Result(mock.RedisInt64(1)))
 
 	store := NewRueidis(client)
