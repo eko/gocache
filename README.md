@@ -182,6 +182,31 @@ switch err {
 }
 ```
 
+#### [Redis Client-Side Caching](https://redis.io/docs/manual/client-side-caching/) (using rueidis)
+
+```go
+client, err := rueidis.NewClient(rueidis.ClientOption{InitAddress: []string{"127.0.0.1:6379"}})
+if err != nil {
+    panic(err)
+}
+
+cacheManager := cache.New[string](rueidis_store.NewRueidis(
+    client,
+    store.WithExpiration(15*time.Second),
+    store.WithClientSideCaching(15*time.Second)),
+)
+
+if err = cacheManager.Set(context.Background(), "my-key", "my-value"); err != nil {
+    panic(err)
+}
+
+value, err := cacheManager.Get(context.Background(), "my-key")
+if err != nil {
+    log.Fatalf("Failed to get the value from the redis cache with key '%s': %v", "my-key", err)
+}
+log.Printf("Get the key '%s' from the redis cache. Result: %s", "my-key", value)
+```
+
 #### Freecache
 
 ```go
