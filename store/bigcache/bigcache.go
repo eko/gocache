@@ -52,10 +52,9 @@ func (s *BigcacheStore) Get(_ context.Context, key any) (any, error) {
 	return item, err
 }
 
-// GetWithTTL returns data stored from a given key and its corresponding TTL
+// Not implemented for BigcacheStore
 func (s *BigcacheStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
-	item, err := s.Get(ctx, key)
-	return item, 0, err
+	return nil, 0, errors.New("method not implemented for codec, use Get() instead")
 }
 
 // Set defines data in Bigcache for given key identifier
