@@ -1,8 +1,91 @@
 version: 2
 updates:
 - package-ecosystem: gomod
-  directory: "/"
+  directory: "/lib"
   schedule:
     interval: daily
     time: "04:00"
+    commit-message:
+      prefix: "[gomod/lib] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/bigcache"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/bigcache] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/freecache"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/freecache] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/go_cache"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/go_cache] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/memcache"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/memcache] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/pegasus"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/pegasus] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/redis"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/redis] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/rediscluster"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/rediscluster] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/ristretto"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/ristretto] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/rueidis"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/rueidis] "
   open-pull-requests-limit: 10
