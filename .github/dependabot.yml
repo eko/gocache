@@ -37,6 +37,15 @@ updates:
   open-pull-requests-limit: 10
 
 - package-ecosystem: gomod
+  directory: "/store/hazelcast"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/hazelcast] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
   directory: "/store/memcache"
   schedule:
     interval: daily
