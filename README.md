@@ -53,6 +53,7 @@ and then, import the store(s) you want to use between all available ones:
 go get github.com/eko/gocache/store/bigcache/v4
 go get github.com/eko/gocache/store/freecache/v4
 go get github.com/eko/gocache/store/go_cache/v4
+go get github.com/eko/gocache/store/hazelcast/v4
 go get github.com/eko/gocache/store/memcache/v4
 go get github.com/eko/gocache/store/pegasus/v4
 go get github.com/eko/gocache/store/redis/v4
