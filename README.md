@@ -32,6 +32,7 @@ Here is what it brings in detail:
 * [Redis (rueidis)](https://github.com/rueian/rueidis) (rueian/rueidis)
 * [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 * [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
+* [Hazelcast](https://github.com/hazelcast/hazelcast-go-client) (hazelcast-go-client/hazelcast)
 * More to come soon
 
 ## Built-in metrics providers
@@ -240,6 +241,34 @@ if err != nil {
 }
 
 value, _ := cacheManager.Get(ctx, "my-key")
+```
+
+#### Hazelcast
+
+```go
+client, err := hazelcast.StartNewClient(ctx)
+if err != nil {
+    log.Fatalf("Failed to start client: %v", err)
+}
+
+hzMap, err := client.GetMap(ctx, "gocache")
+if err != nil {
+    log.Fatalf("Failed to get map: %v", err)
+}
+
+hazelcastStore := hazelcast_store.NewHazelcast(hzMap)
+
+cacheManager := cache.New[string](hazelcastStore)
+err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
+if err != nil {
+    panic(err)
+}
+
+value, err := cacheManager.Get(ctx, "my-key")
+if err != nil {
+    panic(err)
+}
+fmt.Printf("Get the key '%s' from the hazelcast cache. Result: %s", "my-key", value)
 ```
 
 ### A chained cache

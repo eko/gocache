@@ -32,6 +32,7 @@ jobs:
         - bigcache
         - freecache
         - go_cache
+        - hazelcast
         - memcache
         - pegasus
         - redis
