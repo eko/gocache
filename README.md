@@ -168,7 +168,7 @@ redisStore := redis_store.NewRedis(redis.NewClient(&redis.Options{
 }))
 
 cacheManager := cache.New[string](redisStore)
-err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
+err := cacheManager.Set(ctx, "my-key", "my-value", store.WithExpiration(15*time.Second))
 if err != nil {
     panic(err)
 }
@@ -247,20 +247,17 @@ value, _ := cacheManager.Get(ctx, "my-key")
 #### Hazelcast
 
 ```go
-client, err := hazelcast.StartNewClient(ctx)
+hzClient, err := hazelcast.StartNewClient(ctx)
 if err != nil {
     log.Fatalf("Failed to start client: %v", err)
 }
 
-hzMap, err := client.GetMap(ctx, "gocache")
-if err != nil {
-    log.Fatalf("Failed to get map: %v", err)
-}
+hzMapName:= "gocache"
 
-hazelcastStore := hazelcast_store.NewHazelcast(hzMap)
+hazelcastStore := hazelcast_store.NewHazelcast(hzClient, hzMapName)
 
 cacheManager := cache.New[string](hazelcastStore)
-err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
+err := cacheManager.Set(ctx, "my-key", "my-value", store.WithExpiration(15*time.Second))
 if err != nil {
     panic(err)
 }
