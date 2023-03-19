@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
-	"github.com/go-redis/redis/v8"
+	redis "github.com/redis/go-redis/v9"
 )
 
 func BenchmarkRedisSet(b *testing.B) {

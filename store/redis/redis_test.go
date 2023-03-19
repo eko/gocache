@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
+	redis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
