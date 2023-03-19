@@ -525,7 +525,7 @@ type CacheKeyGenerator interface {
 
 ### Benchmarks
 
-![Benchmarks](https://raw.githubusercontent.com/eko/gocache/master/misc/benchmarks.jpeg)
+![Benchmarks](https://raw.githubusercontent.com/eko/gocache/master/lib/misc/benchmarks.jpeg)
 
 ## Run tests
 
