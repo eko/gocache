@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
-	"github.com/go-redis/redis/v8"
+	redis "github.com/redis/go-redis/v9"
 )
 
 // should be configured to connect to real Redis Cluster
