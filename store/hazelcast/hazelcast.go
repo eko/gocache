@@ -8,6 +8,7 @@ import (
 	"time"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
+	"github.com/hazelcast/hazelcast-go-client"
 	"github.com/hazelcast/hazelcast-go-client/types"
 	"golang.org/x/sync/errgroup"
 )
@@ -21,6 +22,8 @@ type HazelcastMapInterface interface {
 	Clear(ctx context.Context) error
 }
 
+type HazelcastMapInterfaceProvider func(ctx context.Context) (HazelcastMapInterface, error)
+
 const (
 	// HazelcastType represents the storage type as a string value
 	HazelcastType = "hazelcast"
@@ -32,21 +35,37 @@ const (
 
 // HazelcastStore is a store for Hazelcast
 type HazelcastStore struct {
-	hzMap   HazelcastMapInterface
-	options *lib_store.Options
+	mapProvider HazelcastMapInterfaceProvider
+	options     *lib_store.Options
 }
 
 // NewHazelcast creates a new store to Hazelcast instance(s)
-func NewHazelcast(hzMap HazelcastMapInterface, options ...lib_store.Option) *HazelcastStore {
+func NewHazelcast(hzClient *hazelcast.Client, mapName string, options ...lib_store.Option) *HazelcastStore {
 	return &HazelcastStore{
-		hzMap:   hzMap,
+		mapProvider: func(ctx context.Context) (HazelcastMapInterface, error) {
+			return hzClient.GetMap(ctx, mapName)
+		},
+		options: lib_store.ApplyOptions(options...),
+	}
+}
+
+// newHazelcast creates a new store with given HazelcastMapInterface for test purpose
+func newHazelcast(hzMap HazelcastMapInterface, options ...lib_store.Option) *HazelcastStore {
+	return &HazelcastStore{
+		mapProvider: func(ctx context.Context) (HazelcastMapInterface, error) {
+			return hzMap, nil
+		},
 		options: lib_store.ApplyOptions(options...),
 	}
 }
 
 // Get returns data stored from a given key
 func (s *HazelcastStore) Get(ctx context.Context, key any) (any, error) {
-	value, err := s.hzMap.Get(ctx, key)
+	hzMap, err := s.mapProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	value, err := hzMap.Get(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +77,11 @@ func (s *HazelcastStore) Get(ctx context.Context, key any) (any, error) {
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *HazelcastStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
-	entryView, err := s.hzMap.GetEntryView(ctx, key)
+	hzMap, err := s.mapProvider(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	entryView, err := hzMap.GetEntryView(ctx, key)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -71,28 +94,32 @@ func (s *HazelcastStore) GetWithTTL(ctx context.Context, key any) (any, time.Dur
 // Set defines data in Hazelcast for given key identifier
 func (s *HazelcastStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
-	err := s.hzMap.SetWithTTL(ctx, key, value, opts.Expiration)
+	hzMap, err := s.mapProvider(ctx)
+	if err != nil {
+		return err
+	}
+	err = hzMap.SetWithTTL(ctx, key, value, opts.Expiration)
 	if err != nil {
 		return err
 	}
 	if tags := opts.Tags; len(tags) > 0 {
-		s.setTags(ctx, key, tags)
+		s.setTags(ctx, hzMap, key, tags)
 	}
 	return nil
 }
 
-func (s *HazelcastStore) setTags(ctx context.Context, key any, tags []string) {
+func (s *HazelcastStore) setTags(ctx context.Context, hzMap HazelcastMapInterface, key any, tags []string) {
 	group, ctx := errgroup.WithContext(ctx)
 	for _, tag := range tags {
 		currentTag := tag
 		group.Go(func() error {
 			tagKey := fmt.Sprintf(HazelcastTagPattern, currentTag)
-			tagValue, err := s.hzMap.Get(ctx, tagKey)
+			tagValue, err := hzMap.Get(ctx, tagKey)
 			if err != nil {
 				return err
 			}
 			if tagValue == nil {
-				return s.hzMap.SetWithTTL(ctx, tagKey, key.(string), TagKeyExpiry)
+				return hzMap.SetWithTTL(ctx, tagKey, key.(string), TagKeyExpiry)
 			}
 			cacheKeys := strings.Split(tagValue.(string), ",")
 			for _, cacheKey := range cacheKeys {
@@ -102,7 +129,7 @@ func (s *HazelcastStore) setTags(ctx context.Context, key any, tags []string) {
 			}
 			cacheKeys = append(cacheKeys, key.(string))
 			newTagValue := strings.Join(cacheKeys, ",")
-			return s.hzMap.SetWithTTL(ctx, tagKey, newTagValue, TagKeyExpiry)
+			return hzMap.SetWithTTL(ctx, tagKey, newTagValue, TagKeyExpiry)
 		})
 	}
 	group.Wait()
@@ -110,7 +137,11 @@ func (s *HazelcastStore) setTags(ctx context.Context, key any, tags []string) {
 
 // Delete removes data from Hazelcast for given key identifier
 func (s *HazelcastStore) Delete(ctx context.Context, key any) error {
-	_, err := s.hzMap.Remove(ctx, key)
+	hzMap, err := s.mapProvider(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = hzMap.Remove(ctx, key)
 	return err
 }
 
@@ -118,17 +149,21 @@ func (s *HazelcastStore) Delete(ctx context.Context, key any) error {
 func (s *HazelcastStore) Invalidate(ctx context.Context, options ...lib_store.InvalidateOption) error {
 	opts := lib_store.ApplyInvalidateOptions(options...)
 	if tags := opts.Tags; len(tags) > 0 {
+		hzMap, err := s.mapProvider(ctx)
+		if err != nil {
+			return err
+		}
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(HazelcastTagPattern, tag)
-			tagValue, err := s.hzMap.Get(ctx, tagKey)
+			tagValue, err := hzMap.Get(ctx, tagKey)
 			if err != nil || tagValue == nil {
 				continue
 			}
 			cacheKeys := strings.Split(tagValue.(string), ",")
 			for _, cacheKey := range cacheKeys {
-				s.Delete(ctx, cacheKey)
+				hzMap.Remove(ctx, cacheKey)
 			}
-			s.Delete(ctx, tagKey)
+			hzMap.Remove(ctx, tagKey)
 		}
 	}
 	return nil
@@ -136,7 +171,11 @@ func (s *HazelcastStore) Invalidate(ctx context.Context, options ...lib_store.In
 
 // Clear resets all data in the store
 func (s *HazelcastStore) Clear(ctx context.Context) error {
-	return s.hzMap.Clear(ctx)
+	hzMap, err := s.mapProvider(ctx)
+	if err != nil {
+		return err
+	}
+	return hzMap.Clear(ctx)
 }
 
 // GetType returns the store type

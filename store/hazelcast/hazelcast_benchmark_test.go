@@ -13,17 +13,12 @@ import (
 func BenchmarkHazelcastSet(b *testing.B) {
 	ctx := context.Background()
 
-	client, err := hazelcast.StartNewClient(ctx)
+	hzClient, err := hazelcast.StartNewClient(ctx)
 	if err != nil {
 		b.Fatalf("Failed to start client: %v", err)
 	}
 
-	hzMap, err := client.GetMap(ctx, "gocache")
-	if err != nil {
-		b.Fatalf("Failed to get map: %v", err)
-	}
-
-	store := NewHazelcast(hzMap)
+	store := NewHazelcast(hzClient, "gocache")
 
 	for k := 0.; k <= 10; k++ {
 		n := int(math.Pow(2, k))
@@ -40,17 +35,12 @@ func BenchmarkHazelcastSet(b *testing.B) {
 func BenchmarkHazelcastGet(b *testing.B) {
 	ctx := context.Background()
 
-	client, err := hazelcast.StartNewClient(ctx)
+	hzClient, err := hazelcast.StartNewClient(ctx)
 	if err != nil {
 		b.Fatalf("Failed to start client: %v", err)
 	}
 
-	hzMap, err := client.GetMap(ctx, "gocache")
-	if err != nil {
-		b.Fatalf("Failed to get map: %v", err)
-	}
-
-	store := NewHazelcast(hzMap)
+	store := NewHazelcast(hzClient, "gocache")
 
 	key := "test"
 	value := []byte("value")
