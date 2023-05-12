@@ -439,7 +439,6 @@ package main
 
 import (
 	"log"
-	"github.com/eko/gocache/lib/v4/generic"
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/store"
 )
