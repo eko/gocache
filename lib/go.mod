@@ -8,6 +8,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 )
 
 require (
