@@ -29,7 +29,7 @@ Here is what it brings in detail:
 * [Memory (go-cache)](https://github.com/patrickmn/go-cache) (patrickmn/go-cache)
 * [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 * [Redis](https://github.com/go-redis/redis) (go-redis/redis)
-* [Redis (rueidis)](https://github.com/rueian/rueidis) (rueian/rueidis)
+* [Redis (rueidis)](https://github.com/redis/rueidis) (redis/rueidis)
 * [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 * [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
 * [Hazelcast](https://github.com/hazelcast/hazelcast-go-client) (hazelcast-go-client/hazelcast)
