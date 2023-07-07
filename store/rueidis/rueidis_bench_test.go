@@ -8,7 +8,7 @@ import (
 	"time"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
-	"github.com/rueian/rueidis"
+	"github.com/redis/rueidis"
 )
 
 func BenchmarkRueidisSet(b *testing.B) {
