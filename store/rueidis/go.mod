@@ -1,4 +1,4 @@
-module github.com/eko/gocache/store/rueidis/v4
+module github.com/wexder/gocache/store/rueidis/v4
 
 go 1.19
 
