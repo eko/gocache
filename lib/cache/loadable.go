@@ -57,7 +57,12 @@ func (c *LoadableCache[T]) setter() {
 	defer c.setterWg.Done()
 
 	for item := range c.setChannel {
-		c.Set(context.Background(), item.key, item.value, store.WithExpiration(c.options.loadDefaultExpireTime))
+		c.Set(
+			context.Background(),
+			item.key,
+			item.value,
+			store.WithExpiration(c.options.loadDefaultExpireTime),
+		)
 	}
 }
 
