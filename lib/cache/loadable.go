@@ -25,15 +25,26 @@ type LoadableCache[T any] struct {
 	cache      CacheInterface[T]
 	setChannel chan *loadableKeyValue[T]
 	setterWg   *sync.WaitGroup
+	options    *options
 }
 
 // NewLoadable instanciates a new cache that uses a function to load data
-func NewLoadable[T any](loadFunc LoadFunction[T], cache CacheInterface[T]) *LoadableCache[T] {
+func NewLoadable[T any](
+	loadFunc LoadFunction[T],
+	cache CacheInterface[T],
+	opts ...Option,
+) *LoadableCache[T] {
+	options := newOptions()
+	for _, o := range opts {
+		o(options)
+	}
+
 	loadable := &LoadableCache[T]{
 		loadFunc:   loadFunc,
 		cache:      cache,
 		setChannel: make(chan *loadableKeyValue[T], 10000),
 		setterWg:   &sync.WaitGroup{},
+		options:    options,
 	}
 
 	loadable.setterWg.Add(1)
@@ -46,7 +57,7 @@ func (c *LoadableCache[T]) setter() {
 	defer c.setterWg.Done()
 
 	for item := range c.setChannel {
-		c.Set(context.Background(), item.key, item.value)
+		c.Set(context.Background(), item.key, item.value, store.WithExpiration(c.options.loadDefaultExpireTime))
 	}
 }
 
