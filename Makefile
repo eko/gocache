@@ -1,4 +1,8 @@
-.PHONY: mocks test benchmark-store
+.PHONY: update-stores-version mocks test benchmark-store
+
+# Usage: VERSION=v4.1.3 make update-stores-version
+update-stores-version:
+	ls store/ | xargs -I % bash -c "sed -i '' -E 's,github.com/eko/gocache/lib/v4 v[0-9]\.[0-9]\.[0-9],github.com/eko/gocache/lib/v4 ${VERSION},g' store/%/go.mod"
 
 mocks:
 	mockgen -source=lib/cache/interface.go -destination=lib/cache/cache_mock.go -package=cache
