@@ -23,12 +23,47 @@ func TestNewPrometheus(t *testing.T) {
 	assert.IsType(t, new(Prometheus), metrics)
 
 	assert.Equal(t, serviceName, metrics.service)
+	assert.Equal(t, defaultNamespace, metrics.namespace)
+	assert.Equal(t, prometheus.DefaultRegisterer, metrics.registerer)
+
+	assert.IsType(t, new(prometheus.GaugeVec), metrics.collector)
+}
+
+func TestNewPrometheus_WithOptions(t *testing.T) {
+	// Given
+	serviceName := "my-test-service-name"
+
+	customNamespace := "my_custom_namespace"
+	customRegistry := prometheus.NewRegistry()
+	customChannel := make(chan codec.CodecInterface, 100)
+
+	// When
+	metrics := NewPrometheus(
+		serviceName,
+		WithCodecChannel(customChannel),
+		WithNamespace(customNamespace),
+		WithRegisterer(customRegistry),
+	)
+
+	// Then
+	assert.IsType(t, new(Prometheus), metrics)
+
+	assert.Equal(t, serviceName, metrics.service)
+	assert.Equal(t, customChannel, metrics.codecChannel)
+	assert.Equal(t, customNamespace, metrics.namespace)
+	assert.Equal(t, customRegistry, metrics.registerer)
+
 	assert.IsType(t, new(prometheus.GaugeVec), metrics.collector)
 }
 
 func TestRecord(t *testing.T) {
 	// Given
-	metrics := NewPrometheus("my-test-service-name")
+	customRegistry := prometheus.NewRegistry()
+
+	metrics := NewPrometheus(
+		"my-test-service-name",
+		WithRegisterer(customRegistry),
+	)
 
 	// When
 	metrics.record("redis", "hit_count", 6)
@@ -65,7 +100,12 @@ func TestRecordFromCodec(t *testing.T) {
 	testCodec.EXPECT().GetStats().Return(stats)
 	testCodec.EXPECT().GetStore().Return(redisStore)
 
-	metrics := NewPrometheus("my-test-service-name")
+	customRegistry := prometheus.NewRegistry()
+
+	metrics := NewPrometheus(
+		"my-test-service-name",
+		WithRegisterer(customRegistry),
+	)
 
 	// When
 	metrics.RecordFromCodec(testCodec)

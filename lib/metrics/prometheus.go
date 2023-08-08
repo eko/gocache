@@ -3,45 +3,72 @@ package metrics
 import (
 	"github.com/eko/gocache/lib/v4/codec"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
-	namespaceCache = "cache"
+	defaultNamespace = "cache"
 )
-
-var cacheCollector *prometheus.GaugeVec = initCacheCollector(namespaceCache)
 
 // Prometheus represents the prometheus struct for collecting metrics
 type Prometheus struct {
 	service      string
+	namespace    string
 	collector    *prometheus.GaugeVec
+	registerer   prometheus.Registerer
 	codecChannel chan codec.CodecInterface
 }
 
-func initCacheCollector(namespace string) *prometheus.GaugeVec {
-	c := promauto.NewGaugeVec(
+// PrometheusOption is a type for defining Prometheus options
+type PrometheusOption func(*Prometheus)
+
+// WithCodecChannel sets the prometheus codec channel
+func WithCodecChannel(codecChannel chan codec.CodecInterface) PrometheusOption {
+	return func(m *Prometheus) {
+		m.codecChannel = codecChannel
+	}
+}
+
+// WithNamespace sets the prometheus namespace
+func WithNamespace(namespace string) PrometheusOption {
+	return func(m *Prometheus) {
+		m.namespace = namespace
+	}
+}
+
+// WithRegisterer sets the prometheus registerer
+func WithRegisterer(registerer prometheus.Registerer) PrometheusOption {
+	return func(m *Prometheus) {
+		m.registerer = registerer
+	}
+}
+
+// NewPrometheus initializes a new prometheus metric instance
+func NewPrometheus(service string, options ...PrometheusOption) *Prometheus {
+	instance := &Prometheus{
+		namespace:    defaultNamespace,
+		registerer:   prometheus.DefaultRegisterer,
+		service:      service,
+		codecChannel: make(chan codec.CodecInterface, 10000),
+	}
+
+	for _, option := range options {
+		option(instance)
+	}
+
+	instance.collector = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name:      "collector",
-			Namespace: namespace,
+			Namespace: instance.namespace,
 			Help:      "This represent the number of items in cache",
 		},
 		[]string{"service", "store", "metric"},
 	)
-	return c
-}
 
-// NewPrometheus initializes a new prometheus metric instance
-func NewPrometheus(service string) *Prometheus {
-	prometheus := &Prometheus{
-		service:      service,
-		collector:    cacheCollector,
-		codecChannel: make(chan codec.CodecInterface, 10000),
-	}
+	instance.registerer.MustRegister(instance.collector)
 
-	go prometheus.recorder()
+	go instance.recorder()
 
-	return prometheus
+	return instance
 }
 
 // Record records a metric in prometheus by specifying the store name, metric name and value
