@@ -57,7 +57,7 @@ func (s *RistrettoStore) GetWithTTL(ctx context.Context, key any) (any, time.Dur
 	return value, 0, err
 }
 
-// Set defines data in Ristretto memoey cache for given key identifier
+// Set defines data in Ristretto memory cache for given key identifier
 func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
 
@@ -105,7 +105,7 @@ func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
 	}
 }
 
-// Delete removes data in Ristretto memoey cache for given key identifier
+// Delete removes data in Ristretto memory cache for given key identifier
 func (s *RistrettoStore) Delete(_ context.Context, key any) error {
 	s.client.Del(key)
 	return nil
