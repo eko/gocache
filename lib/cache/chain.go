@@ -54,6 +54,12 @@ func (c *ChainCache[T]) setter() {
 
 // Get returns the object stored in cache if it exists
 func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
+	object, _, err := c.GetWithTTL(ctx, key)
+	return object, err
+}
+
+// Get returns the object stored in cache if it exists, with TTL
+func (c *ChainCache[T]) GetWithTTL(ctx context.Context, key any) (T, time.Duration, error) {
 	var object T
 	var err error
 	var ttl time.Duration
@@ -64,11 +70,11 @@ func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
 		if err == nil {
 			// Set the value back until this cache layer
 			c.setChannel <- &chainKeyValue[T]{key, object, ttl, &storeType}
-			return object, nil
+			return object, ttl, nil
 		}
 	}
 
-	return object, err
+	return object, ttl, err
 }
 
 // Set sets a value in available caches
