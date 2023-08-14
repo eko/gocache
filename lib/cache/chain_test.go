@@ -181,6 +181,152 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	assert.Equal(t, nil, value)
 }
 
+func TestChainGetWithTTLWhenAvailableInFirstCache(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheValue := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+
+	cacheValueTTL := 5 * time.Second
+
+	// Cache 1
+	store1 := store.NewMockStoreInterface(ctrl)
+	store1.EXPECT().GetType().AnyTimes().Return("store1")
+
+	codec1 := codec.NewMockCodecInterface(ctrl)
+	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
+
+	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
+	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue,
+		cacheValueTTL, nil)
+
+	// Cache 2
+	cache2 := NewMockSetterCacheInterface[any](ctrl)
+
+	cache := NewChain[any](cache1, cache2)
+
+	// When
+	value, valueTTL, err := cache.GetWithTTL(ctx, "my-key")
+
+	// Wait for data to be processed
+	time.Sleep(100 * time.Millisecond)
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, cacheValueTTL, valueTTL)
+}
+
+func TestChainGetWithTTLWhenAvailableInSecondCache(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheValue := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+
+	cacheValueTTL := 5 * time.Second
+
+	options := store.OptionsMatcher{
+		Expiration: cacheValueTTL,
+	}
+
+	// Cache 1
+	store1 := store.NewMockStoreInterface(ctrl)
+	store1.EXPECT().GetType().AnyTimes().Return("store1")
+
+	codec1 := codec.NewMockCodecInterface(ctrl)
+	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
+
+	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
+	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, cacheValueTTL,
+		errors.New("unable to find in cache 1"))
+	cache1.EXPECT().Set(ctx, "my-key", cacheValue, &options).AnyTimes().Return(nil)
+
+	// Cache 2
+	store2 := store.NewMockStoreInterface(ctrl)
+	store2.EXPECT().GetType().AnyTimes().Return("store2")
+
+	codec2 := codec.NewMockCodecInterface(ctrl)
+	codec2.EXPECT().GetStore().AnyTimes().Return(store2)
+
+	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2.EXPECT().GetCodec().AnyTimes().Return(codec2)
+	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue,
+		cacheValueTTL, nil)
+
+	cache := NewChain[any](cache1, cache2)
+
+	// When
+	value, valueTTL, err := cache.GetWithTTL(ctx, "my-key")
+
+	// Wait for data to be processed
+	time.Sleep(100 * time.Millisecond)
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
+	assert.Equal(t, cacheValueTTL, valueTTL)
+}
+
+func TestChainGetWithTTLWhenNotAvailableInAnyCache(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheValueTTL := 0 * time.Second
+
+	// Cache 1
+	store1 := store.NewMockStoreInterface(ctrl)
+	store1.EXPECT().GetType().Return("store1")
+
+	codec1 := codec.NewMockCodecInterface(ctrl)
+	codec1.EXPECT().GetStore().Return(store1)
+
+	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().GetCodec().Return(codec1)
+	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, cacheValueTTL,
+		errors.New("unable to find in cache 1"))
+
+	// Cache 2
+	store2 := store.NewMockStoreInterface(ctrl)
+	store2.EXPECT().GetType().Return("store2")
+
+	codec2 := codec.NewMockCodecInterface(ctrl)
+	codec2.EXPECT().GetStore().Return(store2)
+
+	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2.EXPECT().GetCodec().Return(codec2)
+	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, cacheValueTTL,
+		errors.New("unable to find in cache 2"))
+
+	cache := NewChain[any](cache1, cache2)
+
+	// When
+	value, valueTTL, err := cache.GetWithTTL(ctx, "my-key")
+
+	// Wait for data to be processed
+	time.Sleep(100 * time.Millisecond)
+
+	// Then
+	assert.Equal(t, errors.New("unable to find in cache 2"), err)
+	assert.Equal(t, nil, value)
+	assert.Equal(t, cacheValueTTL, valueTTL)
+}
+
 func TestChainSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
