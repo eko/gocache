@@ -17,8 +17,11 @@ func TestNewMetric(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	// When
 	cache := NewMetric[any](metrics, cache1)
@@ -45,10 +48,10 @@ func TestMetricGet(t *testing.T) {
 	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
-	cache1.EXPECT().GetCodec().Return(codec1)
+	cache1.EXPECT().GetCodec().Return(codec1).MinTimes(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
-	metrics.EXPECT().RecordFromCodec(codec1).AnyTimes()
+	metrics.EXPECT().RecordFromCodec(codec1).MinTimes(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -110,10 +113,13 @@ func TestMetricSet(t *testing.T) {
 		Hello: "world",
 	}
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Set(ctx, "my-key", value).Return(nil)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -130,10 +136,13 @@ func TestMetricDelete(t *testing.T) {
 
 	ctx := context.Background()
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(nil)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -152,10 +161,13 @@ func TestMetricDeleteWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unable to delete key")
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -172,10 +184,13 @@ func TestMetricInvalidate(t *testing.T) {
 
 	ctx := context.Background()
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(nil)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -194,10 +209,13 @@ func TestMetricInvalidateWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unexpected error while invalidating data")
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(expectedErr)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -214,10 +232,13 @@ func TestMetricClear(t *testing.T) {
 
 	ctx := context.Background()
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(nil)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -236,10 +257,13 @@ func TestMetricClearWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unexpected error while clearing cache")
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(expectedErr)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 
@@ -254,8 +278,11 @@ func TestMetricGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
+	codec1 := codec.NewMockCodecInterface(ctrl)
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().GetCodec().Return(codec1).Times(1)
 	metrics := metrics.NewMockMetricsInterface(ctrl)
+	metrics.EXPECT().RecordFromCodec(codec1).Times(1)
 
 	cache := NewMetric[any](metrics, cache1)
 

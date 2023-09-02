@@ -20,10 +20,14 @@ type MetricCache[T any] struct {
 
 // NewMetric creates a new cache with metrics and a given cache storage
 func NewMetric[T any](metrics metrics.MetricsInterface, cache CacheInterface[T]) *MetricCache[T] {
-	return &MetricCache[T]{
+	metricCache := &MetricCache[T]{
 		metrics: metrics,
 		cache:   cache,
 	}
+
+	metricCache.updateMetrics(cache)
+
+	return metricCache
 }
 
 // Get obtains a value from cache and also records metrics
