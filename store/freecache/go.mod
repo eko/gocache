@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/coocood/freecache v1.2.3
-	github.com/eko/gocache/lib/v4 v4.1.4
+	github.com/eko/gocache/lib/v4 v4.1.5
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.8.1
 )
