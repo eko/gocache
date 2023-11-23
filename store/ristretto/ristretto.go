@@ -23,6 +23,7 @@ type RistrettoClientInterface interface {
 	SetWithTTL(key, value any, cost int64, ttl time.Duration) bool
 	Del(key any)
 	Clear()
+	Wait()
 }
 
 // RistrettoStore is a store for Ristretto (memory) library
@@ -69,6 +70,10 @@ func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ..
 
 	if err != nil {
 		return err
+	}
+
+	if opts.SynchronousSet {
+		s.client.Wait()
 	}
 
 	if tags := opts.Tags; len(tags) > 0 {
