@@ -8,6 +8,7 @@ import (
 type Option func(o *Options)
 
 type Options struct {
+	SynchronousSet            bool
 	Cost                      int64
 	Expiration                time.Duration
 	Tags                      []string
@@ -44,6 +45,14 @@ func ApplyOptions(opts ...Option) *Options {
 func WithCost(cost int64) Option {
 	return func(o *Options) {
 		o.Cost = cost
+	}
+}
+
+// WithSynchronousSet allows setting the behavior when setting a value, whether to wait until all buffered writes have been applied or not.
+// Currently to be used by Ristretto library only.
+func WithSynchronousSet() Option {
+	return func(o *Options) {
+		o.SynchronousSet = true
 	}
 }
 

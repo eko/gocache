@@ -177,6 +177,28 @@ func TestRistrettoSetWhenError(t *testing.T) {
 	assert.Equal(t, fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", cacheValue, cacheKey), err)
 }
 
+func TestRistrettoSetWithSynchronousSet(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockRistrettoClientInterface(ctrl)
+	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(true)
+	client.EXPECT().Wait()
+
+	store := NewRistretto(client, lib_store.WithCost(7), lib_store.WithSynchronousSet())
+
+	// When
+	err := store.Set(ctx, cacheKey, cacheValue, lib_store.WithSynchronousSet())
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestRistrettoSetWithTags(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)

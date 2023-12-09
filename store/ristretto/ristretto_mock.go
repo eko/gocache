@@ -86,3 +86,15 @@ func (mr *MockRistrettoClientInterfaceMockRecorder) SetWithTTL(key, value, cost,
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetWithTTL", reflect.TypeOf((*MockRistrettoClientInterface)(nil).SetWithTTL), key, value, cost, ttl)
 }
+
+// Wait mocks base method.
+func (m *MockRistrettoClientInterface) Wait() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Wait")
+}
+
+// Wait indicates an expected call of Wait.
+func (mr *MockRistrettoClientInterfaceMockRecorder) Wait() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Wait", reflect.TypeOf((*MockRistrettoClientInterface)(nil).Wait))
+}
