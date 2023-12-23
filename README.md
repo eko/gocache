@@ -198,11 +198,11 @@ cacheManager := cache.New[string](rueidis_store.NewRueidis(
     store.WithClientSideCaching(15*time.Second)),
 )
 
-if err = cacheManager.Set(context.Background(), "my-key", "my-value"); err != nil {
+if err = cacheManager.Set(ctx, "my-key", "my-value"); err != nil {
     panic(err)
 }
 
-value, err := cacheManager.Get(context.Background(), "my-key")
+value, err := cacheManager.Get(ctx, "my-key")
 if err != nil {
     log.Fatalf("Failed to get the value from the redis cache with key '%s': %v", "my-key", err)
 }
@@ -432,15 +432,19 @@ if err != nil {
 }
 ```
 
-Mix this with expiration times on your caches to have a fine tuned control on how your data are cached.
+Mix this with expiration times on your caches to have a fine-tuned control on how your data are cached.
 
 ```go
 package main
 
 import (
+	"fmt"
 	"log"
+	"time"
+
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/store"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -449,18 +453,20 @@ func main() {
 	}), nil)
 
 	cacheManager := cache.New[string](redisStore)
-	err := cacheManager.Set("my-key", "my-value", store.WithExpiration(15*time.Second))
+	err := cacheManager.Set(ctx, "my-key", "my-value", store.WithExpiration(15*time.Second))
 	if err != nil {
 		panic(err)
 	}
 
-	value, err := cacheManager.Get(ctx, "my-key")
+	key := "my-key"
+	value, err := cacheManager.Get(ctx, key)
 	if err != nil {
-		log.Fatalf("unable to get cache key '%s' from the cache: %v", err)
+		log.Fatalf("unable to get cache key '%s' from the cache: %v", key, err)
 	}
 
 	fmt.Printf("%#+v\n", value)
 }
+
 ```
 
 ### Write your own custom cache
@@ -525,7 +531,7 @@ type CacheKeyGenerator interface {
 
 ## Run tests
 
-To generate mocks usng mockgen library, run:
+To generate mocks using mockgen library, run:
 
 ```bash
 $ make mocks
