@@ -120,6 +120,12 @@ value := cacheManager.Get(ctx, "my-key")
 #### Memory (using Ristretto)
 
 ```go
+import (
+	"github.com/dgraph-io/ristretto"
+	"github.com/eko/gocache/lib/v4/cache"
+	"github.com/eko/gocache/lib/v4/store"
+	ristretto_store "github.com/eko/gocache/store/ristretto/v4"
+)
 ristrettoCache, err := ristretto.NewCache(&ristretto.Config{
 	NumCounters: 1000,
 	MaxCost: 100,
