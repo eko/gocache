@@ -3,11 +3,13 @@ module github.com/eko/gocache/lib/v4
 go 1.19
 
 require (
+	github.com/coocood/freecache v1.2.4
+	github.com/eko/gocache/store/freecache/v4 v4.2.1
 	github.com/golang/mock v1.6.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/vmihailenco/msgpack/v5 v5.3.5
-	golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9
+	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
 )
 
 require (

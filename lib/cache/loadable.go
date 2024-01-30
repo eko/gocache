@@ -25,19 +25,23 @@ type LoadableCache[T any] struct {
 	cache      CacheInterface[T]
 	setChannel chan *loadableKeyValue[T]
 	setterWg   *sync.WaitGroup
+	options    *store.Options
 }
 
 // NewLoadable instanciates a new cache that uses a function to load data
-func NewLoadable[T any](loadFunc LoadFunction[T], cache CacheInterface[T]) *LoadableCache[T] {
+func NewLoadable[T any](loadFunc LoadFunction[T], cache CacheInterface[T], options ...store.Option) *LoadableCache[T] {
 	loadable := &LoadableCache[T]{
-		loadFunc:   loadFunc,
-		cache:      cache,
-		setChannel: make(chan *loadableKeyValue[T], 10000),
-		setterWg:   &sync.WaitGroup{},
+		loadFunc: loadFunc,
+		cache:    cache,
+		options:  store.ApplyOptions(options...),
 	}
 
-	loadable.setterWg.Add(1)
-	go loadable.setter()
+	if !loadable.options.SynchronousSet {
+		loadable.setChannel = make(chan *loadableKeyValue[T], 10000)
+		loadable.setterWg = &sync.WaitGroup{}
+		loadable.setterWg.Add(1)
+		go loadable.setter()
+	}
 
 	return loadable
 }
@@ -65,9 +69,13 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 		return object, err
 	}
 
-	// Then, put it back in cache
-	c.setChannel <- &loadableKeyValue[T]{key, object}
+	if !c.options.SynchronousSet {
+		// Then, put it back in cache
+		c.setChannel <- &loadableKeyValue[T]{key, object}
+		return object, err
+	}
 
+	c.cache.Set(ctx, key, object)
 	return object, err
 }
 
@@ -97,8 +105,10 @@ func (c *LoadableCache[T]) GetType() string {
 }
 
 func (c *LoadableCache[T]) Close() error {
-	close(c.setChannel)
-	c.setterWg.Wait()
+	if !c.options.SynchronousSet {
+		close(c.setChannel)
+		c.setterWg.Wait()
+	}
 
 	return nil
 }
