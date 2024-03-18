@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coocood/freecache"
+	"github.com/eko/gocache/lib/v4/store"
+	freecache2 "github.com/eko/gocache/store/freecache/v4"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -271,4 +274,28 @@ func TestLoadableGetType(t *testing.T) {
 
 	// When - Then
 	assert.Equal(t, LoadableType, cache.GetType())
+}
+
+func TestLoadableSynchronousSetOptions(t *testing.T) {
+
+	count := 0
+	cacheValue := []byte("foobar")
+
+	ctx := context.Background()
+
+	freeCacheStore := freecache2.NewFreecache(freecache.NewCache(1000), store.WithExpiration(10*time.Second))
+	loadFunc := func(_ context.Context, key any) (any, error) {
+		count++
+		return cacheValue, nil
+	}
+
+	cache := NewLoadable[any](loadFunc, freeCacheStore, store.WithSynchronousSet())
+
+	for i := 0; i < 10; i++ {
+		value, err := cache.Get(ctx, "my-key")
+		assert.NoError(t, err)
+		assert.Equal(t, value, cacheValue)
+	}
+
+	assert.Equal(t, 1, count)
 }
