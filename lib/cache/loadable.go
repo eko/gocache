@@ -2,9 +2,12 @@ package cache
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/eko/gocache/lib/v4/store"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -21,19 +24,21 @@ type LoadFunction[T any] func(ctx context.Context, key any) (T, error)
 
 // LoadableCache represents a cache that uses a function to load data
 type LoadableCache[T any] struct {
-	loadFunc   LoadFunction[T]
-	cache      CacheInterface[T]
-	setChannel chan *loadableKeyValue[T]
-	setterWg   *sync.WaitGroup
+	singleFlight singleflight.Group
+	loadFunc     LoadFunction[T]
+	cache        CacheInterface[T]
+	setChannel   chan *loadableKeyValue[T]
+	setterWg     *sync.WaitGroup
 }
 
-// NewLoadable instanciates a new cache that uses a function to load data
+// NewLoadable instantiates a new cache that uses a function to load data
 func NewLoadable[T any](loadFunc LoadFunction[T], cache CacheInterface[T]) *LoadableCache[T] {
 	loadable := &LoadableCache[T]{
-		loadFunc:   loadFunc,
-		cache:      cache,
-		setChannel: make(chan *loadableKeyValue[T], 10000),
-		setterWg:   &sync.WaitGroup{},
+		singleFlight: singleflight.Group{},
+		loadFunc:     loadFunc,
+		cache:        cache,
+		setChannel:   make(chan *loadableKeyValue[T], 10000),
+		setterWg:     &sync.WaitGroup{},
 	}
 
 	loadable.setterWg.Add(1)
@@ -47,6 +52,7 @@ func (c *LoadableCache[T]) setter() {
 
 	for item := range c.setChannel {
 		c.Set(context.Background(), item.key, item.value)
+		c.singleFlight.Forget(c.getCacheKey(item.key))
 	}
 }
 
@@ -60,9 +66,21 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 	}
 
 	// Unable to find in cache, try to load it from load function
-	object, err = c.loadFunc(ctx, key)
-	if err != nil {
-		return object, err
+	var r any
+	if r, err, _ = c.singleFlight.Do(
+		c.getCacheKey(key),
+		func() (any, error) {
+			return c.loadFunc(ctx, key)
+		},
+	); err != nil {
+		return *new(T), err
+	}
+	var ok bool
+	if object, ok = r.(T); !ok {
+		zero := *new(T)
+		return zero, errors.New(
+			fmt.Sprintf("returned value can't be cast to %T", zero),
+		)
 	}
 
 	// Then, put it back in cache
@@ -101,4 +119,18 @@ func (c *LoadableCache[T]) Close() error {
 	c.setterWg.Wait()
 
 	return nil
+}
+
+// getCacheKey returns the cache key for the given key object by returning
+// the key if type is string or by computing a checksum of key structure
+// if its type is other than string
+func (c *LoadableCache[T]) getCacheKey(key any) string {
+	switch v := key.(type) {
+	case string:
+		return v
+	case CacheKeyGenerator:
+		return v.GetCacheKey()
+	default:
+		return checksum(key)
+	}
 }
