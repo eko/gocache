@@ -3,6 +3,8 @@ package cache
 import (
 	"context"
 	"errors"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -98,25 +100,50 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	// Cache 1
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
+	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
+	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue).AnyTimes().Return(nil)
 
+	var loadCallCount int32
+	pauseLoadFn := make(chan struct{})
+
 	loadFunc := func(_ context.Context, key any) (any, error) {
+		atomic.AddInt32(&loadCallCount, 1)
+		<-pauseLoadFn
+		time.Sleep(time.Millisecond * 10)
 		return cacheValue, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
 
-	// When
-	value, err := cache.Get(ctx, "my-key")
+	const numRequests = 3
+	var started sync.WaitGroup
+	started.Add(numRequests)
+	var finished sync.WaitGroup
+	finished.Add(numRequests)
+	for i := 0; i < numRequests; i++ {
+		go func() {
+			defer finished.Done()
+			started.Done()
+			// When
+			value, err := cache.Get(ctx, "my-key")
 
-	// Wait for data to be processed
-	for len(cache.setChannel) > 0 {
-		time.Sleep(1 * time.Millisecond)
+			// Wait for data to be processed
+			for len(cache.setChannel) > 0 {
+				time.Sleep(1 * time.Millisecond)
+			}
+
+			// Then
+			assert.Nil(t, err)
+			assert.Equal(t, cacheValue, value)
+		}()
 	}
 
-	// Then
-	assert.Nil(t, err)
-	assert.Equal(t, cacheValue, value)
+	started.Wait()
+	close(pauseLoadFn)
+	finished.Wait()
+
+	assert.Equal(t, int32(1), loadCallCount)
 }
 
 func TestLoadableDelete(t *testing.T) {
