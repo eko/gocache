@@ -66,18 +66,21 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 	}
 
 	// Unable to find in cache, try to load it from load function
-	var r any
-	if r, err, _ = c.singleFlight.Do(
-		c.getCacheKey(key),
+	cacheKey := c.getCacheKey(key)
+	zero := *new(T)
+
+	loadedResult, err, _ := c.singleFlight.Do(
+		cacheKey,
 		func() (any, error) {
 			return c.loadFunc(ctx, key)
 		},
-	); err != nil {
-		return *new(T), err
+	)
+	if err != nil {
+		return zero, err
 	}
+
 	var ok bool
-	if object, ok = r.(T); !ok {
-		zero := *new(T)
+	if object, ok = loadedResult.(T); !ok {
 		return zero, errors.New(
 			fmt.Sprintf("returned value can't be cast to %T", zero),
 		)
