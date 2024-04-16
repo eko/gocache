@@ -52,7 +52,9 @@ func (c *LoadableCache[T]) setter() {
 
 	for item := range c.setChannel {
 		c.Set(context.Background(), item.key, item.value)
-		c.singleFlight.Forget(c.getCacheKey(item.key))
+
+		cacheKey := c.getCacheKey(item.key)
+		c.singleFlight.Forget(cacheKey)
 	}
 }
 
