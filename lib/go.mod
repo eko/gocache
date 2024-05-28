@@ -3,10 +3,10 @@ module github.com/eko/gocache/lib/v4
 go 1.22
 
 require (
-	github.com/golang/mock v1.6.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/stretchr/testify v1.8.1
 	github.com/vmihailenco/msgpack/v5 v5.4.1
+	go.uber.org/mock v0.4.0
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f
 	golang.org/x/sync v0.7.0
 )

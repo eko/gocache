@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	redis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
 )

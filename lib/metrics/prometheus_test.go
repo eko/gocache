@@ -6,10 +6,10 @@ import (
 
 	"github.com/eko/gocache/lib/v4/codec"
 	"github.com/eko/gocache/lib/v4/store"
-	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNewPrometheus(t *testing.T) {

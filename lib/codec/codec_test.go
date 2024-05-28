@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/eko/gocache/lib/v4/store"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNew(t *testing.T) {
