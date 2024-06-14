@@ -13,14 +13,16 @@ import (
 
 func TestNewHazelcast(t *testing.T) {
 	// Given
-	mapName := "gocache"
+	ctrl := gomock.NewController(t)
+
+	hzMap := NewMockHazelcastMapInterface(ctrl)
 
 	// When
-	store := NewHazelcast(nil, mapName, lib_store.WithExpiration(6*time.Second))
+	store := NewHazelcast(hzMap, lib_store.WithExpiration(6*time.Second))
 
 	// Then
 	assert.IsType(t, new(HazelcastStore), store)
-	assert.NotNil(t, store.mapProvider)
+	assert.Equal(t, hzMap, store.hzMap)
 	assert.Equal(t, &lib_store.Options{Expiration: 6 * time.Second}, store.options)
 }
 
@@ -33,7 +35,7 @@ func TestHazelcastGet(t *testing.T) {
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().Get(ctx, "my-key").Return("my-value", nil)
 
-	store := newHazelcast(hzMap)
+	store := NewHazelcast(hzMap)
 
 	// When
 	value, err := store.Get(ctx, "my-key")
@@ -55,7 +57,7 @@ func TestHazelcastSet(t *testing.T) {
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().SetWithTTL(ctx, cacheKey, cacheValue, 5*time.Second).Return(nil)
 
-	store := newHazelcast(hzMap, lib_store.WithExpiration(6*time.Second))
+	store := NewHazelcast(hzMap, lib_store.WithExpiration(6*time.Second))
 
 	// When
 	err := store.Set(ctx, cacheKey, cacheValue, lib_store.WithExpiration(5*time.Second))
@@ -76,7 +78,7 @@ func TestHazelcastSetWhenNoOptionsGiven(t *testing.T) {
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().SetWithTTL(ctx, cacheKey, cacheValue, 6*time.Second).Return(nil)
 
-	store := newHazelcast(hzMap, lib_store.WithExpiration(6*time.Second))
+	store := NewHazelcast(hzMap, lib_store.WithExpiration(6*time.Second))
 
 	// When
 	err := store.Set(ctx, cacheKey, cacheValue)
@@ -99,7 +101,7 @@ func TestHazelcastSetWithTags(t *testing.T) {
 	hzMap.EXPECT().SetWithTTL(gomock.Any(), "gocache_tag_tag1", cacheKey, TagKeyExpiry).Return(nil)
 	hzMap.EXPECT().Get(gomock.Any(), "gocache_tag_tag1").Return(nil, nil)
 
-	store := newHazelcast(hzMap)
+	store := NewHazelcast(hzMap)
 
 	// When
 	err := store.Set(ctx, cacheKey, cacheValue, lib_store.WithTags([]string{"tag1"}))
@@ -119,7 +121,7 @@ func TestHazelcastDelete(t *testing.T) {
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().Remove(ctx, "my-key").Return(0, nil)
 
-	store := newHazelcast(hzMap)
+	store := NewHazelcast(hzMap)
 
 	// When
 	err := store.Delete(ctx, cacheKey)
@@ -137,7 +139,7 @@ func TestHazelcastInvalidate(t *testing.T) {
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().Get(ctx, "gocache_tag_tag1").Return(nil, nil)
 
-	store := newHazelcast(hzMap)
+	store := NewHazelcast(hzMap)
 
 	// When
 	err := store.Invalidate(ctx, lib_store.WithInvalidateTags([]string{"tag1"}))
@@ -161,7 +163,7 @@ func TestHazelcastInvalidateWhenCacheKeysExist(t *testing.T) {
 	hzMap.EXPECT().Remove(ctx, "my-key2").Return("my-value2", nil)
 	hzMap.EXPECT().Remove(ctx, "gocache_tag_tag1").Return(cacheKeys, nil)
 
-	store := newHazelcast(hzMap)
+	store := NewHazelcast(hzMap)
 
 	// When
 	err := store.Invalidate(ctx, lib_store.WithInvalidateTags([]string{"tag1"}))
@@ -179,7 +181,7 @@ func TestHazelcastClear(t *testing.T) {
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().Clear(ctx).Return(nil)
 
-	store := newHazelcast(hzMap, lib_store.WithExpiration(6*time.Second))
+	store := NewHazelcast(hzMap, lib_store.WithExpiration(6*time.Second))
 
 	// When
 	err := store.Clear(ctx)
@@ -194,7 +196,7 @@ func TestHazelcastType(t *testing.T) {
 
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 
-	store := newHazelcast(hzMap)
+	store := NewHazelcast(hzMap)
 
 	// When - Then
 	assert.Equal(t, HazelcastType, store.GetType())

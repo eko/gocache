@@ -258,9 +258,12 @@ if err != nil {
     log.Fatalf("Failed to start client: %v", err)
 }
 
-hzMapName:= "gocache"
+hzMap, err := hzClient.GetMap(ctx, "gocache")
+if err != nil {
+    b.Fatalf("Failed to get map: %v", err)
+}
 
-hazelcastStore := hazelcast_store.NewHazelcast(hzClient, hzMapName)
+hazelcastStore := hazelcast_store.NewHazelcast(hzMap)
 
 cacheManager := cache.New[string](hazelcastStore)
 err := cacheManager.Set(ctx, "my-key", "my-value", store.WithExpiration(15*time.Second))
