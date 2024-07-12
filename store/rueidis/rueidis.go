@@ -66,12 +66,18 @@ func (s *RueidisStore) GetWithTTL(ctx context.Context, key any) (any, time.Durat
 func (s *RueidisStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
 	ttl := int64(opts.Expiration.Seconds())
-	cmd := s.client.B().Set().Key(key.(string)).Value(value.(string)).ExSeconds(ttl).Build()
+	var cmd rueidis.Completed
+	switch value.(type) {
+	case string:
+		cmd = s.client.B().Set().Key(key.(string)).Value(value.(string)).ExSeconds(ttl).Build()
+
+	case []byte:
+		cmd = s.client.B().Set().Key(key.(string)).Value(rueidis.BinaryString(value.([]byte))).ExSeconds(ttl).Build()
+	}
 	err := s.client.Do(ctx, cmd).Error()
 	if err != nil {
 		return err
 	}
-
 	if tags := opts.Tags; len(tags) > 0 {
 		s.setTags(ctx, key, tags)
 	}
