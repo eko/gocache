@@ -50,6 +50,9 @@ func NewMemcache(client MemcacheClientInterface, options ...lib_store.Option) *M
 func (s *MemcacheStore) Get(_ context.Context, key any) (any, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
+		if errors.Is(err, memcache.ErrCacheMiss) {
+			return nil, lib_store.NotFoundWithCause(err)
+		}
 		return nil, err
 	}
 	if item == nil {
@@ -63,6 +66,9 @@ func (s *MemcacheStore) Get(_ context.Context, key any) (any, error) {
 func (s *MemcacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duration, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
+		if errors.Is(err, memcache.ErrCacheMiss) {
+			return nil, 0, lib_store.NotFoundWithCause(err)
+		}
 		return nil, 0, err
 	}
 	if item == nil {
@@ -159,7 +165,11 @@ func (s *MemcacheStore) addKeyToTagValue(tagKey string, key any) error {
 
 // Delete removes data from Memcache for given key identifier
 func (s *MemcacheStore) Delete(_ context.Context, key any) error {
-	return s.client.Delete(key.(string))
+	err := s.client.Delete(key.(string))
+	if errors.Is(err, memcache.ErrCacheMiss) {
+		return nil
+	}
+	return err
 }
 
 // Invalidate invalidates some cache data in Memcache for given options
