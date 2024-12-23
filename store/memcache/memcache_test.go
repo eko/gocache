@@ -51,6 +51,27 @@ func TestMemcacheGet(t *testing.T) {
 	assert.Equal(t, cacheValue, value)
 }
 
+func TestMemcacheGetWithMissingItem(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+
+	client := NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, memcache.ErrCacheMiss)
+
+	store := NewMemcache(client, lib_store.WithExpiration(3*time.Second))
+
+	// When
+	value, err := store.Get(ctx, cacheKey)
+
+	// Then
+	assert.ErrorIs(t, err, lib_store.NotFound{})
+	assert.Nil(t, value)
+}
+
 func TestMemcacheGetWhenError(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
@@ -109,7 +130,7 @@ func TestMemcacheGetWithTTLWhenMissingItem(t *testing.T) {
 	cacheKey := "my-key"
 
 	client := NewMockMemcacheClientInterface(ctrl)
-	client.EXPECT().Get(cacheKey).Return(nil, nil)
+	client.EXPECT().Get(cacheKey).Return(nil, memcache.ErrCacheMiss)
 
 	store := NewMemcache(client, lib_store.WithExpiration(3*time.Second))
 
@@ -117,7 +138,7 @@ func TestMemcacheGetWithTTLWhenMissingItem(t *testing.T) {
 	value, ttl, err := store.GetWithTTL(ctx, cacheKey)
 
 	// Then
-	assert.NotNil(t, err)
+	assert.ErrorIs(t, err, lib_store.NotFound{})
 	assert.Nil(t, value)
 	assert.Equal(t, 0*time.Second, ttl)
 }
@@ -286,6 +307,26 @@ func TestMemcacheDelete(t *testing.T) {
 
 	client := NewMockMemcacheClientInterface(ctrl)
 	client.EXPECT().Delete(cacheKey).Return(nil)
+
+	store := NewMemcache(client)
+
+	// When
+	err := store.Delete(ctx, cacheKey)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMemcacheDeleteWithMissingItem(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+
+	client := NewMockMemcacheClientInterface(ctrl)
+	client.EXPECT().Delete(cacheKey).Return(memcache.ErrCacheMiss)
 
 	store := NewMemcache(client)
 
