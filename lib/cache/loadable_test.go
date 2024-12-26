@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -298,4 +299,30 @@ func TestLoadableGetType(t *testing.T) {
 
 	// When - Then
 	assert.Equal(t, LoadableType, cache.GetType())
+}
+
+func TestLoadableGetTwice(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache1 := NewMockSetterCacheInterface[any](ctrl)
+
+	var counter atomic.Uint64
+	loadFunc := func(_ context.Context, key any) (any, error) {
+		return counter.Add(1), nil
+	}
+
+	cache := NewLoadable[any](loadFunc, cache1)
+
+	key := 1
+	cache1.EXPECT().Get(context.Background(), key).Return(nil, store.NotFound{}).Times(2)
+	cache1.EXPECT().Set(context.Background(), key, uint64(1)).Times(1)
+	v1, err1 := cache.Get(context.Background(), key)
+	v2, err2 := cache.Get(context.Background(), key) // setter may not be called now because it's done by another goroutine
+	assert.NoError(t, err1)
+	assert.NoError(t, err2)
+	assert.Equal(t, uint64(1), v1)
+	assert.Equal(t, uint64(1), v2)
+	assert.Equal(t, uint64(1), counter.Load())
+	_ = cache.Close() // wait for setter
 }

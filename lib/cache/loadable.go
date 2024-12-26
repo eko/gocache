@@ -28,6 +28,7 @@ type LoadableCache[T any] struct {
 	loadFunc     LoadFunction[T]
 	cache        CacheInterface[T]
 	setChannel   chan *loadableKeyValue[T]
+	setCache     sync.Map
 	setterWg     *sync.WaitGroup
 }
 
@@ -55,6 +56,7 @@ func (c *LoadableCache[T]) setter() {
 
 		cacheKey := c.getCacheKey(item.key)
 		c.singleFlight.Forget(cacheKey)
+		c.setCache.Delete(cacheKey)
 	}
 }
 
@@ -69,6 +71,9 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 
 	// Unable to find in cache, try to load it from load function
 	cacheKey := c.getCacheKey(key)
+	if v, ok := c.setCache.Load(cacheKey); ok {
+		return v.(T), nil
+	}
 	zero := *new(T)
 
 	loadedResult, err, _ := c.singleFlight.Do(
@@ -89,6 +94,7 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 	}
 
 	// Then, put it back in cache
+	c.setCache.Store(cacheKey, object)
 	c.setChannel <- &loadableKeyValue[T]{key, object}
 
 	return object, err
