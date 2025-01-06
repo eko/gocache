@@ -80,6 +80,7 @@ func TestRistrettoGetWithTTL(t *testing.T) {
 
 	client := NewMockRistrettoClientInterface(ctrl)
 	client.EXPECT().Get(cacheKey).Return(cacheValue, true)
+	client.EXPECT().GetTTL(cacheKey).Return(time.Minute, true)
 
 	store := NewRistretto(client)
 
@@ -89,7 +90,7 @@ func TestRistrettoGetWithTTL(t *testing.T) {
 	// Then
 	assert.Nil(t, err)
 	assert.Equal(t, cacheValue, value)
-	assert.Equal(t, 0*time.Second, ttl)
+	assert.Equal(t, time.Minute, ttl)
 }
 
 func TestRistrettoGetWithTTLWhenError(t *testing.T) {

@@ -20,6 +20,7 @@ const (
 // RistrettoClientInterface represents a dgraph-io/ristretto client
 type RistrettoClientInterface interface {
 	Get(key any) (any, bool)
+	GetTTL(key any) (time.Duration, bool)
 	SetWithTTL(key, value any, cost int64, ttl time.Duration) bool
 	Del(key any)
 	Clear()
@@ -55,7 +56,11 @@ func (s *RistrettoStore) Get(_ context.Context, key any) (any, error) {
 // GetWithTTL returns data stored from a given key and its corresponding TTL
 func (s *RistrettoStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	value, err := s.Get(ctx, key)
-	return value, 0, err
+	if err != nil {
+		return value, 0, err
+	}
+	ttl, _ := s.client.GetTTL(key)
+	return value, ttl, nil
 }
 
 // Set defines data in Ristretto memory cache for given key identifier
