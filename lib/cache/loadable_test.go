@@ -19,8 +19,8 @@ func TestNewLoadable(t *testing.T) {
 
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "test data loaded", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "test data loaded", []store.Option{}, nil
 	}
 
 	// When
@@ -48,8 +48,8 @@ func TestLoadableGetWhenAlreadyInCache(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return nil, errors.New("should not be called")
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return nil, []store.Option{}, errors.New("should not be called")
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -72,8 +72,8 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return nil, errors.New("an error has occurred while loading data from custom source")
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return nil, []store.Option{}, errors.New("an error has occurred while loading data from custom source")
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -108,11 +108,11 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	var loadCallCount int32
 	pauseLoadFn := make(chan struct{})
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
 		atomic.AddInt32(&loadCallCount, 1)
 		<-pauseLoadFn
 		time.Sleep(time.Millisecond * 10)
-		return cacheValue, nil
+		return cacheValue, []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -156,8 +156,8 @@ func TestLoadableDelete(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(nil)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "a value", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a value", []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -180,8 +180,8 @@ func TestLoadableDeleteWhenError(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "a value", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a value", []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -202,8 +202,8 @@ func TestLoadableInvalidate(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(nil)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "a value", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a value", []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -226,8 +226,8 @@ func TestLoadableInvalidateWhenError(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(expectedErr)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "a value", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a value", []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -248,8 +248,8 @@ func TestLoadableClear(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(nil)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "a value", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a value", []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -272,8 +272,8 @@ func TestLoadableClearWhenError(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(expectedErr)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "a value", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a value", []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -291,8 +291,8 @@ func TestLoadableGetType(t *testing.T) {
 
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return "test data loaded", nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "test data loaded", []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
@@ -308,8 +308,8 @@ func TestLoadableGetTwice(t *testing.T) {
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 
 	var counter atomic.Uint64
-	loadFunc := func(_ context.Context, key any) (any, error) {
-		return counter.Add(1), nil
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return counter.Add(1), []store.Option{}, nil
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)

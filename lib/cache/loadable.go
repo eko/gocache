@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/eko/gocache/lib/v4/store"
@@ -16,11 +15,12 @@ const (
 )
 
 type loadableKeyValue[T any] struct {
-	key   any
-	value T
+	key     any
+	value   T
+	options []store.Option
 }
 
-type LoadFunction[T any] func(ctx context.Context, key any) (T, error)
+type LoadFunction[T any] func(ctx context.Context, key any) (T, []store.Option, error)
 
 // LoadableCache represents a cache that uses a function to load data
 type LoadableCache[T any] struct {
@@ -52,7 +52,7 @@ func (c *LoadableCache[T]) setter() {
 	defer c.setterWg.Done()
 
 	for item := range c.setChannel {
-		c.Set(context.Background(), item.key, item.value)
+		c.Set(context.Background(), item.key, item.value, item.options...)
 
 		cacheKey := c.getCacheKey(item.key)
 		c.singleFlight.Forget(cacheKey)
@@ -74,30 +74,37 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 	if v, ok := c.setCache.Load(cacheKey); ok {
 		return v.(T), nil
 	}
+
 	zero := *new(T)
 
-	loadedResult, err, _ := c.singleFlight.Do(
+	rawLoadedResult, err, _ := c.singleFlight.Do(
 		cacheKey,
 		func() (any, error) {
-			return c.loadFunc(ctx, key)
+			value, options, innerErr := c.loadFunc(ctx, key)
+
+			return &loadableKeyValue[T]{
+				key:     key,
+				value:   value,
+				options: options,
+			}, innerErr
 		},
 	)
 	if err != nil {
 		return zero, err
 	}
 
-	var ok bool
-	if object, ok = loadedResult.(T); !ok {
+	loadedKeyValue, ok := rawLoadedResult.(*loadableKeyValue[T])
+	if !ok {
 		return zero, errors.New(
-			fmt.Sprintf("returned value can't be cast to %T", zero),
+			"returned value can't be cast to *loadableKeyValue[T]",
 		)
 	}
 
 	// Then, put it back in cache
-	c.setCache.Store(cacheKey, object)
-	c.setChannel <- &loadableKeyValue[T]{key, object}
+	c.setCache.Store(cacheKey, loadedKeyValue.value)
+	c.setChannel <- loadedKeyValue
 
-	return object, err
+	return loadedKeyValue.value, err
 }
 
 // Set sets a value in available caches
