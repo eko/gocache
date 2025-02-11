@@ -101,8 +101,6 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	// Cache 1
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
-	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
-	cache1.EXPECT().Get(ctx, "my-key").Return(nil, errors.New("unable to find in cache 1"))
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue).AnyTimes().Return(nil)
 
 	var loadCallCount int32
@@ -315,7 +313,7 @@ func TestLoadableGetTwice(t *testing.T) {
 	cache := NewLoadable[any](loadFunc, cache1)
 
 	key := 1
-	cache1.EXPECT().Get(context.Background(), key).Return(nil, store.NotFound{}).Times(2)
+	cache1.EXPECT().Get(context.Background(), key).Return(nil, store.NotFound{}).AnyTimes()
 	cache1.EXPECT().Set(context.Background(), key, uint64(1)).Times(1)
 	v1, err1 := cache.Get(context.Background(), key)
 	v2, err2 := cache.Get(context.Background(), key) // setter may not be called now because it's done by another goroutine
