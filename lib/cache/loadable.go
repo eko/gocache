@@ -3,6 +3,8 @@ package cache
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 	"sync"
 
 	"github.com/eko/gocache/lib/v4/store"
@@ -55,56 +57,54 @@ func (c *LoadableCache[T]) setter() {
 		c.Set(context.Background(), item.key, item.value, item.options...)
 
 		cacheKey := c.getCacheKey(item.key)
-		c.singleFlight.Forget(cacheKey)
 		c.setCache.Delete(cacheKey)
 	}
 }
 
 // Get returns the object stored in cache if it exists
 func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
-	var err error
-
-	object, err := c.cache.Get(ctx, key)
-	if err == nil {
-		return object, err
-	}
-
-	// Unable to find in cache, try to load it from load function
 	cacheKey := c.getCacheKey(key)
-	if v, ok := c.setCache.Load(cacheKey); ok {
-		return v.(T), nil
-	}
-
-	zero := *new(T)
-
-	rawLoadedResult, err, _ := c.singleFlight.Do(
+	if value, err, _ := c.singleFlight.Do(
 		cacheKey,
 		func() (any, error) {
-			value, options, innerErr := c.loadFunc(ctx, key)
+			// try temporary-while-setter-works cache
+			if v, ok := c.setCache.Load(cacheKey); ok {
+				return v, nil
+			}
+			// try main cache
+			if v, err := c.cache.Get(ctx, key); err == nil {
+				return v, err
+			}
+			// Unable to find in cache, try to load it from load function
+			if value, options, err := c.loadFunc(ctx, key); err == nil {
 
-			return &loadableKeyValue[T]{
-				key:     key,
-				value:   value,
-				options: options,
-			}, innerErr
+				// cache locally until main cache is set
+				c.setCache.Store(cacheKey, value)
+
+				c.setChannel <- &loadableKeyValue[T]{
+					key:     key,
+					value:   value,
+					options: options,
+				}
+				return value, err
+			} else {
+				return *new(T), err
+			}
 		},
-	)
-	if err != nil {
-		return zero, err
-	}
-
-	loadedKeyValue, ok := rawLoadedResult.(*loadableKeyValue[T])
-	if !ok {
+	); err != nil {
+		return *new(T), err
+	} else if value, ok := value.(T); ok {
+		return value, err
+	} else {
+		zero := *new(T)
 		return zero, errors.New(
-			"returned value can't be cast to *loadableKeyValue[T]",
+			fmt.Sprintf(
+				"type assertion failed: expected %s, got %s",
+				reflect.TypeOf(zero),
+				reflect.TypeOf(value),
+			),
 		)
 	}
-
-	// Then, put it back in cache
-	c.setCache.Store(cacheKey, loadedKeyValue.value)
-	c.setChannel <- loadedKeyValue
-
-	return loadedKeyValue.value, err
 }
 
 // Set sets a value in available caches
