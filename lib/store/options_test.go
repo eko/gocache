@@ -37,6 +37,16 @@ func TestOptionsTagsValue(t *testing.T) {
 	assert.Equal(t, []string{"tag1", "tag2", "tag3"}, options.Tags)
 }
 
+func TestOptionsTagsTTL(t *testing.T) {
+  // Given
+  options := &Options{
+    TagsTTL: time.Hour,
+  }
+
+  // When - Then
+  assert.Equal(t, time.Hour, options.TagsTTL)
+}
+
 func Test_applyOptionsWithDefault(t *testing.T) {
 	// Given
 	defaultOptions := &Options{

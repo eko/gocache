@@ -157,6 +157,29 @@ func TestRedisSetWithTags(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestRedisSetWithTagsWithTTL(t *testing.T) {
+  // Given
+  ctrl := gomock.NewController(t)
+
+  ctx := context.Background()
+
+  cacheKey := "my-key"
+  cacheValue := "my-cache-value"
+
+  client := NewMockRedisClientInterface(ctrl)
+  client.EXPECT().Set(ctx, cacheKey, cacheValue, time.Duration(0)).Return(&redis.StatusCmd{})
+  client.EXPECT().SAdd(ctx, "gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
+  client.EXPECT().Expire(ctx, "gocache_tag_tag1", time.Hour).Return(&redis.BoolCmd{})
+
+  store := NewRedis(client)
+
+  // When
+  err := store.Set(ctx, cacheKey, cacheValue, []lib_store.Option{lib_store.WithTags([]string{"tag1"}), lib_store.WithTagsTTL(time.Hour)}...)
+
+  // Then
+  assert.Nil(t, err)
+}
+
 func TestRedisDelete(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
