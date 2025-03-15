@@ -12,6 +12,7 @@ type Options struct {
 	Cost                      int64
 	Expiration                time.Duration
 	Tags                      []string
+	TagsTTL                   time.Duration
 	ClientSideCacheExpiration time.Duration
 }
 
@@ -67,6 +68,13 @@ func WithExpiration(expiration time.Duration) Option {
 func WithTags(tags []string) Option {
 	return func(o *Options) {
 		o.Tags = tags
+	}
+}
+
+// WithTagsTTL allows to specify a time-to-live parameter for tags
+func WithTagsTTL(ttl time.Duration) Option {
+	return func(o *Options) {
+		o.TagsTTL = ttl
 	}
 }
 
