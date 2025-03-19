@@ -78,18 +78,10 @@ func (c *ChainCache[T]) Set(ctx context.Context, key any, object T, options ...s
 		err := cache.Set(ctx, key, object, options...)
 		if err != nil {
 			storeType := cache.GetCodec().GetStore().GetType()
-			errs = append(errs, fmt.Errorf("Unable to set item into cache with store '%s': %v", storeType, err))
+			errs = append(errs, fmt.Errorf("unable to set item into cache with store '%s': %w", storeType, err))
 		}
 	}
-	if len(errs) > 0 {
-		errStr := ""
-		for k, v := range errs {
-			errStr += fmt.Sprintf("error %d of %d: %v", k+1, len(errs), v.Error())
-		}
-		return errors.New(errStr)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
 
 // Delete removes a value from all available caches

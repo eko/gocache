@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -246,7 +245,8 @@ func TestChainSetWhenErrorOnSetting(t *testing.T) {
 
 	// Then
 	assert.Error(t, err)
-	assert.Equal(t, fmt.Sprintf("error 1 of 1: Unable to set item into cache with store 'store1': %s", expectedErr.Error()), err.Error())
+	assert.ErrorIs(t, err, expectedErr)
+	assert.ErrorContains(t, err, "unable to set item into cache with store 'store1'")
 }
 
 func TestChainDelete(t *testing.T) {
@@ -447,7 +447,8 @@ func TestChainSetWhenErrorInChain(t *testing.T) {
 	// When - Then
 	err := cache.Set(ctx, key, value, nil)
 
-	expErr := errors.New("error 1 of 1: Unable to set item into cache with store 'store1': an issue occurred with the cache")
 	// Then
-	assert.Equal(t, expErr, err)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, interError)
+	assert.ErrorContains(t, err, "unable to set item into cache with store 'store1'")
 }
