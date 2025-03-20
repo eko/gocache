@@ -78,9 +78,10 @@ func TestBigcacheGetWithTTL(t *testing.T) {
 
 	cacheKey := "my-key"
 	client := NewMockBigcacheClientInterface(ctrl)
+	client.EXPECT().Get(cacheKey).Return(nil, nil)
 	store := NewBigcache(client)
 
-	expectedErr := errors.New("method not implemented for codec, use Get() instead")
+	expectedErr := lib_store.NotFoundWithCause(errors.New("unable to retrieve data from bigcache"))
 
 	// When
 	value, _, err := store.GetWithTTL(ctx, cacheKey)
