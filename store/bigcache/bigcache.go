@@ -55,7 +55,7 @@ func (s *BigcacheStore) Get(_ context.Context, key any) (any, error) {
 // Even though Bigcache does not support a TTL, try our best to implement this
 // because it's needed by ChainCache -- if we just return an error, ChainCache
 // will never see any cache hits. Arbitrarily pick a 5 minute timeout since it's
-// not "too bad" or "too small".
+// not "too big" or "too small".
 func (s *BigcacheStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	result, err := s.Get(ctx, key)
 	return result, time.Minute * 5, err
