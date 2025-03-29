@@ -22,19 +22,19 @@ type RedisClusterClientInterface interface {
 }
 
 const (
-	// RedisType represents the storage type as a string value
+	// RedisClusterType represents the storage type as a string value
 	RedisClusterType = "rediscluster"
-	// RedisTagPattern represents the tag pattern to be used as a key in specified storage
+	// RedisClusterTagPattern represents the tag pattern to be used as a key in specified storage
 	RedisClusterTagPattern = "gocache_tag_%s"
 )
 
-// RedisStore is a store for Redis
+// RedisClusterStore is a store for Redis
 type RedisClusterStore struct {
 	clusclient RedisClusterClientInterface
 	options    *lib_store.Options
 }
 
-// NewRedis creates a new store to Redis instance(s)
+// NewRedisCluster creates a new store to Redis cluster
 func NewRedisCluster(client RedisClusterClientInterface, options ...lib_store.Option) *RedisClusterStore {
 	return &RedisClusterStore{
 		clusclient: client,
