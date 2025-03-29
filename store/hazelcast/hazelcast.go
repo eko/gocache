@@ -26,8 +26,6 @@ const (
 	HazelcastType = "hazelcast"
 	// HazelcastTagPattern represents the tag pattern to be used as a key in specified storage
 	HazelcastTagPattern = "gocache_tag_%s"
-
-	TagKeyExpiry = 720 * time.Hour
 )
 
 // HazelcastStore is a store for Hazelcast
@@ -76,12 +74,12 @@ func (s *HazelcastStore) Set(ctx context.Context, key any, value any, options ..
 		return err
 	}
 	if tags := opts.Tags; len(tags) > 0 {
-		s.setTags(ctx, s.hzMap, key, tags)
+		s.setTags(ctx, s.hzMap, key, tags, opts.TagsTTL)
 	}
 	return nil
 }
 
-func (s *HazelcastStore) setTags(ctx context.Context, hzMap HazelcastMapInterface, key any, tags []string) {
+func (s *HazelcastStore) setTags(ctx context.Context, hzMap HazelcastMapInterface, key any, tags []string, ttl time.Duration) {
 	group, ctx := errgroup.WithContext(ctx)
 	for _, tag := range tags {
 		currentTag := tag
@@ -91,18 +89,20 @@ func (s *HazelcastStore) setTags(ctx context.Context, hzMap HazelcastMapInterfac
 			if err != nil {
 				return err
 			}
-			if tagValue == nil {
-				return hzMap.SetWithTTL(ctx, tagKey, key.(string), TagKeyExpiry)
-			}
-			cacheKeys := strings.Split(tagValue.(string), ",")
-			for _, cacheKey := range cacheKeys {
-				if key == cacheKey {
-					return nil
+
+			newTagValue := key.(string)
+			if tagValue != nil {
+				cacheKeys := strings.Split(tagValue.(string), ",")
+				for _, cacheKey := range cacheKeys {
+					if key == cacheKey {
+						return nil
+					}
 				}
+				cacheKeys = append(cacheKeys, key.(string))
+				newTagValue = strings.Join(cacheKeys, ",")
 			}
-			cacheKeys = append(cacheKeys, key.(string))
-			newTagValue := strings.Join(cacheKeys, ",")
-			return hzMap.SetWithTTL(ctx, tagKey, newTagValue, TagKeyExpiry)
+
+			return hzMap.SetWithTTL(ctx, tagKey, newTagValue, ttl)
 		})
 	}
 	group.Wait()
