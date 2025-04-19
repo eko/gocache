@@ -90,15 +90,15 @@ func (s *RedisStore) Set(ctx context.Context, key any, value any, options ...lib
 }
 
 func (s *RedisStore) setTagsWithTTL(ctx context.Context, key any, tags []string, ttl time.Duration) {
-  for _, tag := range tags {
-    tagKey := fmt.Sprintf(RedisTagPattern, tag)
-    s.client.SAdd(ctx, tagKey, key.(string))
-    s.client.Expire(ctx, tagKey, ttl)
-  }
+	for _, tag := range tags {
+		tagKey := fmt.Sprintf(RedisTagPattern, tag)
+		s.client.SAdd(ctx, tagKey, key.(string))
+		s.client.Expire(ctx, tagKey, ttl)
+	}
 }
 
 func (s *RedisStore) setTags(ctx context.Context, key any, tags []string) {
-  s.setTagsWithTTL(ctx, key, tags, 720*time.Hour)
+	s.setTagsWithTTL(ctx, key, tags, 720*time.Hour)
 }
 
 // Delete removes data from Redis for given key identifier
