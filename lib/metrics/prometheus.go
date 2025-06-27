@@ -37,6 +37,7 @@ func WithNamespace(namespace string) PrometheusOption {
 	}
 }
 
+// WithAttributesNamespace sets the prometheus namespace for GaugeVec attributes
 func WithAttributesNamespace(namespace string) PrometheusOption {
 	return func(m *Prometheus) {
 		m.attributesNamespace = namespace
