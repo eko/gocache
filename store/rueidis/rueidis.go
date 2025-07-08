@@ -57,14 +57,10 @@ func (s *RueidisStore) GetWithTTL(ctx context.Context, key any) (any, time.Durat
 	res := s.client.DoCache(ctx, cmd, s.options.ClientSideCacheExpiration)
 	str, err := res.ToString()
 	if rueidis.IsRedisNil(err) {
-		err = lib_store.NotFoundWithCause(err)
+		return res, time.Duration(0), lib_store.NotFoundWithCause(err)
 	}
 
-	ttl, getTtlErr := s.GetTTL(ctx, key)
-	if getTtlErr == nil {
-		return str, ttl, getTtlErr
-	}
-
+	ttl, _ := s.GetTTL(ctx, key)
 	return str, ttl, err
 }
 
