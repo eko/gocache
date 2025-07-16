@@ -57,9 +57,22 @@ func (s *RueidisStore) GetWithTTL(ctx context.Context, key any) (any, time.Durat
 	res := s.client.DoCache(ctx, cmd, s.options.ClientSideCacheExpiration)
 	str, err := res.ToString()
 	if rueidis.IsRedisNil(err) {
+		return res, time.Duration(0), lib_store.NotFoundWithCause(err)
+	}
+
+	ttl, _ := s.GetTTL(ctx, key)
+	return str, ttl, err
+}
+
+func (s *RueidisStore) GetTTL(ctx context.Context, key any) (time.Duration, error) {
+	cmd := s.client.B().Ttl().Key(key.(string)).Cache()
+	res := s.client.DoCache(ctx, cmd, s.options.ClientSideCacheExpiration)
+	castResult, err := res.ToInt64()
+	if rueidis.IsRedisNil(err) {
 		err = lib_store.NotFoundWithCause(err)
 	}
-	return str, time.Duration(res.CacheTTL()) * time.Second, err
+
+	return time.Duration(castResult) * time.Second, err
 }
 
 // Set defines data in Redis for given key identifier
