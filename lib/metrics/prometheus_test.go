@@ -78,6 +78,35 @@ func TestRecord(t *testing.T) {
 	assert.Equal(t, float64(6), v)
 }
 
+func TestRecordWithAttributesNamespace(t *testing.T) {
+	// Given
+	customRegistry := prometheus.NewRegistry()
+
+	metrics := NewPrometheus(
+		"my-test-service-name",
+		WithRegisterer(customRegistry),
+		WithAttributesNamespace("gocache"),
+	)
+
+	// When
+	metrics.record("redis", "hit_count", 6)
+
+	// Then
+	metric, err := metrics.collector.GetMetricWith(
+		prometheus.Labels{
+			"gocache_service": "my-test-service-name",
+			"gocache_store":   "redis",
+			"gocache_metric":  "hit_count",
+		},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	v := testutil.ToFloat64(metric)
+
+	assert.Equal(t, float64(6), v)
+}
+
 func TestRecordFromCodec(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
