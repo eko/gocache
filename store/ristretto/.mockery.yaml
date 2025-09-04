@@ -1,0 +1,8 @@
+all: true
+dir: "{{.InterfaceDir}}"
+filename: "mock_{{.InterfaceName}}_test.go"
+structname: "{{.Mock}}{{.InterfaceName|firstUpper}}"
+pkgname: "{{.SrcPackageName}}"
+template: testify
+packages:
+  github.com/eko/gocache/store/ristretto/v4: {}

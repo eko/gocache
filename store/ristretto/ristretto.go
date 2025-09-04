@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgraph-io/ristretto/v2"
 	lib_store "github.com/eko/gocache/lib/v4/store"
 )
 
@@ -18,34 +19,37 @@ const (
 )
 
 // RistrettoClientInterface represents a dgraph-io/ristretto client
-type RistrettoClientInterface interface {
-	Get(key any) (any, bool)
-	GetTTL(key any) (time.Duration, bool)
-	SetWithTTL(key, value any, cost int64, ttl time.Duration) bool
-	Del(key any)
+type RistrettoClientInterface[K ristretto.Key, V any] interface {
+	Get(key K) (V, bool)
+	GetTTL(key K) (time.Duration, bool)
+	SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool
+	Del(key K)
 	Clear()
 	Wait()
 }
 
 // RistrettoStore is a store for Ristretto (memory) library
-type RistrettoStore struct {
-	client  RistrettoClientInterface
+type RistrettoStore[K ristretto.Key, V any] struct {
+	client  RistrettoClientInterface[K, V]
 	options *lib_store.Options
 }
 
 // NewRistretto creates a new store to Ristretto (memory) library instance
-func NewRistretto(client RistrettoClientInterface, options ...lib_store.Option) *RistrettoStore {
-	return &RistrettoStore{
+func NewRistretto[K ristretto.Key, V any](
+	client RistrettoClientInterface[K, V],
+	options ...lib_store.Option,
+) *RistrettoStore[K, V] {
+	return &RistrettoStore[K, V]{
 		client:  client,
 		options: lib_store.ApplyOptions(options...),
 	}
 }
 
 // Get returns data stored from a given key
-func (s *RistrettoStore) Get(_ context.Context, key any) (any, error) {
+func (s *RistrettoStore[K, V]) Get(_ context.Context, key any) (any, error) {
 	var err error
 
-	value, exists := s.client.Get(key)
+	value, exists := s.client.Get(key.(K))
 	if !exists {
 		err = lib_store.NotFoundWithCause(errors.New("value not found in Ristretto store"))
 	}
@@ -54,22 +58,22 @@ func (s *RistrettoStore) Get(_ context.Context, key any) (any, error) {
 }
 
 // GetWithTTL returns data stored from a given key and its corresponding TTL
-func (s *RistrettoStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
+func (s *RistrettoStore[K, V]) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	value, err := s.Get(ctx, key)
 	if err != nil {
 		return value, 0, err
 	}
-	ttl, _ := s.client.GetTTL(key)
+	ttl, _ := s.client.GetTTL(key.(K))
 	return value, ttl, nil
 }
 
 // Set defines data in Ristretto memory cache for given key identifier
-func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
+func (s *RistrettoStore[K, V]) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
 
 	var err error
 
-	if set := s.client.SetWithTTL(key, value, opts.Cost, opts.Expiration); !set {
+	if set := s.client.SetWithTTL(key.(K), value.(V), opts.Cost, opts.Expiration); !set {
 		err = fmt.Errorf("An error has occurred while setting value '%v' on key '%v'", value, key)
 	}
 
@@ -88,7 +92,7 @@ func (s *RistrettoStore) Set(ctx context.Context, key any, value any, options ..
 	return nil
 }
 
-func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
+func (s *RistrettoStore[K, V]) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(RistrettoTagPattern, tag)
 		cacheKeys := []string{}
@@ -116,13 +120,13 @@ func (s *RistrettoStore) setTags(ctx context.Context, key any, tags []string) {
 }
 
 // Delete removes data in Ristretto memory cache for given key identifier
-func (s *RistrettoStore) Delete(_ context.Context, key any) error {
-	s.client.Del(key)
+func (s *RistrettoStore[K, V]) Delete(_ context.Context, key any) error {
+	s.client.Del(key.(K))
 	return nil
 }
 
 // Invalidate invalidates some cache data in Redis for given options
-func (s *RistrettoStore) Invalidate(ctx context.Context, options ...lib_store.InvalidateOption) error {
+func (s *RistrettoStore[K, V]) Invalidate(ctx context.Context, options ...lib_store.InvalidateOption) error {
 	opts := lib_store.ApplyInvalidateOptions(options...)
 
 	if tags := opts.Tags; len(tags) > 0 {
@@ -148,12 +152,12 @@ func (s *RistrettoStore) Invalidate(ctx context.Context, options ...lib_store.In
 }
 
 // Clear resets all data in the store
-func (s *RistrettoStore) Clear(_ context.Context) error {
+func (s *RistrettoStore[K, V]) Clear(_ context.Context) error {
 	s.client.Clear()
 	return nil
 }
 
 // GetType returns the store type
-func (s *RistrettoStore) GetType() string {
+func (s *RistrettoStore[K, V]) GetType() string {
 	return RistrettoType
 }

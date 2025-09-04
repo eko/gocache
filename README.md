@@ -3,8 +3,7 @@
 [![GoReportCard](https://goreportcard.com/badge/github.com/eko/gocache)](https://goreportcard.com/report/github.com/eko/gocache)
 [![codecov](https://codecov.io/gh/eko/gocache/branch/master/graph/badge.svg)](https://codecov.io/gh/eko/gocache)
 
-Gocache
-=======
+# Gocache
 
 Guess what is Gocache? a Go cache library.
 This is an extendable cache library that brings you a lot of features for caching data.
@@ -13,31 +12,31 @@ This is an extendable cache library that brings you a lot of features for cachin
 
 Here is what it brings in detail:
 
-* ✅ Multiple cache stores: actually in memory, redis, or your own custom store
-* ✅ A chain cache: use multiple cache with a priority order (memory then fallback to a redis shared cache for instance)
-* ✅ A loadable cache: allow you to call a callback function to put your data back in cache
-* ✅ A metric cache to let you store metrics about your caches usage (hits, miss, set success, set error, ...)
-* ✅ A marshaler to automatically marshal/unmarshal your cache values as a struct
-* ✅ Define default values in stores and override them when setting data
-* ✅ Cache invalidation by expiration time and/or using tags
-* ✅ Use of Generics
+- ✅ Multiple cache stores: actually in memory, redis, or your own custom store
+- ✅ A chain cache: use multiple cache with a priority order (memory then fallback to a redis shared cache for instance)
+- ✅ A loadable cache: allow you to call a callback function to put your data back in cache
+- ✅ A metric cache to let you store metrics about your caches usage (hits, miss, set success, set error, ...)
+- ✅ A marshaler to automatically marshal/unmarshal your cache values as a struct
+- ✅ Define default values in stores and override them when setting data
+- ✅ Cache invalidation by expiration time and/or using tags
+- ✅ Use of Generics
 
 ## Built-in stores
 
-* [Memory (bigcache)](https://github.com/allegro/bigcache) (allegro/bigcache)
-* [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
-* [Memory (go-cache)](https://github.com/patrickmn/go-cache) (patrickmn/go-cache)
-* [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
-* [Redis](https://github.com/go-redis/redis) (go-redis/redis)
-* [Redis (rueidis)](https://github.com/redis/rueidis) (redis/rueidis)
-* [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
-* [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
-* [Hazelcast](https://github.com/hazelcast/hazelcast-go-client) (hazelcast-go-client/hazelcast)
-* More to come soon
+- [Memory (bigcache)](https://github.com/allegro/bigcache) (allegro/bigcache)
+- [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
+- [Memory (go-cache)](https://github.com/patrickmn/go-cache) (patrickmn/go-cache)
+- [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
+- [Redis](https://github.com/go-redis/redis) (go-redis/redis)
+- [Redis (rueidis)](https://github.com/redis/rueidis) (redis/rueidis)
+- [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
+- [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
+- [Hazelcast](https://github.com/hazelcast/hazelcast-go-client) (hazelcast-go-client/hazelcast)
+- More to come soon
 
 ## Built-in metrics providers
 
-* [Prometheus](https://github.com/prometheus/client_golang)
+- [Prometheus](https://github.com/prometheus/client_golang)
 
 ## Installation
 
@@ -126,7 +125,7 @@ import (
 	"github.com/eko/gocache/lib/v4/store"
 	ristretto_store "github.com/eko/gocache/store/ristretto/v4"
 )
-ristrettoCache, err := ristretto.NewCache(&ristretto.Config{
+ristrettoCache, err := ristretto.NewCache(&ristretto.Config[string, string]{
 	NumCounters: 1000,
 	MaxCost: 100,
 	BufferItems: 64,
@@ -284,7 +283,11 @@ Here, we will chain caches in the following order: first in memory with Ristrett
 
 ```go
 // Initialize Ristretto cache and Redis client
-ristrettoCache, err := ristretto.NewCache(&ristretto.Config{NumCounters: 1000, MaxCost: 100, BufferItems: 64})
+ristrettoCache, err := ristretto.NewCache(&ristretto.Config[string, string]{
+    NumCounters: 1000,
+    MaxCost: 100,
+    BufferItems: 64,
+})
 if err != nil {
     panic(err)
 }
@@ -395,7 +398,6 @@ marshal.Delete(ctx, "my-key")
 ```
 
 The only thing you have to do is to specify the struct in which you want your value to be un-marshalled as a second argument when calling the `.Get()` method.
-
 
 ### Cache invalidation using tags
 
