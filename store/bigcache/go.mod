@@ -1,6 +1,6 @@
 module github.com/eko/gocache/store/bigcache/v4
 
-go 1.22
+go 1.25
 
 require (
 	github.com/allegro/bigcache/v3 v3.1.0

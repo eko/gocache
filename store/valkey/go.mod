@@ -1,6 +1,6 @@
 module github.com/eko/gocache/store/valkey/v4
 
-go 1.24.3
+go 1.25
 
 require (
 	github.com/eko/gocache/lib/v4 v4.2.0
