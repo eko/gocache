@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgraph-io/ristretto"
+	ristretto "github.com/dgraph-io/ristretto/v2"
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/metrics"
 	"github.com/eko/gocache/lib/v4/store"
@@ -16,7 +16,7 @@ func main() {
 	ctx := context.Background()
 
 	ristrettoClient1, err := ristretto.NewCache(
-		&ristretto.Config{
+		&ristretto.Config[string, []byte]{
 			NumCounters: 1_000,
 			MaxCost:     100_000_000,
 			BufferItems: 64,
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	ristrettoClient2, err := ristretto.NewCache(
-		&ristretto.Config{
+		&ristretto.Config[string, []byte]{
 			NumCounters: 1_000,
 			MaxCost:     100_000_000,
 			BufferItems: 64,

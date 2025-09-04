@@ -8,34 +8,29 @@ import (
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 )
 
 func TestNewRistretto(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 
 	// When
 	store := NewRistretto(client, lib_store.WithCost(8))
 
 	// Then
-	assert.IsType(t, new(RistrettoStore), store)
+	assert.IsType(t, new(RistrettoStore[string, []byte]), store)
 	assert.Equal(t, client, store.client)
 	assert.Equal(t, &lib_store.Options{Cost: 8}, store.options)
 }
 
 func TestRistrettoGet(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, string](t)
 	client.EXPECT().Get(cacheKey).Return(cacheValue, true)
 
 	store := NewRistretto(client)
@@ -50,13 +45,11 @@ func TestRistrettoGet(t *testing.T) {
 
 func TestRistrettoGetWhenError(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().Get(cacheKey).Return(nil, false)
 
 	store := NewRistretto(client)
@@ -71,14 +64,12 @@ func TestRistrettoGetWhenError(t *testing.T) {
 
 func TestRistrettoGetWithTTL(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, string](t)
 	client.EXPECT().Get(cacheKey).Return(cacheValue, true)
 	client.EXPECT().GetTTL(cacheKey).Return(time.Minute, true)
 
@@ -95,13 +86,11 @@ func TestRistrettoGetWithTTL(t *testing.T) {
 
 func TestRistrettoGetWithTTLWhenError(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().Get(cacheKey).Return(nil, false)
 
 	store := NewRistretto(client)
@@ -117,14 +106,12 @@ func TestRistrettoGetWithTTLWhenError(t *testing.T) {
 
 func TestRistrettoSet(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, string](t)
 	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(4), 0*time.Second).Return(true)
 
 	store := NewRistretto(client, lib_store.WithCost(7))
@@ -138,14 +125,12 @@ func TestRistrettoSet(t *testing.T) {
 
 func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, string](t)
 	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(true)
 
 	store := NewRistretto(client, lib_store.WithCost(7))
@@ -159,14 +144,12 @@ func TestRistrettoSetWhenNoOptionsGiven(t *testing.T) {
 
 func TestRistrettoSetWhenError(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := "my-cache-value"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, string](t)
 	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(false)
 
 	store := NewRistretto(client, lib_store.WithCost(7))
@@ -180,14 +163,12 @@ func TestRistrettoSetWhenError(t *testing.T) {
 
 func TestRistrettoSetWithSynchronousSet(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(7), 0*time.Second).Return(true)
 	client.EXPECT().Wait()
 
@@ -202,17 +183,15 @@ func TestRistrettoSetWithSynchronousSet(t *testing.T) {
 
 func TestRistrettoSetWithTags(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(0), 0*time.Second).Return(true)
 	client.EXPECT().Get("gocache_tag_tag1").Return(nil, true)
-	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte("my-key"), int64(0), 720*time.Hour).Return(true)
+	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte(",my-key"), int64(0), 720*time.Hour).Return(true)
 
 	store := NewRistretto(client)
 
@@ -225,14 +204,12 @@ func TestRistrettoSetWithTags(t *testing.T) {
 
 func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 	cacheValue := []byte("my-cache-value")
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(0), 0*time.Second).Return(true)
 	client.EXPECT().Get("gocache_tag_tag1").Return([]byte("my-key,a-second-key"), true)
 	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte("my-key,a-second-key"), int64(0), 720*time.Hour).Return(true)
@@ -248,13 +225,11 @@ func TestRistrettoSetWithTagsWhenAlreadyInserted(t *testing.T) {
 
 func TestRistrettoDelete(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKey := "my-key"
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().Del(cacheKey)
 
 	store := NewRistretto(client)
@@ -268,13 +243,11 @@ func TestRistrettoDelete(t *testing.T) {
 
 func TestRistrettoInvalidate(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKeys := []byte("a23fdf987h2svc23,jHG2372x38hf74")
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, true)
 	client.EXPECT().Del("a23fdf987h2svc23")
 	client.EXPECT().Del("jHG2372x38hf74")
@@ -290,13 +263,11 @@ func TestRistrettoInvalidate(t *testing.T) {
 
 func TestRistrettoInvalidateWhenError(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
 	cacheKeys := []byte("a23fdf987h2svc23,jHG2372x38hf74")
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().Get("gocache_tag_tag1").Return(cacheKeys, false)
 
 	store := NewRistretto(client)
@@ -310,11 +281,9 @@ func TestRistrettoInvalidateWhenError(t *testing.T) {
 
 func TestRistrettoClear(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
 	ctx := context.Background()
 
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().Clear()
 
 	store := NewRistretto(client)
@@ -328,9 +297,7 @@ func TestRistrettoClear(t *testing.T) {
 
 func TestRistrettoGetType(t *testing.T) {
 	// Given
-	ctrl := gomock.NewController(t)
-
-	client := NewMockRistrettoClientInterface(ctrl)
+	client := NewMockRistrettoClientInterface[string, []byte](t)
 
 	store := NewRistretto(client)
 

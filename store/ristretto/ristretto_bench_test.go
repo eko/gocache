@@ -6,14 +6,14 @@ import (
 	"math"
 	"testing"
 
-	"github.com/dgraph-io/ristretto"
+	"github.com/dgraph-io/ristretto/v2"
 	lib_store "github.com/eko/gocache/lib/v4/store"
 )
 
 func BenchmarkRistrettoSet(b *testing.B) {
 	ctx := context.Background()
 
-	client, err := ristretto.NewCache(&ristretto.Config{
+	client, err := ristretto.NewCache(&ristretto.Config[string, []byte]{
 		NumCounters: 1000,
 		MaxCost:     100,
 		BufferItems: 64,
@@ -39,7 +39,7 @@ func BenchmarkRistrettoSet(b *testing.B) {
 func BenchmarkRistrettoSetWithSynchronousSet(b *testing.B) {
 	ctx := context.Background()
 
-	client, err := ristretto.NewCache(&ristretto.Config{
+	client, err := ristretto.NewCache(&ristretto.Config[string, []byte]{
 		NumCounters: 1000,
 		MaxCost:     100,
 		BufferItems: 64,
@@ -65,7 +65,7 @@ func BenchmarkRistrettoSetWithSynchronousSet(b *testing.B) {
 func BenchmarkRistrettoGet(b *testing.B) {
 	ctx := context.Background()
 
-	client, err := ristretto.NewCache(&ristretto.Config{
+	client, err := ristretto.NewCache(&ristretto.Config[string, []byte]{
 		NumCounters: 1000,
 		MaxCost:     100,
 		BufferItems: 64,
