@@ -144,26 +144,12 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	store1 := store.NewMockStoreInterface(ctrl)
-	store1.EXPECT().GetType().Return("store1")
-
-	codec1 := codec.NewMockCodecInterface(ctrl)
-	codec1.EXPECT().GetStore().Return(store1)
-
 	cache1 := NewMockSetterCacheInterface[any](ctrl)
-	cache1.EXPECT().GetCodec().Return(codec1)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
 		errors.New("unable to find in cache 1"))
 
 	// Cache 2
-	store2 := store.NewMockStoreInterface(ctrl)
-	store2.EXPECT().GetType().Return("store2")
-
-	codec2 := codec.NewMockCodecInterface(ctrl)
-	codec2.EXPECT().GetStore().Return(store2)
-
 	cache2 := NewMockSetterCacheInterface[any](ctrl)
-	cache2.EXPECT().GetCodec().Return(codec2)
 	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
 		errors.New("unable to find in cache 2"))
 
@@ -176,7 +162,7 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Then
-	assert.Equal(t, errors.New("unable to find in cache 2"), err)
+	assert.ErrorContains(t, err, "unable to find in cache 2")
 	assert.Equal(t, nil, value)
 }
 

@@ -1,6 +1,6 @@
 module github.com/eko/gocache/store/freecache/v4
 
-go 1.22
+go 1.25
 
 require (
 	github.com/coocood/freecache v1.2.3

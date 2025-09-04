@@ -1,6 +1,6 @@
 module github.com/eko/gocache/store/go_cache/v4
 
-go 1.22
+go 1.25
 
 require (
 	github.com/eko/gocache/lib/v4 v4.1.6

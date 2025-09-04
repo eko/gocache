@@ -1,8 +1,6 @@
 module github.com/eko/gocache/store/pegasus/v4
 
-go 1.23.0
-
-toolchain go1.24.1
+go 1.25
 
 require (
 	github.com/XiaoMi/pegasus-go-client v0.0.0-20220519103347-ba0e68465cd5

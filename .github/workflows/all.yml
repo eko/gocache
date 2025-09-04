@@ -3,20 +3,20 @@ name: Test
 on:
   push:
     branches:
-      - '*'
+      - "*"
   pull_request:
     branches:
-      - '*'
+      - "*"
 
 jobs:
   test_lib:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go_version: ['1.22']
+        go_version: ["1.25"]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go_version }}
 
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go_version: ['1.22']
+        go_version: ["1.25"]
         store:
           - bigcache
           - freecache
@@ -39,8 +39,8 @@ jobs:
           - rediscluster
           - ristretto
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go_version }}
 

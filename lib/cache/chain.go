@@ -15,10 +15,10 @@ const (
 )
 
 type chainKeyValue[T any] struct {
-	key       any
-	value     T
-	ttl       time.Duration
-	storeType *string
+	key          any
+	value        T
+	ttl          time.Duration
+	cacheAddress *string
 }
 
 // ChainCache represents the configuration needed by a cache aggregator
@@ -43,7 +43,9 @@ func NewChain[T any](caches ...SetterCacheInterface[T]) *ChainCache[T] {
 func (c *ChainCache[T]) setter() {
 	for item := range c.setChannel {
 		for _, cache := range c.caches {
-			if item.storeType != nil && *item.storeType == cache.GetCodec().GetStore().GetType() {
+			cacheAddress := fmt.Sprintf("%p", cache)
+
+			if item.cacheAddress != nil && *item.cacheAddress == cacheAddress {
 				break
 			}
 
@@ -59,11 +61,12 @@ func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
 	var ttl time.Duration
 
 	for _, cache := range c.caches {
-		storeType := cache.GetCodec().GetStore().GetType()
+		cacheAddress := fmt.Sprintf("%p", cache)
+
 		object, ttl, err = cache.GetWithTTL(ctx, key)
 		if err == nil {
 			// Set the value back until this cache layer
-			c.setChannel <- &chainKeyValue[T]{key, object, ttl, &storeType}
+			c.setChannel <- &chainKeyValue[T]{key, object, ttl, &cacheAddress}
 			return object, nil
 		}
 	}

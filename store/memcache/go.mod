@@ -1,6 +1,6 @@
 module github.com/eko/gocache/store/memcache/v4
 
-go 1.22
+go 1.25
 
 require (
 	github.com/bradfitz/gomemcache v0.0.0-20230124162541-5f7a7d875746
