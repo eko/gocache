@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/lib/v4/codec"
+	mockcache "github.com/eko/gocache/lib/v4/internal/mocks/cache"
+	mockcodec "github.com/eko/gocache/lib/v4/internal/mocks/codec"
+	mockstore "github.com/eko/gocache/lib/v4/internal/mocks/store"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -16,8 +18,8 @@ func TestNewChain(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	// When
 	cache := NewChain[any](cache1, cache2)
@@ -32,8 +34,8 @@ func TestChainGetCaches(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](cache1, cache2)
 
@@ -60,19 +62,19 @@ func TestChainGetWhenAvailableInFirstCache(t *testing.T) {
 	}
 
 	// Cache 1
-	store1 := store.NewMockStoreInterface(ctrl)
+	store1 := mockstore.NewMockStoreInterface(ctrl)
 	store1.EXPECT().GetType().AnyTimes().Return("store1")
 
-	codec1 := codec.NewMockCodecInterface(ctrl)
+	codec1 := mockcodec.NewMockCodecInterface(ctrl)
 	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
 
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue,
 		0*time.Second, nil)
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](cache1, cache2)
 
@@ -100,26 +102,26 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 	}
 
 	// Cache 1
-	store1 := store.NewMockStoreInterface(ctrl)
+	store1 := mockstore.NewMockStoreInterface(ctrl)
 	store1.EXPECT().GetType().AnyTimes().Return("store1")
 
-	codec1 := codec.NewMockCodecInterface(ctrl)
+	codec1 := mockcodec.NewMockCodecInterface(ctrl)
 	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
 
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
 		errors.New("unable to find in cache 1"))
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue, &store.OptionsMatcher{}).AnyTimes().Return(nil)
 
 	// Cache 2
-	store2 := store.NewMockStoreInterface(ctrl)
+	store2 := mockstore.NewMockStoreInterface(ctrl)
 	store2.EXPECT().GetType().AnyTimes().Return("store2")
 
-	codec2 := codec.NewMockCodecInterface(ctrl)
+	codec2 := mockcodec.NewMockCodecInterface(ctrl)
 	codec2.EXPECT().GetStore().AnyTimes().Return(store2)
 
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().GetCodec().AnyTimes().Return(codec2)
 	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue,
 		0*time.Second, nil)
@@ -144,12 +146,12 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
 		errors.New("unable to find in cache 1"))
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
 		errors.New("unable to find in cache 2"))
 
@@ -179,11 +181,11 @@ func TestChainSet(t *testing.T) {
 	}
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue).Return(nil)
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Set(ctx, "my-key", cacheValue).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
@@ -210,18 +212,18 @@ func TestChainSetWhenErrorOnSetting(t *testing.T) {
 	expectedErr := errors.New("an unexpected error occurred while setting data")
 
 	// Cache 1
-	store1 := store.NewMockStoreInterface(ctrl)
+	store1 := mockstore.NewMockStoreInterface(ctrl)
 	store1.EXPECT().GetType().Return("store1")
 
-	codec1 := codec.NewMockCodecInterface(ctrl)
+	codec1 := mockcodec.NewMockCodecInterface(ctrl)
 	codec1.EXPECT().GetStore().Return(store1)
 
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().GetCodec().Return(codec1)
 	cache1.EXPECT().Set(ctx, "my-key", cacheValue).Return(expectedErr)
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Set(ctx, "my-key", cacheValue)
 
 	cache := NewChain[any](cache1, cache2)
@@ -242,11 +244,11 @@ func TestChainDelete(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
@@ -265,11 +267,11 @@ func TestChainDeleteWhenError(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Delete(ctx, "my-key").Return(errors.New("an error has occurred while deleting key"))
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
@@ -288,11 +290,11 @@ func TestChainInvalidate(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(nil)
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Invalidate(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
@@ -311,11 +313,11 @@ func TestChainInvalidateWhenError(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Invalidate(ctx).Return(errors.New("an unexpected error has occurred while invalidation data"))
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Invalidate(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
@@ -334,11 +336,11 @@ func TestChainClear(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(nil)
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Clear(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
@@ -357,11 +359,11 @@ func TestChainClearWhenError(t *testing.T) {
 	ctx := context.Background()
 
 	// Cache 1
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache1.EXPECT().Clear(ctx).Return(errors.New("an unexpected error has occurred while invalidation data"))
 
 	// Cache 2
-	cache2 := NewMockSetterCacheInterface[any](ctrl)
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 	cache2.EXPECT().Clear(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
@@ -377,7 +379,7 @@ func TestChainGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	cache1 := NewMockSetterCacheInterface[any](ctrl)
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](cache1)
 
@@ -408,10 +410,10 @@ func TestCacheChecksum(t *testing.T) {
 func TestChainSetWhenErrorInChain(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
-	store1 := NewMockSetterCacheInterface[any](ctrl)
+	store1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	store1.EXPECT().GetType().AnyTimes().Return("store1")
-	codec1 := codec.NewMockCodecInterface(ctrl)
+	codec1 := mockcodec.NewMockCodecInterface(ctrl)
 	codec1.EXPECT().GetStore().AnyTimes().Return(store1)
 	store1.EXPECT().GetCodec().AnyTimes().Return(codec1)
 
@@ -423,7 +425,7 @@ func TestChainSetWhenErrorInChain(t *testing.T) {
 		return interError
 	})
 
-	store2 := NewMockSetterCacheInterface[any](ctrl)
+	store2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](store1, store2)
 

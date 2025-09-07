@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/eko/gocache/lib/v4/codec"
+	mockstore "github.com/eko/gocache/lib/v4/internal/mocks/store"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -16,7 +17,7 @@ func TestNew(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	// When
 	cache := New[any](store)
@@ -40,7 +41,7 @@ func TestCacheSet(t *testing.T) {
 		Hello: "world",
 	}
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
 	mockedStore.EXPECT().Set(ctx, "my-key", value, store.OptionsMatcher{
 		Expiration: 5 * time.Second,
 	}).Return(nil)
@@ -66,7 +67,7 @@ func TestCacheSetWhenErrorOccurs(t *testing.T) {
 
 	storeErr := errors.New("an error has occurred while inserting data into store")
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
 	mockedStore.EXPECT().Set(ctx, "my-key", value, store.OptionsMatcher{
 		Expiration: 5 * time.Second,
 	}).Return(storeErr)
@@ -90,7 +91,7 @@ func TestCacheGet(t *testing.T) {
 		Hello: "world",
 	}
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
 
 	cache := New[any](store)
@@ -111,7 +112,7 @@ func TestCacheGetWhenNotFound(t *testing.T) {
 
 	returnedErr := errors.New("unable to find item in store")
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Get(ctx, "my-key").Return(nil, returnedErr)
 
 	cache := New[any](store)
@@ -137,7 +138,7 @@ func TestCacheGetWithTTL(t *testing.T) {
 	}
 	expiration := 1 * time.Second
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().GetWithTTL(ctx, "my-key").
 		Return(cacheValue, expiration, nil)
 
@@ -161,7 +162,7 @@ func TestCacheGetWithTTLWhenNotFound(t *testing.T) {
 	returnedErr := errors.New("unable to find item in store")
 	expiration := 0 * time.Second
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().GetWithTTL(ctx, "my-key").
 		Return(nil, expiration, returnedErr)
 
@@ -180,7 +181,7 @@ func TestCacheGetCodec(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	cache := New[any](store)
 
@@ -196,7 +197,7 @@ func TestCacheGetType(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	cache := New[any](store)
 
@@ -208,7 +209,7 @@ func TestCacheGetCacheKeyWhenKeyIsString(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	cache := New[any](store)
 
@@ -223,7 +224,7 @@ func TestCacheGetCacheKeyWhenKeyIsStruct(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	cache := New[any](store)
 
@@ -250,7 +251,7 @@ func TestCacheGetCacheKeyWhenKeyImplementsGenerator(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	cache := New[any](store)
 
@@ -268,7 +269,7 @@ func TestCacheDelete(t *testing.T) {
 
 	ctx := context.Background()
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	cache := New[any](store)
@@ -286,7 +287,7 @@ func TestCacheInvalidate(t *testing.T) {
 
 	ctx := context.Background()
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
 	mockedStore.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{
 		Tags: []string{"tag1"},
 	}).Return(nil)
@@ -308,7 +309,7 @@ func TestCacheInvalidateWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unexpected error during invalidation")
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
 	mockedStore.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{
 		Tags: []string{"tag1"},
 	}).Return(expectedErr)
@@ -328,7 +329,7 @@ func TestCacheClear(t *testing.T) {
 
 	ctx := context.Background()
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Clear(ctx).Return(nil)
 
 	cache := New[any](store)
@@ -348,7 +349,7 @@ func TestCacheClearWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unexpected error during invalidation")
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Clear(ctx).Return(expectedErr)
 
 	cache := New[any](store)
@@ -368,7 +369,7 @@ func TestCacheDeleteWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unable to delete key")
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
 	cache := New[any](store)
