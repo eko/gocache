@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/eko/gocache/lib/v4/codec"
-	"github.com/eko/gocache/lib/v4/store"
+	mockcodec "github.com/eko/gocache/lib/v4/internal/mocks/codec"
+	mockstore "github.com/eko/gocache/lib/v4/internal/mocks/store"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -111,7 +112,7 @@ func TestRecordFromCodec(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	redisStore := store.NewMockStoreInterface(ctrl)
+	redisStore := mockstore.NewMockStoreInterface(ctrl)
 	redisStore.EXPECT().GetType().Return("redis")
 
 	stats := &codec.Stats{
@@ -125,7 +126,7 @@ func TestRecordFromCodec(t *testing.T) {
 		InvalidateError:   1,
 	}
 
-	testCodec := codec.NewMockCodecInterface(ctrl)
+	testCodec := mockcodec.NewMockCodecInterface(ctrl)
 	testCodec.EXPECT().GetStats().Return(stats)
 	testCodec.EXPECT().GetStore().Return(redisStore)
 

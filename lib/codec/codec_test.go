@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eko/gocache/lib/v4/store"
+	mockstore "github.com/eko/gocache/lib/v4/internal/mocks/store"
+	libstore "github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -15,7 +16,7 @@ func TestNew(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	// When
 	codec := New(store)
@@ -36,7 +37,7 @@ func TestGetWhenHit(t *testing.T) {
 		Hello: "world",
 	}
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Get(ctx, "my-key").Return(cacheValue, nil)
 
 	codec := New(store)
@@ -72,7 +73,7 @@ func TestGetWithTTLWhenHit(t *testing.T) {
 		Hello: "world",
 	}
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue, 1*time.Second, nil)
 
 	codec := New(store)
@@ -105,7 +106,7 @@ func TestGetWithTTLWhenMiss(t *testing.T) {
 
 	expectedErr := errors.New("unable to find in store")
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second, expectedErr)
 
 	codec := New(store)
@@ -138,7 +139,7 @@ func TestGetWhenMiss(t *testing.T) {
 
 	expectedErr := errors.New("unable to find in store")
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Get(ctx, "my-key").Return(nil, expectedErr)
 
 	codec := New(store)
@@ -174,15 +175,15 @@ func TestSetWhenSuccess(t *testing.T) {
 		Hello: "world",
 	}
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
-	mockedStore.EXPECT().Set(ctx, "my-key", cacheValue, store.OptionsMatcher{
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Set(ctx, "my-key", cacheValue, libstore.OptionsMatcher{
 		Expiration: 5 * time.Second,
 	}).Return(nil)
 
 	codec := New(mockedStore)
 
 	// When
-	err := codec.Set(ctx, "my-key", cacheValue, store.WithExpiration(5*time.Second))
+	err := codec.Set(ctx, "my-key", cacheValue, libstore.WithExpiration(5*time.Second))
 
 	// Then
 	assert.Nil(t, err)
@@ -213,15 +214,15 @@ func TestSetWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unable to set value in store")
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
-	mockedStore.EXPECT().Set(ctx, "my-key", cacheValue, store.OptionsMatcher{
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Set(ctx, "my-key", cacheValue, libstore.OptionsMatcher{
 		Expiration: 5 * time.Second,
 	}).Return(expectedErr)
 
 	codec := New(mockedStore)
 
 	// When
-	err := codec.Set(ctx, "my-key", cacheValue, store.WithExpiration(5*time.Second))
+	err := codec.Set(ctx, "my-key", cacheValue, libstore.WithExpiration(5*time.Second))
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -244,7 +245,7 @@ func TestDeleteWhenSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	codec := New(store)
@@ -275,7 +276,7 @@ func TesDeleteWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unable to delete key")
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Delete(ctx, "my-key").Return(expectedErr)
 
 	codec := New(store)
@@ -304,15 +305,15 @@ func TestInvalidateWhenSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
-	mockedStore.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Invalidate(ctx, libstore.InvalidateOptionsMatcher{
 		Tags: []string{"tag1"},
 	}).Return(nil)
 
 	codec := New(mockedStore)
 
 	// When
-	err := codec.Invalidate(ctx, store.WithInvalidateTags([]string{"tag1"}))
+	err := codec.Invalidate(ctx, libstore.WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)
@@ -337,15 +338,15 @@ func TestInvalidateWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unexpected error when invalidating data")
 
-	mockedStore := store.NewMockStoreInterface(ctrl)
-	mockedStore.EXPECT().Invalidate(ctx, store.InvalidateOptionsMatcher{
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Invalidate(ctx, libstore.InvalidateOptionsMatcher{
 		Tags: []string{"tag1"},
 	}).Return(expectedErr)
 
 	codec := New(mockedStore)
 
 	// When
-	err := codec.Invalidate(ctx, store.WithInvalidateTags([]string{"tag1"}))
+	err := codec.Invalidate(ctx, libstore.WithInvalidateTags([]string{"tag1"}))
 
 	// Then
 	assert.Equal(t, expectedErr, err)
@@ -368,7 +369,7 @@ func TestClearWhenSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Clear(ctx).Return(nil)
 
 	codec := New(store)
@@ -399,7 +400,7 @@ func TestClearWhenError(t *testing.T) {
 
 	expectedErr := errors.New("unexpected error when clearing cache")
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 	store.EXPECT().Clear(ctx).Return(expectedErr)
 
 	codec := New(store)
@@ -426,7 +427,7 @@ func TestGetStore(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	codec := New(store)
 
@@ -438,7 +439,7 @@ func TestGetStats(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
-	store := store.NewMockStoreInterface(ctrl)
+	store := mockstore.NewMockStoreInterface(ctrl)
 
 	codec := New(store)
 
