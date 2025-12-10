@@ -1,8 +1,27 @@
-.PHONY: update-stores-version mocks test benchmark-store
+.PHONY: update-stores-version mocks test benchmark-store store-latest-versions store-increment-patch-version
 
 # Usage: VERSION=v4.1.3 make update-stores-version
 update-stores-version:
 	ls store/ | xargs -I % bash -c "sed -i '' -E 's,github.com/eko/gocache/lib/v4 v[0-9]\.[0-9]\.[0-9],github.com/eko/gocache/lib/v4 ${VERSION},g' store/%/go.mod"
+
+store-latest-versions:
+	git tag \
+	| grep '^store/' \
+	| sort -t/ -k3 -Vr \
+	| awk -F/ '!seen[$$2]++'
+
+store-increment-patch-version:
+	git tag \
+	| grep '^store/' \
+	| sort -t/ -k3 -Vr \
+	| awk -F/ '!seen[$$2]++' \
+	| while IFS=/ read -r store name version; do \
+		v="$${version#v}"; \
+		IFS=. read -r major minor patch <<< "$$v"; \
+		new="v$${major}.$${minor}.$$((patch+1))"; \
+		echo "Tagging $$store/$$name/$$new"; \
+		git tag "$$store/$$name/$$new" "$$store/$$name/$$version"; \
+	done
 
 mocks:
 	mockgen -source=lib/cache/interface.go -destination=lib/internal/mocks/cache/cache_mock.go -package=cache
