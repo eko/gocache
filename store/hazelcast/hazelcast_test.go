@@ -98,8 +98,8 @@ func TestHazelcastSetWithTags(t *testing.T) {
 
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().SetWithTTL(ctx, cacheKey, cacheValue, time.Duration(0)).Return(nil)
-	hzMap.EXPECT().SetWithTTL(gomock.Any(), "gocache_tag_tag1", cacheKey, time.Duration(0)).Return(nil)
 	hzMap.EXPECT().Get(gomock.Any(), "gocache_tag_tag1").Return(nil, nil)
+	hzMap.EXPECT().PutIfAbsentWithTTL(gomock.Any(), "gocache_tag_tag1", cacheKey, time.Duration(0)).Return(nil, nil)
 
 	store := NewHazelcast(hzMap)
 
@@ -110,7 +110,7 @@ func TestHazelcastSetWithTags(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestHazelcastSetWithTagsTTL(t *testing.T) {
+func TestHazelcastSetWithTagsAndTagsTTL(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
 
@@ -121,13 +121,60 @@ func TestHazelcastSetWithTagsTTL(t *testing.T) {
 
 	hzMap := NewMockHazelcastMapInterface(ctrl)
 	hzMap.EXPECT().SetWithTTL(ctx, cacheKey, cacheValue, time.Duration(0)).Return(nil)
-	hzMap.EXPECT().SetWithTTL(gomock.Any(), "gocache_tag_tag1", cacheKey, 10*time.Second).Return(nil)
 	hzMap.EXPECT().Get(gomock.Any(), "gocache_tag_tag1").Return(nil, nil)
+	hzMap.EXPECT().PutIfAbsentWithTTL(gomock.Any(), "gocache_tag_tag1", cacheKey, 10*time.Second).Return(nil, nil)
 
 	store := NewHazelcast(hzMap)
 
 	// When
 	err := store.Set(ctx, cacheKey, cacheValue, lib_store.WithTags([]string{"tag1"}), lib_store.WithTagsTTL(10*time.Second))
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestHazelcastSetWithTagsWhenAlreadyInserted(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+
+	hzMap := NewMockHazelcastMapInterface(ctrl)
+	hzMap.EXPECT().SetWithTTL(ctx, cacheKey, cacheValue, time.Duration(0)).Return(nil)
+	hzMap.EXPECT().Get(gomock.Any(), "gocache_tag_tag1").Return("my-key,a-second-key", nil)
+	hzMap.EXPECT().SetTTL(gomock.Any(), "gocache_tag_tag1", time.Duration(0)).Return(nil)
+
+	store := NewHazelcast(hzMap)
+
+	// When
+	err := store.Set(ctx, cacheKey, cacheValue, lib_store.WithTags([]string{"tag1"}))
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestHazelcastSetWithTagsWhenTagExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+
+	hzMap := NewMockHazelcastMapInterface(ctrl)
+	hzMap.EXPECT().SetWithTTL(ctx, cacheKey, cacheValue, time.Duration(0)).Return(nil)
+	hzMap.EXPECT().Get(gomock.Any(), "gocache_tag_tag1").Return("a-second-key", nil)
+	hzMap.EXPECT().ReplaceIfSame(gomock.Any(), "gocache_tag_tag1", "a-second-key", "a-second-key,my-key").Return(true, nil)
+	hzMap.EXPECT().SetTTL(gomock.Any(), "gocache_tag_tag1", time.Duration(0)).Return(nil)
+
+	store := NewHazelcast(hzMap)
+
+	// When
+	err := store.Set(ctx, cacheKey, cacheValue, lib_store.WithTags([]string{"tag1"}))
 
 	// Then
 	assert.Nil(t, err)

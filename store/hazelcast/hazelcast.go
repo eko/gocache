@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -17,6 +18,9 @@ type HazelcastMapInterface interface {
 	Get(ctx context.Context, key any) (any, error)
 	GetEntryView(ctx context.Context, key any) (*types.SimpleEntryView, error)
 	SetWithTTL(ctx context.Context, key any, value any, ttl time.Duration) error
+	SetTTL(ctx context.Context, key any, ttl time.Duration) error
+	PutIfAbsentWithTTL(ctx context.Context, key any, value any, ttl time.Duration) (any, error)
+	ReplaceIfSame(ctx context.Context, key any, oldValue any, newValue any) (bool, error)
 	Remove(ctx context.Context, key any) (any, error)
 	Clear(ctx context.Context) error
 }
@@ -85,27 +89,57 @@ func (s *HazelcastStore) setTags(ctx context.Context, hzMap HazelcastMapInterfac
 		currentTag := tag
 		group.Go(func() error {
 			tagKey := fmt.Sprintf(HazelcastTagPattern, currentTag)
-			tagValue, err := hzMap.Get(ctx, tagKey)
-			if err != nil {
-				return err
-			}
 
-			newTagValue := key.(string)
-			if tagValue != nil {
-				cacheKeys := strings.Split(tagValue.(string), ",")
-				for _, cacheKey := range cacheKeys {
-					if key == cacheKey {
-						return nil
-					}
+			var err error
+			for i := 0; i < 3; i++ {
+				if err = s.addKeyToTagValue(ctx, hzMap, tagKey, key, ttl); err == nil {
+					return nil
 				}
-				cacheKeys = append(cacheKeys, key.(string))
-				newTagValue = strings.Join(cacheKeys, ",")
+				// loop to retry any failure (including race conditions)
 			}
-
-			return hzMap.SetWithTTL(ctx, tagKey, newTagValue, ttl)
+			return err
 		})
 	}
 	group.Wait()
+}
+
+func (s *HazelcastStore) addKeyToTagValue(ctx context.Context, hzMap HazelcastMapInterface, tagKey string, key any, ttl time.Duration) error {
+	tagValue, err := hzMap.Get(ctx, tagKey)
+	if err != nil {
+		return err
+	}
+
+	if tagValue == nil {
+		// first writer: try to insert atomically
+		prev, err := hzMap.PutIfAbsentWithTTL(ctx, tagKey, key.(string), ttl)
+		if err != nil {
+			return err
+		}
+		if prev == nil {
+			// PutIfAbsent returns the existing value or nil if absent;
+			// nil here means our insert succeeded.
+			return nil
+		}
+		// somebody else inserted; fall through to update path with the new value
+		tagValue = prev
+	}
+
+	oldStr := tagValue.(string)
+	cacheKeys := strings.Split(oldStr, ",")
+	if slices.Contains(cacheKeys, key.(string)) {
+		return hzMap.SetTTL(ctx, tagKey, ttl)
+	}
+	newStr := strings.Join(append(cacheKeys, key.(string)), ",")
+
+	ok, err := hzMap.ReplaceIfSame(ctx, tagKey, oldStr, newStr)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("hazelcast tag key contended")
+	}
+
+	return hzMap.SetTTL(ctx, tagKey, ttl)
 }
 
 // Delete removes data from Hazelcast for given key identifier
