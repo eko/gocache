@@ -263,6 +263,10 @@ func TestMemcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	client.EXPECT().Get("gocache_tag_tag1").Return(&memcache.Item{
 		Value: []byte("my-key,a-second-key"),
 	}, nil)
+	client.EXPECT().CompareAndSwap(&memcache.Item{
+		Value:      []byte("my-key,a-second-key"),
+		Expiration: int32(TagKeyExpiry.Seconds()),
+	}).Return(nil)
 
 	store := NewMemcache(client)
 
