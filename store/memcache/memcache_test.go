@@ -281,7 +281,7 @@ func TestMemcacheSetWithTagsAndTagsTTL(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestMemcacheSetWithTagsAndTagsTTLWhenTagExists(t *testing.T) {
+func TestMemcacheSetWithTagsWhenTagExists(t *testing.T) {
 	// Given
 	ctx := context.Background()
 
