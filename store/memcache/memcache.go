@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -136,14 +137,9 @@ func (s *MemcacheStore) addKeyToTagValue(tagKey string, key any) error {
 		return err
 	}
 
-	for _, cacheKey := range cacheKeys {
-		// if key already exists, nothing to do
-		if cacheKey == key.(string) {
-			return nil
-		}
+	if !slices.Contains(cacheKeys, key.(string)) {
+		cacheKeys = append(cacheKeys, key.(string))
 	}
-
-	cacheKeys = append(cacheKeys, key.(string))
 
 	newVal := []byte(strings.Join(cacheKeys, ","))
 
