@@ -86,6 +86,21 @@ func (mr *MockHazelcastMapInterfaceMockRecorder) GetEntryView(ctx, key any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntryView", reflect.TypeOf((*MockHazelcastMapInterface)(nil).GetEntryView), ctx, key)
 }
 
+// PutIfAbsentWithTTL mocks base method.
+func (m *MockHazelcastMapInterface) PutIfAbsentWithTTL(ctx context.Context, key, value any, ttl time.Duration) (any, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutIfAbsentWithTTL", ctx, key, value, ttl)
+	ret0, _ := ret[0].(any)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutIfAbsentWithTTL indicates an expected call of PutIfAbsentWithTTL.
+func (mr *MockHazelcastMapInterfaceMockRecorder) PutIfAbsentWithTTL(ctx, key, value, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIfAbsentWithTTL", reflect.TypeOf((*MockHazelcastMapInterface)(nil).PutIfAbsentWithTTL), ctx, key, value, ttl)
+}
+
 // Remove mocks base method.
 func (m *MockHazelcastMapInterface) Remove(ctx context.Context, key any) (any, error) {
 	m.ctrl.T.Helper()
@@ -99,6 +114,35 @@ func (m *MockHazelcastMapInterface) Remove(ctx context.Context, key any) (any, e
 func (mr *MockHazelcastMapInterfaceMockRecorder) Remove(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockHazelcastMapInterface)(nil).Remove), ctx, key)
+}
+
+// ReplaceIfSame mocks base method.
+func (m *MockHazelcastMapInterface) ReplaceIfSame(ctx context.Context, key, oldValue, newValue any) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReplaceIfSame", ctx, key, oldValue, newValue)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReplaceIfSame indicates an expected call of ReplaceIfSame.
+func (mr *MockHazelcastMapInterfaceMockRecorder) ReplaceIfSame(ctx, key, oldValue, newValue any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceIfSame", reflect.TypeOf((*MockHazelcastMapInterface)(nil).ReplaceIfSame), ctx, key, oldValue, newValue)
+}
+
+// SetTTL mocks base method.
+func (m *MockHazelcastMapInterface) SetTTL(ctx context.Context, key any, ttl time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetTTL", ctx, key, ttl)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetTTL indicates an expected call of SetTTL.
+func (mr *MockHazelcastMapInterfaceMockRecorder) SetTTL(ctx, key, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTTL", reflect.TypeOf((*MockHazelcastMapInterface)(nil).SetTTL), ctx, key, ttl)
 }
 
 // SetWithTTL mocks base method.
