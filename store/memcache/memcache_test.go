@@ -251,6 +251,69 @@ func TestMemcacheSetWithTags(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestMemcacheSetWithTagsAndTagsTTL(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	tagKey := "gocache_tag_tag1"
+
+	client := NewMockMemcacheClientInterface(t)
+	client.EXPECT().Set(mock.Anything).Return(nil)
+	client.EXPECT().Get(tagKey).Return(nil, memcache.ErrCacheMiss)
+	client.EXPECT().Add(&memcache.Item{
+		Key:        tagKey,
+		Value:      []byte(cacheKey),
+		Expiration: int32((5 * time.Minute).Seconds()),
+	}).Return(nil)
+
+	store := NewMemcache(client)
+
+	// When
+	err := store.Set(ctx, cacheKey, cacheValue,
+		lib_store.WithTags([]string{"tag1"}),
+		lib_store.WithTagsTTL(5*time.Minute),
+	)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestMemcacheSetWithTagsWhenTagExists(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	tagKey := "gocache_tag_tag1"
+
+	existing := &memcache.Item{
+		Value: []byte("a-second-key"),
+	}
+
+	client := NewMockMemcacheClientInterface(t)
+	client.EXPECT().Set(mock.Anything).Return(nil)
+	client.EXPECT().Get(tagKey).Return(existing, nil)
+	client.EXPECT().CompareAndSwap(&memcache.Item{
+		Value:      []byte("a-second-key,my-key"),
+		Expiration: int32((5 * time.Minute).Seconds()),
+	}).Return(nil)
+
+	store := NewMemcache(client)
+
+	// When
+	err := store.Set(ctx, cacheKey, cacheValue,
+		lib_store.WithTags([]string{"tag1"}),
+		lib_store.WithTagsTTL(5*time.Minute),
+	)
+
+	// Then
+	assert.Nil(t, err)
+}
+
 func TestMemcacheSetWithTagsWhenAlreadyInserted(t *testing.T) {
 	// Given
 	ctx := context.Background()

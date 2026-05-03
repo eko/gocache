@@ -95,13 +95,17 @@ func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options ...
 	}
 
 	if tags := opts.Tags; len(tags) > 0 {
-		s.setTags(ctx, key, tags)
+		ttl := opts.TagsTTL
+		if ttl == 0 {
+			ttl = TagKeyExpiry
+		}
+		s.setTags(ctx, key, tags, ttl)
 	}
 
 	return nil
 }
 
-func (s *MemcacheStore) setTags(ctx context.Context, key any, tags []string) {
+func (s *MemcacheStore) setTags(ctx context.Context, key any, tags []string, ttl time.Duration) {
 	group, ctx := errgroup.WithContext(ctx)
 	for _, tag := range tags {
 		currentTag := tag
@@ -110,7 +114,7 @@ func (s *MemcacheStore) setTags(ctx context.Context, key any, tags []string) {
 
 			var err error
 			for i := 0; i < 3; i++ {
-				if err = s.addKeyToTagValue(tagKey, key); err == nil {
+				if err = s.addKeyToTagValue(tagKey, key, ttl); err == nil {
 					return nil
 				}
 				// loop to retry any failure (including race conditions)
@@ -123,7 +127,7 @@ func (s *MemcacheStore) setTags(ctx context.Context, key any, tags []string) {
 	group.Wait()
 }
 
-func (s *MemcacheStore) addKeyToTagValue(tagKey string, key any) error {
+func (s *MemcacheStore) addKeyToTagValue(tagKey string, key any, ttl time.Duration) error {
 	var (
 		cacheKeys = []string{}
 		result    *memcache.Item
@@ -148,14 +152,14 @@ func (s *MemcacheStore) addKeyToTagValue(tagKey string, key any) error {
 		return s.client.Add(&memcache.Item{
 			Key:        tagKey,
 			Value:      newVal,
-			Expiration: int32(TagKeyExpiry.Seconds()),
+			Expiration: int32(ttl.Seconds()),
 		})
 	}
 
 	// update existing value
 	// using CompareAndSwap to ensure not to run over writes between Get and here
 	result.Value = newVal
-	result.Expiration = int32(TagKeyExpiry.Seconds())
+	result.Expiration = int32(ttl.Seconds())
 	return s.client.CompareAndSwap(result)
 }
 

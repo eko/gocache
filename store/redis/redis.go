@@ -26,6 +26,8 @@ const (
 	RedisType = "redis"
 	// RedisTagPattern represents the tag pattern to be used as a key in specified storage
 	RedisTagPattern = "gocache_tag_%s"
+
+	TagKeyExpiry = 720 * time.Hour
 )
 
 // RedisStore is a store for Redis
@@ -79,26 +81,22 @@ func (s *RedisStore) Set(ctx context.Context, key any, value any, options ...lib
 	}
 
 	if tags := opts.Tags; len(tags) > 0 {
-		if ttl := opts.TagsTTL; ttl == 0 {
-			s.setTags(ctx, key, tags)
-		} else {
-			s.setTagsWithTTL(ctx, key, tags, ttl)
+		ttl := opts.TagsTTL
+		if ttl == 0 {
+			ttl = TagKeyExpiry
 		}
+		s.setTags(ctx, key, tags, ttl)
 	}
 
 	return nil
 }
 
-func (s *RedisStore) setTagsWithTTL(ctx context.Context, key any, tags []string, ttl time.Duration) {
+func (s *RedisStore) setTags(ctx context.Context, key any, tags []string, ttl time.Duration) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(RedisTagPattern, tag)
 		s.client.SAdd(ctx, tagKey, key.(string))
 		s.client.Expire(ctx, tagKey, ttl)
 	}
-}
-
-func (s *RedisStore) setTags(ctx context.Context, key any, tags []string) {
-	s.setTagsWithTTL(ctx, key, tags, 720*time.Hour)
 }
 
 // Delete removes data from Redis for given key identifier
