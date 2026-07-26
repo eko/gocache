@@ -337,9 +337,12 @@ cacheManager := cache.NewLoadable[*Book](
 	loadFunction,
 	cache.New[*Book](redisStore),
 )
+defer cacheManager.Close()
 
 // ... Then, you can get your data and your function will automatically put them in cache(s)
 ```
+
+As for the `Chain` cache, loaded values are stored in the cache in the background: call `Close()` when you don't need the cache anymore to release the goroutine that does it and store the values that are still pending.
 
 Of course, you can also pass a `Chain` cache into the `Loadable` one so if your data is not available in all caches, it will bring it back in all caches.
 

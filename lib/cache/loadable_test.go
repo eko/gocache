@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -26,6 +27,7 @@ func TestNewLoadable(t *testing.T) {
 
 	// When
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// Then
 	assert.IsType(t, new(LoadableCache[any]), cache)
@@ -54,6 +56,7 @@ func TestLoadableGetWhenAlreadyInCache(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
@@ -78,6 +81,7 @@ func TestLoadableGetWhenNotAvailableInLoadFunc(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
@@ -115,6 +119,7 @@ func TestLoadableGetWhenAvailableInLoadFunc(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	const numRequests = 3
 	var started sync.WaitGroup
@@ -160,6 +165,7 @@ func TestLoadableDelete(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	err := cache.Delete(ctx, "my-key")
@@ -184,6 +190,7 @@ func TestLoadableDeleteWhenError(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	err := cache.Delete(ctx, "my-key")
@@ -206,6 +213,7 @@ func TestLoadableInvalidate(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	err := cache.Invalidate(ctx)
@@ -230,6 +238,7 @@ func TestLoadableInvalidateWhenError(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	err := cache.Invalidate(ctx)
@@ -252,6 +261,7 @@ func TestLoadableClear(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	err := cache.Clear(ctx)
@@ -276,6 +286,7 @@ func TestLoadableClearWhenError(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When
 	err := cache.Clear(ctx)
@@ -295,6 +306,7 @@ func TestLoadableGetType(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	// When - Then
 	assert.Equal(t, LoadableType, cache.GetType())
@@ -312,6 +324,7 @@ func TestLoadableGetTwice(t *testing.T) {
 	}
 
 	cache := NewLoadable[any](loadFunc, cache1)
+	defer cache.Close()
 
 	key := 1
 	cache1.EXPECT().Get(context.Background(), key).Return(nil, store.NotFound{}).AnyTimes()
@@ -324,4 +337,87 @@ func TestLoadableGetTwice(t *testing.T) {
 	assert.Equal(t, uint64(1), v2)
 	assert.Equal(t, uint64(1), counter.Load())
 	_ = cache.Close() // wait for setter
+}
+
+func TestLoadableClose(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "test data loaded", []store.Option{}, nil
+	}
+
+	cache := NewLoadable[any](loadFunc, cache1)
+
+	// When - Close joins the setter goroutine, so it only returns once released
+	closed := make(chan error, 1)
+	go func() {
+		closed <- cache.Close()
+	}()
+
+	// Then
+	select {
+	case err := <-closed:
+		assert.Nil(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("Close did not release the setter goroutine")
+	}
+}
+
+func TestLoadableCloseWhenCalledMultipleTimes(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "test data loaded", []store.Option{}, nil
+	}
+
+	cache := NewLoadable[any](loadFunc, cache1)
+
+	// When - Then
+	assert.Nil(t, cache.Close())
+	assert.Nil(t, cache.Close())
+}
+
+func TestLoadableCloseWhileGetting(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().Get(ctx, gomock.Any()).AnyTimes().Return(nil, store.NotFound{})
+	cache1.EXPECT().Set(ctx, gomock.Any(), "test data loaded").AnyTimes().Return(nil)
+
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "test data loaded", []store.Option{}, nil
+	}
+
+	cache := NewLoadable[any](loadFunc, cache1)
+
+	const numRequests = 100
+
+	var finished sync.WaitGroup
+	finished.Add(numRequests)
+
+	// When - loading concurrently with Close must not send on a closed channel
+	for i := 0; i < numRequests; i++ {
+		go func(i int) {
+			defer finished.Done()
+
+			value, err := cache.Get(ctx, fmt.Sprintf("my-key-%d", i))
+
+			// Then
+			assert.Nil(t, err)
+			assert.Equal(t, "test data loaded", value)
+		}(i)
+	}
+
+	assert.Nil(t, cache.Close())
+
+	finished.Wait()
 }

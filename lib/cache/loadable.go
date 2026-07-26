@@ -31,17 +31,22 @@ type LoadableCache[T any] struct {
 	cache        CacheInterface[T]
 	setChannel   chan *loadableKeyValue[T]
 	setCache     sync.Map
-	setterWg     *sync.WaitGroup
+	done         chan struct{}
+	closeOnce    sync.Once
+	setterWg     sync.WaitGroup
 }
 
-// NewLoadable instantiates a new cache that uses a function to load data
+// NewLoadable instantiates a new cache that uses a function to load data.
+//
+// It starts a background goroutine responsible for storing the loaded values into
+// the cache: call Close when the cache is not used anymore to release it.
 func NewLoadable[T any](loadFunc LoadFunction[T], cache CacheInterface[T]) *LoadableCache[T] {
 	loadable := &LoadableCache[T]{
 		singleFlight: singleflight.Group{},
 		loadFunc:     loadFunc,
 		cache:        cache,
 		setChannel:   make(chan *loadableKeyValue[T], 10000),
-		setterWg:     &sync.WaitGroup{},
+		done:         make(chan struct{}),
 	}
 
 	loadable.setterWg.Add(1)
@@ -50,15 +55,40 @@ func NewLoadable[T any](loadFunc LoadFunction[T], cache CacheInterface[T]) *Load
 	return loadable
 }
 
+// setter stores the loaded values into the cache until it is closed
 func (c *LoadableCache[T]) setter() {
 	defer c.setterWg.Done()
 
-	for item := range c.setChannel {
-		c.Set(context.Background(), item.key, item.value, item.options...)
-
-		cacheKey := c.getCacheKey(item.key)
-		c.setCache.Delete(cacheKey)
+	for {
+		select {
+		case item := <-c.setChannel:
+			c.setItem(item)
+		case <-c.done:
+			c.drain()
+			return
+		}
 	}
+}
+
+// drain stores the items still buffered when the cache has been closed
+func (c *LoadableCache[T]) drain() {
+	for {
+		select {
+		case item := <-c.setChannel:
+			c.setItem(item)
+		default:
+			return
+		}
+	}
+}
+
+// setItem stores a loaded value into the cache and releases it from the
+// temporary-while-setter-works cache
+func (c *LoadableCache[T]) setItem(item *loadableKeyValue[T]) {
+	c.Set(context.Background(), item.key, item.value, item.options...)
+
+	cacheKey := c.getCacheKey(item.key)
+	c.setCache.Delete(cacheKey)
 }
 
 // Get returns the object stored in cache if it exists
@@ -81,11 +111,17 @@ func (c *LoadableCache[T]) Get(ctx context.Context, key any) (T, error) {
 				// cache locally until main cache is set
 				c.setCache.Store(cacheKey, value)
 
-				c.setChannel <- &loadableKeyValue[T]{
+				select {
+				case c.setChannel <- &loadableKeyValue[T]{
 					key:     key,
 					value:   value,
 					options: options,
+				}:
+				case <-c.done:
+					// no setter left to hand the value over to, do not retain it
+					c.setCache.Delete(cacheKey)
 				}
+
 				return value, err
 			} else {
 				return *new(T), err
@@ -132,8 +168,14 @@ func (c *LoadableCache[T]) GetType() string {
 	return LoadableType
 }
 
+// Close releases the background goroutine started by NewLoadable, after having
+// stored the values that were still waiting to be set into the cache.
+// It is safe to call Close multiple times.
 func (c *LoadableCache[T]) Close() error {
-	close(c.setChannel)
+	c.closeOnce.Do(func() {
+		close(c.done)
+	})
+
 	c.setterWg.Wait()
 
 	return nil
