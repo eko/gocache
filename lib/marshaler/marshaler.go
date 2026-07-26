@@ -2,11 +2,17 @@ package marshaler
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/vmihailenco/msgpack/v5"
 )
+
+// ErrUnsupportedValueType is returned by Get when the cached value cannot be
+// unmarshaled because the store returned a type the marshaler does not handle.
+var ErrUnsupportedValueType = errors.New("unsupported cached value type")
 
 // Marshaler is the struct that marshal and unmarshal cache values
 type Marshaler struct {
@@ -32,6 +38,8 @@ func (c *Marshaler) Get(ctx context.Context, key any, returnObj any) (any, error
 		err = msgpack.Unmarshal(v, returnObj)
 	case string:
 		err = msgpack.Unmarshal([]byte(v), returnObj)
+	default:
+		return nil, fmt.Errorf("%w: got %T, expected []byte or string", ErrUnsupportedValueType, result)
 	}
 
 	if err != nil {

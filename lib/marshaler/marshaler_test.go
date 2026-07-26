@@ -106,6 +106,48 @@ func TestGetWhenUnmarshalingError(t *testing.T) {
 	assert.Nil(t, value)
 }
 
+func TestGetWhenStoreReturnsUnsupportedType(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	testCases := []struct {
+		name       string
+		storeValue any
+	}{
+		{
+			name:       "struct pointer",
+			storeValue: &testCacheValue{Hello: "world"},
+		},
+		{
+			name:       "int",
+			storeValue: 42,
+		},
+		{
+			name:       "nil",
+			storeValue: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			cache := mockcache.NewMockCacheInterface[any](ctrl)
+			cache.EXPECT().Get(ctx, "my-key").Return(testCase.storeValue, nil)
+
+			marshaler := New(cache)
+
+			// When
+			value, err := marshaler.Get(ctx, "my-key", new(testCacheValue))
+
+			// Then
+			assert.Nil(t, value)
+			assert.ErrorIs(t, err, ErrUnsupportedValueType)
+			assert.ErrorContains(t, err, "expected []byte or string")
+		})
+	}
+}
+
 func TestGetWhenNotFoundInStore(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
