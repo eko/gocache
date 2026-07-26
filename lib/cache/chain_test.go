@@ -173,6 +173,15 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 	assert.Equal(t, nil, value)
 }
 
+func TestChainGetWithNoCachesReturnsError(t *testing.T) {
+	cache := NewChain[[]byte]()
+
+	value, err := cache.Get(context.Background(), "my-key")
+
+	assert.Nil(t, value)
+	assert.ErrorContains(t, err, "no cache configured")
+}
+
 func TestChainSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)

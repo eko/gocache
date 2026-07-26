@@ -91,6 +91,10 @@ func (c *ChainCache[T]) setUntilCacheAddress(item *chainKeyValue[T]) {
 // Get returns the object stored in cache if it exists
 func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
 	var object T
+	if len(c.caches) == 0 {
+		return object, errors.New("no cache configured in chain")
+	}
+
 	var err error
 	var ttl time.Duration
 
