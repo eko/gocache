@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/eko/gocache/lib/v4/store"
@@ -25,32 +26,65 @@ type chainKeyValue[T any] struct {
 type ChainCache[T any] struct {
 	caches     []SetterCacheInterface[T]
 	setChannel chan *chainKeyValue[T]
+	done       chan struct{}
+	closeOnce  sync.Once
+	setterWg   sync.WaitGroup
 }
 
-// NewChain instantiates a new cache aggregator
+// NewChain instantiates a new cache aggregator.
+//
+// It starts a background goroutine responsible for setting values back into the
+// upper cache layers: call Close when the chain is not used anymore to release it.
 func NewChain[T any](caches ...SetterCacheInterface[T]) *ChainCache[T] {
 	chain := &ChainCache[T]{
 		caches:     caches,
 		setChannel: make(chan *chainKeyValue[T], 10000),
+		done:       make(chan struct{}),
 	}
 
+	chain.setterWg.Add(1)
 	go chain.setter()
 
 	return chain
 }
 
-// setter sets a value in available caches, until a given cache layer
+// setter sets values in available caches until the chain is closed
 func (c *ChainCache[T]) setter() {
-	for item := range c.setChannel {
-		for _, cache := range c.caches {
-			cacheAddress := fmt.Sprintf("%p", cache)
+	defer c.setterWg.Done()
 
-			if item.cacheAddress != nil && *item.cacheAddress == cacheAddress {
-				break
-			}
-
-			cache.Set(context.Background(), item.key, item.value, store.WithExpiration(item.ttl))
+	for {
+		select {
+		case item := <-c.setChannel:
+			c.setUntilCacheAddress(item)
+		case <-c.done:
+			c.drain()
+			return
 		}
+	}
+}
+
+// drain sets the items still buffered when the chain has been closed
+func (c *ChainCache[T]) drain() {
+	for {
+		select {
+		case item := <-c.setChannel:
+			c.setUntilCacheAddress(item)
+		default:
+			return
+		}
+	}
+}
+
+// setUntilCacheAddress sets a value in available caches, until a given cache layer
+func (c *ChainCache[T]) setUntilCacheAddress(item *chainKeyValue[T]) {
+	for _, cache := range c.caches {
+		cacheAddress := fmt.Sprintf("%p", cache)
+
+		if item.cacheAddress != nil && *item.cacheAddress == cacheAddress {
+			return
+		}
+
+		cache.Set(context.Background(), item.key, item.value, store.WithExpiration(item.ttl))
 	}
 }
 
@@ -66,7 +100,10 @@ func (c *ChainCache[T]) Get(ctx context.Context, key any) (T, error) {
 		object, ttl, err = cache.GetWithTTL(ctx, key)
 		if err == nil {
 			// Set the value back until this cache layer
-			c.setChannel <- &chainKeyValue[T]{key, object, ttl, &cacheAddress}
+			select {
+			case c.setChannel <- &chainKeyValue[T]{key, object, ttl, &cacheAddress}:
+			case <-c.done:
+			}
 			return object, nil
 		}
 	}
@@ -117,6 +154,19 @@ func (c *ChainCache[T]) Clear(ctx context.Context) error {
 // GetCaches returns all Chained caches
 func (c *ChainCache[T]) GetCaches() []SetterCacheInterface[T] {
 	return c.caches
+}
+
+// Close releases the background goroutine started by NewChain, after having set
+// the values that were still waiting to be propagated to the upper cache layers.
+// It is safe to call Close multiple times.
+func (c *ChainCache[T]) Close() error {
+	c.closeOnce.Do(func() {
+		close(c.done)
+	})
+
+	c.setterWg.Wait()
+
+	return nil
 }
 
 // GetType returns the cache type

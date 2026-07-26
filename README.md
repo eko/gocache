@@ -303,11 +303,14 @@ cacheManager := cache.NewChain[any](
     cache.New[any](ristrettoStore),
     cache.New[any](redisStore),
 )
+defer cacheManager.Close()
 
 // ... Then, do what you want with your cache
 ```
 
 `Chain` cache also put data back in previous caches when it's found so in this case, if ristretto doesn't have the data in its cache but redis have, data will also get setted back into ristretto (memory) cache.
+
+This is done in the background, which is why a `Chain` cache owns a goroutine: call `Close()` when you don't need it anymore to release it and set the values that are still pending. If your chain lives for the whole lifetime of your process, you don't have to bother.
 
 ### A loadable cache
 

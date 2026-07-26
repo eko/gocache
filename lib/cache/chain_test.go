@@ -23,6 +23,7 @@ func TestNewChain(t *testing.T) {
 
 	// When
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// Then
 	assert.IsType(t, new(ChainCache[any]), cache)
@@ -38,6 +39,7 @@ func TestChainGetCaches(t *testing.T) {
 	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	caches := cache.GetCaches()
@@ -77,12 +79,13 @@ func TestChainGetWhenAvailableInFirstCache(t *testing.T) {
 	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
 
-	// Wait for data to be processed
-	time.Sleep(100 * time.Millisecond)
+	// Closing waits for the values to be set back into the upper cache layers
+	assert.Nil(t, cache.Close())
 
 	// Then
 	assert.Nil(t, err)
@@ -112,7 +115,7 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 	cache1.EXPECT().GetCodec().AnyTimes().Return(codec1)
 	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
 		errors.New("unable to find in cache 1"))
-	cache1.EXPECT().Set(ctx, "my-key", cacheValue, &store.OptionsMatcher{}).AnyTimes().Return(nil)
+	cache1.EXPECT().Set(ctx, "my-key", cacheValue, &store.OptionsMatcher{}).Times(1).Return(nil)
 
 	// Cache 2
 	store2 := mockstore.NewMockStoreInterface(ctrl)
@@ -127,12 +130,13 @@ func TestChainGetWhenAvailableInSecondCache(t *testing.T) {
 		0*time.Second, nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
 
-	// Wait for data to be processed
-	time.Sleep(100 * time.Millisecond)
+	// Closing waits for the values to be set back into the upper cache layers
+	assert.Nil(t, cache.Close())
 
 	// Then
 	assert.Nil(t, err)
@@ -156,12 +160,13 @@ func TestChainGetWhenNotAvailableInAnyCache(t *testing.T) {
 		errors.New("unable to find in cache 2"))
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	value, err := cache.Get(ctx, "my-key")
 
-	// Wait for data to be processed
-	time.Sleep(100 * time.Millisecond)
+	// Closing waits for the values to be set back into the upper cache layers
+	assert.Nil(t, cache.Close())
 
 	// Then
 	assert.ErrorContains(t, err, "unable to find in cache 2")
@@ -189,6 +194,7 @@ func TestChainSet(t *testing.T) {
 	cache2.EXPECT().Set(ctx, "my-key", cacheValue).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Set(ctx, "my-key", cacheValue)
@@ -227,6 +233,7 @@ func TestChainSetWhenErrorOnSetting(t *testing.T) {
 	cache2.EXPECT().Set(ctx, "my-key", cacheValue)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Set(ctx, "my-key", cacheValue)
@@ -252,6 +259,7 @@ func TestChainDelete(t *testing.T) {
 	cache2.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Delete(ctx, "my-key")
@@ -275,6 +283,7 @@ func TestChainDeleteWhenError(t *testing.T) {
 	cache2.EXPECT().Delete(ctx, "my-key").Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Delete(ctx, "my-key")
@@ -298,6 +307,7 @@ func TestChainInvalidate(t *testing.T) {
 	cache2.EXPECT().Invalidate(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Invalidate(ctx)
@@ -321,6 +331,7 @@ func TestChainInvalidateWhenError(t *testing.T) {
 	cache2.EXPECT().Invalidate(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Invalidate(ctx)
@@ -344,6 +355,7 @@ func TestChainClear(t *testing.T) {
 	cache2.EXPECT().Clear(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Clear(ctx)
@@ -367,6 +379,7 @@ func TestChainClearWhenError(t *testing.T) {
 	cache2.EXPECT().Clear(ctx).Return(nil)
 
 	cache := NewChain[any](cache1, cache2)
+	defer cache.Close()
 
 	// When
 	err := cache.Clear(ctx)
@@ -382,9 +395,80 @@ func TestChainGetType(t *testing.T) {
 	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](cache1)
+	defer cache.Close()
 
 	// When - Then
 	assert.Equal(t, ChainType, cache.GetType())
+}
+
+func TestChainClose(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+
+	cache := NewChain[any](cache1)
+
+	// When - Close joins the setter goroutine, so it only returns once released
+	closed := make(chan error, 1)
+	go func() {
+		closed <- cache.Close()
+	}()
+
+	// Then
+	select {
+	case err := <-closed:
+		assert.Nil(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("Close did not release the setter goroutine")
+	}
+}
+
+func TestChainCloseWhenCalledMultipleTimes(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+
+	cache := NewChain[any](cache1)
+
+	// When - Then
+	assert.Nil(t, cache.Close())
+	assert.Nil(t, cache.Close())
+}
+
+func TestChainGetWhenClosed(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheValue := &struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+
+	// Cache 1
+	cache1 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+	cache1.EXPECT().GetWithTTL(ctx, "my-key").Return(nil, 0*time.Second,
+		errors.New("unable to find in cache 1"))
+
+	// Cache 2
+	cache2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
+	cache2.EXPECT().GetWithTTL(ctx, "my-key").Return(cacheValue,
+		0*time.Second, nil)
+
+	cache := NewChain[any](cache1, cache2)
+
+	assert.Nil(t, cache.Close())
+
+	// When - the value cannot be set back anymore but reading still succeeds
+	value, err := cache.Get(ctx, "my-key")
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, cacheValue, value)
 }
 
 func TestCacheChecksum(t *testing.T) {
@@ -428,6 +512,7 @@ func TestChainSetWhenErrorInChain(t *testing.T) {
 	store2 := mockcache.NewMockSetterCacheInterface[any](ctrl)
 
 	cache := NewChain[any](store1, store2)
+	defer cache.Close()
 
 	// assert store2 set is called
 	store2.EXPECT().Set(ctx, key, value, nil).Return(nil)
