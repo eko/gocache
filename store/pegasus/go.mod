@@ -1,6 +1,6 @@
 module github.com/eko/gocache/store/pegasus/v4
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/XiaoMi/pegasus-go-client v0.0.0-20220519103347-ba0e68465cd5
@@ -17,8 +17,8 @@ require (
 	github.com/pegasus-kv/thrift v0.13.0 // indirect
 	github.com/sirupsen/logrus v1.8.3 // indirect
 	golang.org/x/exp v0.0.0-20251209150349-8475f28825e9 // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 	k8s.io/apimachinery v0.16.13 // indirect
