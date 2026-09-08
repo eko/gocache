@@ -3,7 +3,9 @@ package cache
 import (
 	"context"
 	"crypto"
+	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"time"
 
@@ -15,6 +17,10 @@ const (
 	// CacheType represents the cache type as a string value
 	CacheType = "cache"
 )
+
+// ErrValueTypeMismatch is returned when the value read from the store cannot be
+// represented by the type the cache has been instantiated with.
+var ErrValueTypeMismatch = errors.New("value type mismatch")
 
 // Cache represents the configuration needed by a cache
 type Cache[T any] struct {
@@ -37,11 +43,7 @@ func (c *Cache[T]) Get(ctx context.Context, key any) (T, error) {
 		return *new(T), err
 	}
 
-	if v, ok := value.(T); ok {
-		return v, nil
-	}
-
-	return *new(T), nil
+	return castValue[T](value)
 }
 
 // GetWithTTL returns the object stored in cache and its corresponding TTL
@@ -53,11 +55,9 @@ func (c *Cache[T]) GetWithTTL(ctx context.Context, key any) (T, time.Duration, e
 		return *new(T), duration, err
 	}
 
-	if v, ok := value.(T); ok {
-		return v, duration, nil
-	}
+	object, err := castValue[T](value)
 
-	return *new(T), duration, nil
+	return object, duration, err
 }
 
 // Set populates the cache item using the given key
@@ -92,6 +92,17 @@ func (c *Cache[T]) GetType() string {
 	return CacheType
 }
 
+// Close releases the resources held by the underlying store when it implements
+// io.Closer. Stores backed by a client owning goroutines or connections (such as
+// Ristretto or Bigcache) need this to be called when the cache is not used anymore.
+func (c *Cache[T]) Close() error {
+	if closer, ok := c.codec.GetStore().(io.Closer); ok {
+		return closer.Close()
+	}
+
+	return nil
+}
+
 // getCacheKey returns the cache key for the given key object by returning
 // the key if type is string or by computing a checksum of key structure
 // if its type is other than string
@@ -104,6 +115,40 @@ func (c *Cache[T]) getCacheKey(key any) string {
 	default:
 		return checksum(key)
 	}
+}
+
+// castValue returns the given store value as a T.
+//
+// Stores do not all keep the type they have been given: some of them normalize
+// values to []byte or to string, so both representations are accepted when T is
+// one of these two types. Any other mismatch returns ErrValueTypeMismatch rather
+// than silently returning a zero value.
+func castValue[T any](value any) (T, error) {
+	if value == nil {
+		return *new(T), nil
+	}
+
+	if v, ok := value.(T); ok {
+		return v, nil
+	}
+
+	switch v := value.(type) {
+	case []byte:
+		if converted, ok := any(string(v)).(T); ok {
+			return converted, nil
+		}
+	case string:
+		if converted, ok := any([]byte(v)).(T); ok {
+			return converted, nil
+		}
+	}
+
+	return *new(T), fmt.Errorf(
+		"%w: got %T, expected %s",
+		ErrValueTypeMismatch,
+		value,
+		reflect.TypeOf(new(T)).Elem(),
+	)
 }
 
 // checksum hashes a given object into a string

@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/allegro/bigcache/v3"
 	"github.com/eko/gocache/lib/v4/store"
 )
 
@@ -27,6 +29,7 @@ const (
 
 // BigcacheStore is a store for Bigcache
 type BigcacheStore struct {
+	mu      sync.Mutex
 	client  BigcacheClientInterface
 	options *store.Options
 }
@@ -43,13 +46,17 @@ func NewBigcache(client BigcacheClientInterface, options ...store.Option) *Bigca
 func (s *BigcacheStore) Get(_ context.Context, key any) (any, error) {
 	item, err := s.client.Get(key.(string))
 	if err != nil {
+		if errors.Is(err, bigcache.ErrEntryNotFound) {
+			return nil, store.NotFoundWithCause(err)
+		}
+
 		return nil, err
 	}
 	if item == nil {
 		return nil, store.NotFoundWithCause(errors.New("unable to retrieve data from bigcache"))
 	}
 
-	return item, err
+	return item, nil
 }
 
 // Even though Bigcache does not support a TTL, try our best to implement this
@@ -90,13 +97,13 @@ func (s *BigcacheStore) Set(ctx context.Context, key any, value any, options ...
 func (s *BigcacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(BigcacheTagPattern, tag)
-		cacheKeys := []string{}
 
-		if result, err := s.Get(ctx, tagKey); err == nil {
-			if bytes, ok := result.([]byte); ok {
-				cacheKeys = strings.Split(string(bytes), ",")
-			}
-		}
+		// The whole read-modify-write sequence has to happen under the same lock:
+		// otherwise two concurrent Set calls on the same tag both read the same
+		// list of keys and the last write wins, losing the other one key.
+		s.mu.Lock()
+
+		cacheKeys := s.getCacheKeysForTag(ctx, tagKey)
 
 		alreadyInserted := false
 		for _, cacheKey := range cacheKeys {
@@ -110,8 +117,25 @@ func (s *BigcacheStore) setTags(ctx context.Context, key any, tags []string) {
 			cacheKeys = append(cacheKeys, key.(string))
 		}
 
-		s.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), store.WithExpiration(720*time.Hour))
+		s.client.Set(tagKey, []byte(strings.Join(cacheKeys, ",")))
+
+		s.mu.Unlock()
 	}
+}
+
+// getCacheKeysForTag returns the list of cache keys associated to a given tag key
+func (s *BigcacheStore) getCacheKeysForTag(ctx context.Context, tagKey string) []string {
+	result, err := s.Get(ctx, tagKey)
+	if err != nil {
+		return []string{}
+	}
+
+	bytes, ok := result.([]byte)
+	if !ok || len(bytes) == 0 {
+		return []string{}
+	}
+
+	return strings.Split(string(bytes), ",")
 }
 
 // Delete removes data from Bigcache for given key identifier
@@ -123,22 +147,15 @@ func (s *BigcacheStore) Delete(_ context.Context, key any) error {
 func (s *BigcacheStore) Invalidate(ctx context.Context, options ...store.InvalidateOption) error {
 	opts := store.ApplyInvalidateOptions(options...)
 
-	if tags := opts.Tags; len(tags) > 0 {
-		for _, tag := range tags {
-			tagKey := fmt.Sprintf(BigcacheTagPattern, tag)
-			result, err := s.Get(ctx, tagKey)
-			if err != nil {
-				return nil
-			}
+	for _, tag := range opts.Tags {
+		tagKey := fmt.Sprintf(BigcacheTagPattern, tag)
 
-			cacheKeys := []string{}
-			if bytes, ok := result.([]byte); ok {
-				cacheKeys = strings.Split(string(bytes), ",")
-			}
+		s.mu.Lock()
+		cacheKeys := s.getCacheKeysForTag(ctx, tagKey)
+		s.mu.Unlock()
 
-			for _, cacheKey := range cacheKeys {
-				s.Delete(ctx, cacheKey)
-			}
+		for _, cacheKey := range cacheKeys {
+			_ = s.Delete(ctx, cacheKey)
 		}
 	}
 

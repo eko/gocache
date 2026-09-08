@@ -150,6 +150,10 @@ func (c *LoadableCache[T]) Set(ctx context.Context, key any, object T, options .
 
 // Delete removes a value from cache
 func (c *LoadableCache[T]) Delete(ctx context.Context, key any) error {
+	// Drop the value possibly waiting to be stored in the main cache, otherwise
+	// a following Get would serve the value that has just been deleted.
+	c.setCache.Delete(c.getCacheKey(key))
+
 	return c.cache.Delete(ctx, key)
 }
 
@@ -160,6 +164,8 @@ func (c *LoadableCache[T]) Invalidate(ctx context.Context, options ...store.Inva
 
 // Clear resets all cache data
 func (c *LoadableCache[T]) Clear(ctx context.Context) error {
+	c.setCache.Clear()
+
 	return c.cache.Clear(ctx)
 }
 

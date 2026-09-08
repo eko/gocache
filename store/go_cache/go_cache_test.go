@@ -3,6 +3,7 @@ package go_cache
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -343,4 +344,87 @@ func TestGoCacheInvalidateConcurrency(t *testing.T) {
 		}(i)
 
 	}
+}
+
+func TestGoCacheSetWithTagsConcurrently(t *testing.T) {
+	ctx := context.Background()
+
+	client := cache.New(10*time.Second, 30*time.Second)
+	store := NewGoCache(client)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			err := store.Set(
+				ctx,
+				fmt.Sprintf("key-%d", i),
+				[]byte("my-cache-value"),
+				lib_store.WithTags([]string{"tag1"}),
+			)
+			assert.Nil(t, err, err)
+		}(i)
+	}
+
+	wg.Wait()
+
+	result, err := store.Get(ctx, "gocache_tag_tag1")
+	assert.Nil(t, err)
+
+	cacheKeys, ok := result.(map[string]struct{})
+	assert.True(t, ok)
+	assert.Len(t, cacheKeys, 100)
+}
+
+func TestGoCacheSetUsesStoreDefaultOptions(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockGoCacheClientInterface(ctrl)
+	client.EXPECT().Set(cacheKey, cacheValue, 5*time.Second)
+
+	store := NewGoCache(client, lib_store.WithExpiration(5*time.Second))
+
+	// When
+	err := store.Set(ctx, cacheKey, cacheValue)
+
+	// Then
+	assert.Nil(t, err)
+}
+
+func TestGoCacheSetWithTagsUsesTagsTTLOption(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockGoCacheClientInterface(ctrl)
+	client.EXPECT().Set(cacheKey, cacheValue, 0*time.Second)
+	client.EXPECT().Get("gocache_tag_tag1").Return(nil, false)
+	client.EXPECT().Set("gocache_tag_tag1", map[string]struct{}{"my-key": {}}, time.Hour)
+
+	store := NewGoCache(client)
+
+	// When
+	err := store.Set(
+		ctx,
+		cacheKey,
+		cacheValue,
+		lib_store.WithTags([]string{"tag1"}),
+		lib_store.WithTagsTTL(time.Hour),
+	)
+
+	// Then
+	assert.Nil(t, err)
 }

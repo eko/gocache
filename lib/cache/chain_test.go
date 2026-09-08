@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	mockcache "github.com/eko/gocache/lib/v4/internal/mocks/cache"
-	mockcodec "github.com/eko/gocache/lib/v4/internal/mocks/codec"
-	mockstore "github.com/eko/gocache/lib/v4/internal/mocks/store"
+	mockcache "github.com/eko/gocache/lib/v4/mocks/cache"
+	mockcodec "github.com/eko/gocache/lib/v4/mocks/codec"
+	mockstore "github.com/eko/gocache/lib/v4/mocks/store"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"

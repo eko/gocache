@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/eko/gocache/lib/v4/codec"
-	mockcodec "github.com/eko/gocache/lib/v4/internal/mocks/codec"
-	mockstore "github.com/eko/gocache/lib/v4/internal/mocks/store"
+	mockcodec "github.com/eko/gocache/lib/v4/mocks/codec"
+	mockstore "github.com/eko/gocache/lib/v4/mocks/store"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -193,4 +193,25 @@ func TestRecordFromCodec(t *testing.T) {
 
 		assert.Equal(t, tc.expected, v)
 	}
+}
+
+func TestNewPrometheusWhenCollectorIsAlreadyRegistered(t *testing.T) {
+	// Given
+	registry := prometheus.NewRegistry()
+
+	first := NewPrometheus("first-cache", WithRegisterer(registry))
+
+	// When
+	second := NewPrometheus("second-cache", WithRegisterer(registry))
+
+	// Then
+	assert.Equal(t, first.collector, second.collector)
+
+	first.record("my-store", "hit_count", 5)
+	second.record("my-store", "hit_count", 8)
+
+	metrics, err := registry.Gather()
+	assert.Nil(t, err)
+	assert.Len(t, metrics, 1)
+	assert.Len(t, metrics[0].GetMetric(), 2)
 }

@@ -24,10 +24,10 @@ store-increment-patch-version:
 	done
 
 mocks:
-	mockgen -source=lib/cache/interface.go -destination=lib/internal/mocks/cache/cache_mock.go -package=cache
-	mockgen -source=lib/codec/interface.go -destination=lib/internal/mocks/codec/codec_mock.go -package=codec
-	mockgen -source=lib/metrics/interface.go -destination=lib/internal/mocks/metrics/metrics_mock.go -package=metrics
-	mockgen -source=lib/store/interface.go -destination=lib/internal/mocks/store/store_mock.go -package=store
+	mockgen -source=lib/cache/interface.go -destination=lib/mocks/cache/cache_mock.go -package=cache
+	mockgen -source=lib/codec/interface.go -destination=lib/mocks/codec/codec_mock.go -package=codec
+	mockgen -source=lib/metrics/interface.go -destination=lib/mocks/metrics/metrics_mock.go -package=metrics
+	mockgen -source=lib/store/interface.go -destination=lib/mocks/store/store_mock.go -package=store
 
 	mockgen -source=store/bigcache/bigcache.go -destination=store/bigcache/bigcache_mock_test.go -package=bigcache
 	mockgen -source=store/redis/redis.go -destination=store/redis/redis_mock_test.go -package=redis

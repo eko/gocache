@@ -15,6 +15,9 @@ const (
 	GoCacheType = "go-cache"
 	// GoCacheTagPattern represents the tag pattern to be used as a key in specified storage
 	GoCacheTagPattern = "gocache_tag_%s"
+
+	// TagKeyExpiry is the default expiration applied to tag keys
+	TagKeyExpiry = 720 * time.Hour
 )
 
 // GoCacheClientInterface represents a github.com/patrickmn/go-cache client
@@ -65,47 +68,50 @@ func (s *GoCacheStore) GetWithTTL(_ context.Context, key any) (any, time.Duratio
 
 // Set defines data in GoCache memoey cache for given key identifier
 func (s *GoCacheStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
-	opts := lib_store.ApplyOptions(options...)
-	if opts == nil {
-		opts = s.options
-	}
+	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
 
 	s.client.Set(key.(string), value, opts.Expiration)
 
 	if tags := opts.Tags; len(tags) > 0 {
-		s.setTags(ctx, key, tags)
+		ttl := opts.TagsTTL
+		if ttl == 0 {
+			ttl = TagKeyExpiry
+		}
+		s.setTags(key, tags, ttl)
 	}
 
 	return nil
 }
 
-func (s *GoCacheStore) setTags(ctx context.Context, key any, tags []string) {
+func (s *GoCacheStore) setTags(key any, tags []string, ttl time.Duration) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(GoCacheTagPattern, tag)
-		var cacheKeys map[string]struct{}
 
-		if result, err := s.Get(ctx, tagKey); err == nil {
-			if bytes, ok := result.(map[string]struct{}); ok {
-				cacheKeys = bytes
-			}
+		// The whole read-modify-write sequence has to happen under the same lock:
+		// otherwise two concurrent Set calls on the same tag both read the same
+		// list of keys and the last write wins, losing the other one key.
+		s.mu.Lock()
+
+		var currentKeys map[string]struct{}
+		if result, exists := s.client.Get(tagKey); exists {
+			currentKeys, _ = result.(map[string]struct{})
 		}
 
-		s.mu.RLock()
-		if _, exists := cacheKeys[key.(string)]; exists {
-			s.mu.RUnlock()
+		if _, alreadyInserted := currentKeys[key.(string)]; alreadyInserted {
+			s.mu.Unlock()
 			continue
 		}
-		s.mu.RUnlock()
 
-		if cacheKeys == nil {
-			cacheKeys = make(map[string]struct{})
+		// Store a copy: the previous map may still be read by another goroutine.
+		cacheKeys := make(map[string]struct{}, len(currentKeys)+1)
+		for cacheKey := range currentKeys {
+			cacheKeys[cacheKey] = struct{}{}
 		}
-
-		s.mu.Lock()
 		cacheKeys[key.(string)] = struct{}{}
-		s.mu.Unlock()
 
-		s.client.Set(tagKey, cacheKeys, 720*time.Hour)
+		s.client.Set(tagKey, cacheKeys, ttl)
+
+		s.mu.Unlock()
 	}
 }
 
@@ -119,24 +125,24 @@ func (s *GoCacheStore) Delete(_ context.Context, key any) error {
 func (s *GoCacheStore) Invalidate(ctx context.Context, options ...lib_store.InvalidateOption) error {
 	opts := lib_store.ApplyInvalidateOptions(options...)
 
-	if tags := opts.Tags; len(tags) > 0 {
-		for _, tag := range tags {
-			tagKey := fmt.Sprintf(GoCacheTagPattern, tag)
-			result, err := s.Get(ctx, tagKey)
-			if err != nil {
-				return nil
-			}
+	for _, tag := range opts.Tags {
+		tagKey := fmt.Sprintf(GoCacheTagPattern, tag)
 
-			var cacheKeys map[string]struct{}
-			if bytes, ok := result.(map[string]struct{}); ok {
-				cacheKeys = bytes
-			}
+		s.mu.RLock()
+		result, exists := s.client.Get(tagKey)
+		s.mu.RUnlock()
 
-			s.mu.RLock()
-			for cacheKey := range cacheKeys {
-				_ = s.Delete(ctx, cacheKey)
-			}
-			s.mu.RUnlock()
+		if !exists {
+			continue
+		}
+
+		cacheKeys, ok := result.(map[string]struct{})
+		if !ok {
+			continue
+		}
+
+		for cacheKey := range cacheKeys {
+			_ = s.Delete(ctx, cacheKey)
 		}
 	}
 

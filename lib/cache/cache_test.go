@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/eko/gocache/lib/v4/codec"
-	mockstore "github.com/eko/gocache/lib/v4/internal/mocks/store"
+	mockstore "github.com/eko/gocache/lib/v4/mocks/store"
 	libstore "github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -379,4 +379,118 @@ func TestCacheDeleteWhenError(t *testing.T) {
 
 	// Then
 	assert.Equal(t, expectedErr, err)
+}
+
+func TestCacheGetWhenStoreReturnsBytesAndStringIsExpected(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Get(ctx, "my-key").Return([]byte("my-cache-value"), nil)
+
+	cache := New[string](mockedStore)
+
+	// When
+	value, err := cache.Get(ctx, "my-key")
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, "my-cache-value", value)
+}
+
+func TestCacheGetWhenStoreReturnsStringAndBytesAreExpected(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Get(ctx, "my-key").Return("my-cache-value", nil)
+
+	cache := New[[]byte](mockedStore)
+
+	// When
+	value, err := cache.Get(ctx, "my-key")
+
+	// Then
+	assert.Nil(t, err)
+	assert.Equal(t, []byte("my-cache-value"), value)
+}
+
+func TestCacheGetWhenValueTypeDoesNotMatch(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().Get(ctx, "my-key").Return(42, nil)
+
+	cache := New[string](mockedStore)
+
+	// When
+	value, err := cache.Get(ctx, "my-key")
+
+	// Then
+	assert.Empty(t, value)
+	assert.ErrorIs(t, err, ErrValueTypeMismatch)
+	assert.EqualError(t, err, "value type mismatch: got int, expected string")
+}
+
+func TestCacheGetWithTTLWhenValueTypeDoesNotMatch(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().GetWithTTL(ctx, "my-key").Return(42, 5*time.Second, nil)
+
+	cache := New[string](mockedStore)
+
+	// When
+	value, ttl, err := cache.GetWithTTL(ctx, "my-key")
+
+	// Then
+	assert.Empty(t, value)
+	assert.Equal(t, 5*time.Second, ttl)
+	assert.ErrorIs(t, err, ErrValueTypeMismatch)
+}
+
+type closeableStore struct {
+	libstore.StoreInterface
+	closed bool
+}
+
+func (s *closeableStore) Close() error {
+	s.closed = true
+	return nil
+}
+
+func TestCacheClose(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	store := &closeableStore{StoreInterface: mockstore.NewMockStoreInterface(ctrl)}
+
+	cache := New[any](store)
+
+	// When
+	err := cache.Close()
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, store.closed)
+}
+
+func TestCacheCloseWhenStoreIsNotCloseable(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	cache := New[any](mockstore.NewMockStoreInterface(ctrl))
+
+	// When - Then
+	assert.Nil(t, cache.Close())
 }

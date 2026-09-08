@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dgraph-io/ristretto/v2"
 	lib_store "github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 )
@@ -191,7 +192,7 @@ func TestRistrettoSetWithTags(t *testing.T) {
 	client := NewMockRistrettoClientInterface[string, []byte](t)
 	client.EXPECT().SetWithTTL(cacheKey, cacheValue, int64(0), 0*time.Second).Return(true)
 	client.EXPECT().Get("gocache_tag_tag1").Return(nil, true)
-	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte(",my-key"), int64(0), 720*time.Hour).Return(true)
+	client.EXPECT().SetWithTTL("gocache_tag_tag1", []byte("my-key"), int64(0), 720*time.Hour).Return(true)
 
 	store := NewRistretto(client)
 
@@ -303,4 +304,75 @@ func TestRistrettoGetType(t *testing.T) {
 
 	// When - Then
 	assert.Equal(t, RistrettoType, store.GetType())
+}
+
+func TestRistrettoSetWithTagsWhenValueTypeIsString(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	client, err := ristretto.NewCache(&ristretto.Config[string, string]{
+		NumCounters: 1000,
+		MaxCost:     100,
+		BufferItems: 64,
+	})
+	assert.Nil(t, err)
+	defer client.Close()
+
+	store := NewRistretto(client, lib_store.WithCost(1), lib_store.WithSynchronousSet())
+
+	// When
+	err = store.Set(ctx, "my-key", "my-cache-value", lib_store.WithTags([]string{"tag1"}))
+
+	// Then
+	assert.Nil(t, err)
+
+	value, err := store.Get(ctx, "gocache_tag_tag1")
+	assert.Nil(t, err)
+	assert.Equal(t, "my-key", value)
+}
+
+func TestRistrettoGetWhenKeyTypeIsNotSupported(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	client := NewMockRistrettoClientInterface[int, string](t)
+
+	store := NewRistretto(client)
+
+	// When
+	value, err := store.Get(ctx, "my-key")
+
+	// Then
+	assert.Nil(t, value)
+	assert.EqualError(t, err, "key type not supported by Ristretto store: got string, expected int")
+}
+
+func TestRistrettoSetWhenValueTypeIsNotSupported(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	client := NewMockRistrettoClientInterface[string, string](t)
+
+	store := NewRistretto(client)
+
+	// When
+	err := store.Set(ctx, "my-key", []byte("my-cache-value"))
+
+	// Then
+	assert.EqualError(t, err, "value type not supported by Ristretto store: got []uint8, expected string")
+}
+
+func TestRistrettoClose(t *testing.T) {
+	// Given
+	client, err := ristretto.NewCache(&ristretto.Config[string, string]{
+		NumCounters: 1000,
+		MaxCost:     100,
+		BufferItems: 64,
+	})
+	assert.Nil(t, err)
+
+	store := NewRistretto(client)
+
+	// When - Then
+	assert.Nil(t, store.Close())
 }

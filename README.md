@@ -120,7 +120,7 @@ value := cacheManager.Get(ctx, "my-key")
 
 ```go
 import (
-	"github.com/dgraph-io/ristretto"
+	"github.com/dgraph-io/ristretto/v2"
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/store"
 	ristretto_store "github.com/eko/gocache/store/ristretto/v4"
@@ -136,6 +136,10 @@ if err != nil {
 ristrettoStore := ristretto_store.NewRistretto(ristrettoCache)
 
 cacheManager := cache.New[string](ristrettoStore)
+
+// Ristretto owns goroutines that live until the cache is closed
+defer cacheManager.Close()
+
 err := cacheManager.Set(ctx, "my-key", "my-value", store.WithCost(2))
 if err != nil {
     panic(err)
@@ -145,6 +149,8 @@ value := cacheManager.Get(ctx, "my-key")
 
 cacheManager.Delete(ctx, "my-key")
 ```
+
+Note that since `store/ristretto/v4.3.1`, this store is built on top of `github.com/dgraph-io/ristretto/v2`, whose `NewCache` takes the key and value types as generic parameters. Upgrading requires updating both the import path and the `ristretto.Config` instantiation.
 
 #### Memory (using Go-cache)
 
@@ -283,7 +289,7 @@ Here, we will chain caches in the following order: first in memory with Ristrett
 
 ```go
 // Initialize Ristretto cache and Redis client
-ristrettoCache, err := ristretto.NewCache(&ristretto.Config[string, string]{
+ristrettoCache, err := ristretto.NewCache(&ristretto.Config[string, any]{
     NumCounters: 1000,
     MaxCost: 100,
     BufferItems: 64,
@@ -485,6 +491,45 @@ func main() {
 }
 
 ```
+
+### Value types
+
+A cache is instantiated with the type of the values it holds (`cache.New[*Book](...)`), but stores do not
+all keep the type they are given: Bigcache and Freecache only handle `[]byte`, Redis returns `string`, ...
+
+Both representations are converted for you when the cache type is `string` or `[]byte`, so
+`cache.New[string](bigcacheStore)` and `cache.New[[]byte](redisStore)` both return the value that was stored.
+Any other mismatch returns a `cache.ErrValueTypeMismatch` error instead of silently returning a zero value:
+
+```go
+value, err := cacheManager.Get(ctx, "my-key")
+if errors.Is(err, cache.ErrValueTypeMismatch) {
+    // the store does not hold the type this cache was instantiated with
+}
+```
+
+To store structs in a store that only handles bytes, use the [marshaler wrapper](#a-marshaler-wrapper).
+
+### Expiration
+
+The expiration is given by the `store.WithExpiration()` option, either as a store default or per `Set()` call.
+
+How to store a value that never expires depends on the underlying store:
+
+* most of them (Redis, Rueidis, Valkey, Memcache, Ristretto, Freecache, ...) treat a zero expiration as
+  "no expiration", which is the default when the option is not given,
+* the Go-cache store forwards a zero expiration to the client, which then applies its own default expiration:
+  pass `store.WithExpiration(gocache.NoExpiration)` (which is `-1`) instead,
+* Bigcache does not handle a per-key lifetime at all, it is configured on the client itself.
+
+### Releasing resources
+
+Some caches and stores own goroutines or connections that have to be released when they are not used anymore:
+
+* `cache.Cache` exposes a `Close()` method that closes the underlying store when it supports it (Ristretto,
+  Bigcache, ...),
+* `cache.ChainCache` and `cache.LoadableCache` own a goroutine each: their `Close()` method releases it after
+  having written the values that were still pending.
 
 ### Write your own custom cache
 

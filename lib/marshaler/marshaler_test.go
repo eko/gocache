@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	mockcache "github.com/eko/gocache/lib/v4/internal/mocks/cache"
+	mockcache "github.com/eko/gocache/lib/v4/mocks/cache"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmihailenco/msgpack/v5"

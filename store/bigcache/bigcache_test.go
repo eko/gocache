@@ -3,8 +3,13 @@ package bigcache
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/allegro/bigcache/v3"
 	lib_store "github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -338,4 +343,61 @@ func TestBigcacheGetType(t *testing.T) {
 
 	// When - Then
 	assert.Equal(t, BigcacheType, store.GetType())
+}
+
+func TestBigcacheGetWhenEntryIsNotFound(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	client := NewMockBigcacheClientInterface(ctrl)
+	client.EXPECT().Get("my-key").Return(nil, bigcache.ErrEntryNotFound)
+
+	store := NewBigcache(client)
+
+	// When
+	value, err := store.Get(ctx, "my-key")
+
+	// Then
+	assert.Nil(t, value)
+	assert.ErrorIs(t, err, lib_store.NotFound{})
+	assert.ErrorIs(t, err, bigcache.ErrEntryNotFound)
+}
+
+func TestBigcacheSetWithTagsConcurrently(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	client, err := bigcache.New(ctx, bigcache.DefaultConfig(5*time.Minute))
+	assert.Nil(t, err)
+
+	store := NewBigcache(client)
+
+	// When
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			err := store.Set(
+				ctx,
+				fmt.Sprintf("key-%d", i),
+				[]byte("my-cache-value"),
+				lib_store.WithTags([]string{"tag1"}),
+			)
+			assert.Nil(t, err, err)
+		}(i)
+	}
+
+	wg.Wait()
+
+	// Then
+	result, err := store.Get(ctx, "gocache_tag_tag1")
+	assert.Nil(t, err)
+
+	cacheKeys := strings.Split(string(result.([]byte)), ",")
+	assert.Len(t, cacheKeys, 100)
 }

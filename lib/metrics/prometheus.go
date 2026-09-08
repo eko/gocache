@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"errors"
+
 	"github.com/eko/gocache/lib/v4/codec"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -81,7 +83,22 @@ func NewPrometheus(service string, options ...PrometheusOption) *Prometheus {
 		labelNames,
 	)
 
-	instance.registerer.MustRegister(instance.collector)
+	// Several caches can share the same metric: when a collector with the same
+	// name and labels is already registered, reuse it instead of panicking. Each
+	// instance is then told apart by its own "service" label value.
+	if err := instance.registerer.Register(instance.collector); err != nil {
+		var alreadyRegistered prometheus.AlreadyRegisteredError
+		if !errors.As(err, &alreadyRegistered) {
+			panic(err)
+		}
+
+		collector, ok := alreadyRegistered.ExistingCollector.(*prometheus.GaugeVec)
+		if !ok {
+			panic(err)
+		}
+
+		instance.collector = collector
+	}
 
 	go instance.recorder()
 

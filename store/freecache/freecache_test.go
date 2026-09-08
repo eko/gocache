@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/coocood/freecache"
 	lib_store "github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -498,4 +501,40 @@ func TestFreecacheGetType(t *testing.T) {
 
 	// Then
 	assert.Equal(t, FreecacheType, ty)
+}
+
+func TestFreecacheSetWithTagsConcurrently(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	client := freecache.NewCache(10 * 1024 * 1024)
+
+	store := NewFreecache(client)
+
+	// When
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			err := store.Set(
+				ctx,
+				fmt.Sprintf("key-%d", i),
+				[]byte("my-cache-value"),
+				lib_store.WithTags([]string{"tag1"}),
+			)
+			assert.Nil(t, err, err)
+		}(i)
+	}
+
+	wg.Wait()
+
+	// Then
+	result, err := store.Get(ctx, "freecache_tag_tag1")
+	assert.Nil(t, err)
+
+	cacheKeys := strings.Split(string(result.([]byte)), ",")
+	assert.Len(t, cacheKeys, 100)
 }

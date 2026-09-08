@@ -38,13 +38,13 @@ func TestOptionsTagsValue(t *testing.T) {
 }
 
 func TestOptionsTagsTTL(t *testing.T) {
-  // Given
-  options := &Options{
-    TagsTTL: time.Hour,
-  }
+	// Given
+	options := &Options{
+		TagsTTL: time.Hour,
+	}
 
-  // When - Then
-  assert.Equal(t, time.Hour, options.TagsTTL)
+	// When - Then
+	assert.Equal(t, time.Hour, options.TagsTTL)
 }
 
 func Test_applyOptionsWithDefault(t *testing.T) {

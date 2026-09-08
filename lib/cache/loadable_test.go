@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	mockcache "github.com/eko/gocache/lib/v4/internal/mocks/cache"
+	mockcache "github.com/eko/gocache/lib/v4/mocks/cache"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -420,4 +420,60 @@ func TestLoadableCloseWhileGetting(t *testing.T) {
 	assert.Nil(t, cache.Close())
 
 	finished.Wait()
+}
+
+func TestLoadableDeleteReleasesValueWaitingToBeSet(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cache1 := mockcache.NewMockCacheInterface[any](ctrl)
+	cache1.EXPECT().Delete(ctx, "my-key").Return(nil)
+
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a-value", nil, nil
+	}
+
+	cacheLoadable := NewLoadable[any](loadFunc, cache1)
+	defer cacheLoadable.Close()
+
+	cacheLoadable.setCache.Store("my-key", "a-value")
+
+	// When
+	err := cacheLoadable.Delete(ctx, "my-key")
+
+	// Then
+	assert.Nil(t, err)
+
+	_, found := cacheLoadable.setCache.Load("my-key")
+	assert.False(t, found)
+}
+
+func TestLoadableClearReleasesValuesWaitingToBeSet(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cache1 := mockcache.NewMockCacheInterface[any](ctrl)
+	cache1.EXPECT().Clear(ctx).Return(nil)
+
+	loadFunc := func(_ context.Context, key any) (any, []store.Option, error) {
+		return "a-value", nil, nil
+	}
+
+	cacheLoadable := NewLoadable[any](loadFunc, cache1)
+	defer cacheLoadable.Close()
+
+	cacheLoadable.setCache.Store("my-key", "a-value")
+
+	// When
+	err := cacheLoadable.Clear(ctx)
+
+	// Then
+	assert.Nil(t, err)
+
+	_, found := cacheLoadable.setCache.Load("my-key")
+	assert.False(t, found)
 }

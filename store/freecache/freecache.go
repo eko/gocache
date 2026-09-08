@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
@@ -31,6 +32,7 @@ type FreecacheClientInterface interface {
 
 // FreecacheStore is a store for freecache
 type FreecacheStore struct {
+	mu      sync.Mutex
 	client  FreecacheClientInterface
 	options *lib_store.Options
 }
@@ -112,6 +114,12 @@ func (f *FreecacheStore) Set(ctx context.Context, key any, value any, options ..
 func (f *FreecacheStore) setTags(ctx context.Context, key any, tags []string) {
 	for _, tag := range tags {
 		tagKey := fmt.Sprintf(FreecacheTagPattern, tag)
+
+		// The whole read-modify-write sequence has to happen under the same lock:
+		// otherwise two concurrent Set calls on the same tag both read the same
+		// list of keys and the last write wins, losing the other one key.
+		f.mu.Lock()
+
 		cacheKeys := f.getCacheKeysForTag(ctx, tagKey)
 
 		alreadyInserted := false
@@ -127,13 +135,15 @@ func (f *FreecacheStore) setTags(ctx context.Context, key any, tags []string) {
 		}
 
 		f.Set(ctx, tagKey, []byte(strings.Join(cacheKeys, ",")), lib_store.WithExpiration(720*time.Hour))
+
+		f.mu.Unlock()
 	}
 }
 
 func (f *FreecacheStore) getCacheKeysForTag(ctx context.Context, tagKey string) []string {
 	cacheKeys := []string{}
 	if result, err := f.Get(ctx, tagKey); err == nil && result != nil {
-		if str, ok := result.([]byte); ok {
+		if str, ok := result.([]byte); ok && len(str) > 0 {
 			cacheKeys = strings.Split(string(str), ",")
 		}
 	}
@@ -158,7 +168,10 @@ func (f *FreecacheStore) Invalidate(ctx context.Context, options ...lib_store.In
 	if tags := opts.Tags; len(tags) > 0 {
 		for _, tag := range tags {
 			tagKey := fmt.Sprintf(FreecacheTagPattern, tag)
+
+			f.mu.Lock()
 			cacheKeys := f.getCacheKeysForTag(ctx, tagKey)
+			f.mu.Unlock()
 
 			for _, cacheKey := range cacheKeys {
 				err := f.Delete(ctx, cacheKey)
