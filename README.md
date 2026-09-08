@@ -490,6 +490,41 @@ marshal.Delete(ctx, "my-key")
 
 The only thing you have to do is to specify the struct in which you want your value to be un-marshalled as a second argument when calling the `.Get()` method.
 
+#### A marshaler cache
+
+`marshaler.Marshaler` fills an object given to `Get()`, which means it is not a `cache.CacheInterface` and
+cannot be composed with the other caches. `marshaler.Cache` is the same idea with a `Get()` that returns the
+value, so it satisfies `cache.CacheInterface[T]` and can be wrapped like any other cache — a loadable cache
+over a chain of stores that only handle bytes, for instance:
+
+```go
+// A chain of caches holding bytes
+chain := cache.NewChain[[]byte](
+	cache.New[[]byte](ristrettoStore),
+	cache.New[[]byte](redisStore),
+)
+defer chain.Close()
+
+// ... seen as a cache of *Book
+books := marshaler.NewCache[*Book](chain)
+
+// ... which can be given a load function
+cacheManager := cache.NewLoadable[*Book](loadFunction, books)
+defer cacheManager.Close()
+
+book, err := cacheManager.Get(ctx, "my-key")
+if err != nil {
+    panic(err)
+}
+```
+
+It takes a `cache.CacheInterface[[]byte]`, so put the metric cache below it rather than above it, otherwise
+there is no codec to read the statistics from:
+
+```go
+books := marshaler.NewCache[*Book](cache.NewMetric[[]byte](promMetrics, cache.New[[]byte](redisStore)))
+```
+
 ### Setting a value only if the key is free
 
 `SetIfNotExists()` writes a value only when the key does not exist yet and reports whether it did, using the
