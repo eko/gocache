@@ -11,16 +11,16 @@ store-latest-versions:
 	| awk -F/ '!seen[$$2]++'
 
 store-increment-patch-version:
-	git tag \
-	| grep '^store/' \
-	| sort -t/ -k3 -Vr \
-	| awk -F/ '!seen[$$2]++' \
-	| while IFS=/ read -r store name version; do \
-		v="$${version#v}"; \
-		IFS=. read -r major minor patch <<< "$$v"; \
-		new="v$${major}.$${minor}.$$((patch+1))"; \
-		echo "Tagging $$store/$$name/$$new"; \
-		git tag "$$store/$$name/$$new" "$$store/$$name/$$version"; \
+	@ls store/ | while read -r name; do \
+		version=$$(git tag | grep "^store/$$name/v" | sort -t/ -k3 -V | tail -n1); \
+		if [ -z "$$version" ]; then \
+			echo "Skipping store/$$name: no version tagged yet, tag the first one manually"; \
+			continue; \
+		fi; \
+		patch=$$(echo "$$version" | awk -F. '{print $$NF}'); \
+		new="$$(echo "$$version" | sed -E 's/\.[0-9]+$$//').$$((patch+1))"; \
+		echo "Tagging $$new"; \
+		git tag "$$new"; \
 	done
 
 mocks:
@@ -41,8 +41,11 @@ test:
 	cd store/bigcache; GOGC=10 go test -v -p=4 ./...
 	cd store/freecache; GOGC=10 go test -v -p=4 ./...
 	cd store/go_cache; GOGC=10 go test -v -p=4 ./...
+	cd store/hazelcast; GOGC=10 go test -v -p=4 ./...
 	cd store/memcache; GOGC=10 go test -v -p=4 ./...
 	cd store/pegasus; GOGC=10 go test -v -p=4 ./...
 	cd store/redis; GOGC=10 go test -v -p=4 ./...
 	cd store/rediscluster; GOGC=10 go test -v -p=4 ./...
 	cd store/ristretto; GOGC=10 go test -v -p=4 ./...
+	cd store/rueidis; GOGC=10 go test -v -p=4 ./...
+	cd store/valkey; GOGC=10 go test -v -p=4 ./...

@@ -38,6 +38,8 @@ jobs:
           - redis
           - rediscluster
           - ristretto
+          - rueidis
+          - valkey
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
