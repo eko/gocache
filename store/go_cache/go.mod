@@ -3,7 +3,7 @@ module github.com/eko/gocache/store/go_cache/v4
 go 1.25
 
 require (
-	github.com/eko/gocache/lib/v4 v4.3.0
+	github.com/eko/gocache/lib/v4 v4.4.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
