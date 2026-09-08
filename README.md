@@ -29,6 +29,7 @@ Here is what it brings in detail:
 - [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
 - [Redis](https://github.com/go-redis/redis) (go-redis/redis)
 - [Redis (rueidis)](https://github.com/redis/rueidis) (redis/rueidis)
+- [Valkey](https://github.com/valkey-io/valkey-go) (valkey-io/valkey-go)
 - [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
 - [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
 - [Hazelcast](https://github.com/hazelcast/hazelcast-go-client) (hazelcast-go-client/hazelcast)
@@ -59,6 +60,7 @@ go get github.com/eko/gocache/store/redis/v4
 go get github.com/eko/gocache/store/rediscluster/v4
 go get github.com/eko/gocache/store/rueidis/v4
 go get github.com/eko/gocache/store/ristretto/v4
+go get github.com/eko/gocache/store/valkey/v4
 ```
 
 Then, simply use the following import statements:
@@ -219,6 +221,33 @@ if err != nil {
 }
 log.Printf("Get the key '%s' from the redis cache. Result: %s", "my-key", value)
 ```
+
+#### Valkey
+
+```go
+client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{"127.0.0.1:6379"}})
+if err != nil {
+    panic(err)
+}
+
+cacheManager := cache.New[string](valkey_store.NewValkey(
+    client,
+    store.WithExpiration(15*time.Second),
+    store.WithClientSideCaching(15*time.Second)),
+)
+
+if err = cacheManager.Set(ctx, "my-key", "my-value"); err != nil {
+    panic(err)
+}
+
+value, err := cacheManager.Get(ctx, "my-key")
+if err != nil {
+    log.Fatalf("Failed to get the value from the valkey cache with key '%s': %v", "my-key", err)
+}
+log.Printf("Get the key '%s' from the valkey cache. Result: %s", "my-key", value)
+```
+
+Client-side caching is enabled by default with a 10 seconds expiration, use `store.WithClientSideCaching()` to change it.
 
 #### Freecache
 
