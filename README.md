@@ -35,6 +35,38 @@ Here is what it brings in detail:
 - [Hazelcast](https://github.com/hazelcast/hazelcast-go-client) (hazelcast-go-client/hazelcast)
 - More to come soon
 
+### What each store supports
+
+Stores do not all accept the same value types, and not all of them provide every operation. Keys are always
+strings (Ristretto excepted, where the key type is a generic parameter).
+
+| Store         | Values accepted by `Set()`               | Values returned by `Get()` | Per-key expiration | Tags | `SetIfNotExists()` |
+|---------------|------------------------------------------|----------------------------|--------------------|------|--------------------|
+| Bigcache      | `string`, `[]byte`                       | `[]byte`                   | no, client-wide    | yes  | no                 |
+| Freecache     | `[]byte`                                 | `[]byte`                   | yes                | yes  | no                 |
+| Go-cache      | any                                      | as stored                  | yes                | yes  | yes                |
+| Hazelcast     | any serializable by the client           | as stored                  | yes                | yes  | no                 |
+| Memcache      | `[]byte`                                 | `[]byte`                   | yes                | yes  | yes                |
+| Pegasus       | anything `cast.ToString` handles         | `[]byte`                   | yes                | yes  | no                 |
+| Redis         | anything go-redis can marshal            | `string`                   | yes                | yes  | yes                |
+| Redis cluster | anything go-redis can marshal            | `string`                   | yes                | yes  | yes                |
+| Ristretto     | the store value type `V`                 | `V`                        | yes                | yes¹ | no                 |
+| Rueidis       | `string`, `[]byte`                       | `string`                   | yes                | yes  | no                 |
+| Valkey        | `string`, `[]byte`                       | `string`                   | yes                | yes  | no                 |
+
+¹ Ristretto tags need string keys and a value type able to hold the tag list (`string`, `[]byte` or `any`).
+
+`cache.Cache` converts between `string` and `[]byte` for you, so `cache.New[string](bigcacheStore)` and
+`cache.New[[]byte](redisStore)` both work. To store anything else in a store that only handles bytes, use the
+[marshaler wrapper](#a-marshaler-wrapper).
+
+Two more things worth knowing:
+
+* Bigcache has no per-key TTL, so `GetWithTTL()` reports a fixed 5 minutes in order to stay usable in a `Chain` cache,
+* Ristretto is allowed to drop a `Set()` when its buffers are full — this is by design in
+  [its FAQ](https://github.com/dgraph-io/ristretto#faq) — in which case `Set()` returns an error. Use
+  `store.WithSynchronousSet()` if you need the write to be visible right after the call.
+
 ## Built-in metrics providers
 
 - [Prometheus](https://github.com/prometheus/client_golang)
@@ -197,6 +229,16 @@ switch err {
 }
 ```
 
+`NewRedis()` takes any client satisfying its `RedisClientInterface`, which `redis.UniversalClient` does: the
+same store works against a single node, a Sentinel setup or a cluster, without changing anything but the
+client options.
+
+```go
+redisStore := redis_store.NewRedis(redis.NewUniversalClient(&redis.UniversalOptions{
+	Addrs: []string{"127.0.0.1:6379", "127.0.0.1:6380"},
+}))
+```
+
 #### [Redis Client-Side Caching](https://redis.io/docs/manual/client-side-caching/) (using rueidis)
 
 ```go
@@ -353,7 +395,7 @@ This cache will provide a load function that acts as a callable function and wil
 
 ```go
 type Book struct {
-	ID string
+	ID   string
 	Name string
 }
 
@@ -361,21 +403,29 @@ type Book struct {
 redisClient := redis.NewClient(&redis.Options{Addr: "127.0.0.1:6379"})
 redisStore := redis_store.NewRedis(redisClient)
 
-// Initialize a load function that loads your data from a custom source
-loadFunction := func(ctx context.Context, key any) (*Book, error) {
+// Initialize a load function that loads your data from a custom source.
+// It returns the value, the options to store it with, and an error.
+loadFunction := func(ctx context.Context, key any) ([]byte, []store.Option, error) {
     // ... retrieve value from available source
-    return &Book{ID: 1, Name: "My test amazing book"}, nil
+    book := &Book{ID: "1", Name: "My test amazing book"}
+
+    value, err := msgpack.Marshal(book)
+
+    return value, []store.Option{store.WithExpiration(1 * time.Hour)}, err
 }
 
 // Initialize loadable cache
-cacheManager := cache.NewLoadable[*Book](
+cacheManager := cache.NewLoadable[[]byte](
 	loadFunction,
-	cache.New[*Book](redisStore),
+	cache.New[[]byte](redisStore),
 )
 defer cacheManager.Close()
 
 // ... Then, you can get your data and your function will automatically put them in cache(s)
 ```
+
+Note that the cache type has to be one the store actually handles: Redis cannot store a `*Book` as is, hence
+the marshaling above. Have a look at [the table of what each store supports](#what-each-store-supports).
 
 As for the `Chain` cache, loaded values are stored in the cache in the background: call `Close()` when you don't need the cache anymore to release the goroutine that does it and store the values that are still pending.
 
@@ -439,6 +489,35 @@ marshal.Delete(ctx, "my-key")
 ```
 
 The only thing you have to do is to specify the struct in which you want your value to be un-marshalled as a second argument when calling the `.Get()` method.
+
+### Setting a value only if the key is free
+
+`SetIfNotExists()` writes a value only when the key does not exist yet and reports whether it did, using the
+atomic primitive of the underlying store (`SETNX` for Redis, `add` for Memcache and Go-cache). It is the
+building block for idempotent writes and simple distributed locks, which `Get()` followed by `Set()` cannot
+give you:
+
+```go
+set, err := cacheManager.SetIfNotExists(ctx, "my-lock", "owner-id", store.WithExpiration(30*time.Second))
+if err != nil {
+    panic(err)
+}
+
+if !set {
+    // someone else owns the lock
+}
+```
+
+Stores that have no such primitive return an error wrapping `store.ErrNotSupported`, so it can be told apart
+from a real failure:
+
+```go
+if errors.Is(err, store.ErrNotSupported) {
+    // this store cannot do it atomically
+}
+```
+
+See [the table above](#what-each-store-supports) for the stores that implement it.
 
 ### Cache invalidation using tags
 
