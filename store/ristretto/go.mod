@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.3.0
-	github.com/eko/gocache/lib/v4 v4.2.0
+	github.com/eko/gocache/lib/v4 v4.2.5
 	github.com/stretchr/testify v1.11.1
 )
 

@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/allegro/bigcache/v3 v3.1.0
-	github.com/eko/gocache/lib/v4 v4.2.2
+	github.com/eko/gocache/lib/v4 v4.2.5
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 )

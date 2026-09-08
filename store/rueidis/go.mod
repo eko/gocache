@@ -3,7 +3,7 @@ module github.com/eko/gocache/store/rueidis/v4
 go 1.25
 
 require (
-	github.com/eko/gocache/lib/v4 v4.1.6
+	github.com/eko/gocache/lib/v4 v4.2.5
 	github.com/redis/rueidis v1.0.37
 	github.com/redis/rueidis/mock v1.0.37
 	github.com/redis/rueidis/rueidiscompat v1.0.37

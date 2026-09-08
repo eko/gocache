@@ -3,7 +3,7 @@ module github.com/eko/gocache/store/redis/v4
 go 1.25
 
 require (
-	github.com/eko/gocache/lib/v4 v4.2.0
+	github.com/eko/gocache/lib/v4 v4.2.5
 	github.com/redis/go-redis/v9 v9.13.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
