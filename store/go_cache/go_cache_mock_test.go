@@ -40,6 +40,20 @@ func (m *MockGoCacheClientInterface) EXPECT() *MockGoCacheClientInterfaceMockRec
 	return m.recorder
 }
 
+// Add mocks base method.
+func (m *MockGoCacheClientInterface) Add(k string, x any, d time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Add", k, x, d)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Add indicates an expected call of Add.
+func (mr *MockGoCacheClientInterfaceMockRecorder) Add(k, x, d any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockGoCacheClientInterface)(nil).Add), k, x, d)
+}
+
 // Delete mocks base method.
 func (m *MockGoCacheClientInterface) Delete(k string) {
 	m.ctrl.T.Helper()

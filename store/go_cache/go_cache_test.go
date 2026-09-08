@@ -428,3 +428,72 @@ func TestGoCacheSetWithTagsUsesTagsTTLOption(t *testing.T) {
 	// Then
 	assert.Nil(t, err)
 }
+
+func TestGoCacheSetIfNotExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockGoCacheClientInterface(ctrl)
+	client.EXPECT().Add(cacheKey, cacheValue, 5*time.Second).Return(nil)
+
+	store := NewGoCache(client, lib_store.WithExpiration(3*time.Second))
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue, lib_store.WithExpiration(5*time.Second))
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, set)
+}
+
+func TestGoCacheSetIfNotExistsWhenKeyAlreadyExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockGoCacheClientInterface(ctrl)
+	client.EXPECT().Add(cacheKey, cacheValue, 0*time.Second).
+		Return(fmt.Errorf("Item %s already exists", cacheKey))
+
+	store := NewGoCache(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue)
+
+	// Then
+	assert.Nil(t, err)
+	assert.False(t, set)
+}
+
+func TestGoCacheSetIfNotExistsWithTags(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockGoCacheClientInterface(ctrl)
+	client.EXPECT().Add(cacheKey, cacheValue, 0*time.Second).Return(nil)
+	client.EXPECT().Get("gocache_tag_tag1").Return(nil, false)
+	client.EXPECT().Set("gocache_tag_tag1", map[string]struct{}{"my-key": {}}, 720*time.Hour)
+
+	store := NewGoCache(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue, lib_store.WithTags([]string{"tag1"}))
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, set)
+}

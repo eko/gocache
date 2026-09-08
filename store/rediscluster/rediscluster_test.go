@@ -180,3 +180,46 @@ func TestRedisClusterGetType(t *testing.T) {
 	// When - Then
 	assert.Equal(t, RedisClusterType, store.GetType())
 }
+
+func TestRedisClusterSetIfNotExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+
+	client := NewMockRedisClusterClientInterface(ctrl)
+	client.EXPECT().SetNX(ctx, cacheKey, cacheValue, 5*time.Second).
+		Return(redis.NewBoolResult(true, nil))
+
+	store := NewRedisCluster(client, lib_store.WithExpiration(6*time.Second))
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue, lib_store.WithExpiration(5*time.Second))
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, set)
+}
+
+func TestRedisClusterSetIfNotExistsWhenKeyAlreadyExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	client := NewMockRedisClusterClientInterface(ctrl)
+	client.EXPECT().SetNX(ctx, "my-key", "my-cache-value", time.Duration(0)).
+		Return(redis.NewBoolResult(false, nil))
+
+	store := NewRedisCluster(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, "my-key", "my-cache-value")
+
+	// Then
+	assert.Nil(t, err)
+	assert.False(t, set)
+}

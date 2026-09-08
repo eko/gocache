@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -382,3 +383,99 @@ func testTTLFetchError(t *testing.T, ctx context.Context, client *MockRedisClien
 	assert.Equal(t, nil, value)
 	assert.Equal(t, 0*time.Second, ttl)
 }
+
+func TestRedisSetIfNotExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+
+	client := NewMockRedisClientInterface(ctrl)
+	client.EXPECT().SetNX(ctx, cacheKey, cacheValue, 5*time.Second).
+		Return(redis.NewBoolResult(true, nil))
+
+	store := NewRedis(client, lib_store.WithExpiration(6*time.Second))
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue, lib_store.WithExpiration(5*time.Second))
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, set)
+}
+
+func TestRedisSetIfNotExistsWhenKeyAlreadyExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := "my-cache-value"
+
+	client := NewMockRedisClientInterface(ctrl)
+	client.EXPECT().SetNX(ctx, cacheKey, cacheValue, time.Duration(0)).
+		Return(redis.NewBoolResult(false, nil))
+
+	store := NewRedis(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue)
+
+	// Then
+	assert.Nil(t, err)
+	assert.False(t, set)
+}
+
+func TestRedisSetIfNotExistsWithTags(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+
+	client := NewMockRedisClientInterface(ctrl)
+	client.EXPECT().SetNX(ctx, cacheKey, "my-cache-value", time.Duration(0)).
+		Return(redis.NewBoolResult(true, nil))
+	client.EXPECT().SAdd(ctx, "gocache_tag_tag1", "my-key").Return(&redis.IntCmd{})
+	client.EXPECT().Expire(ctx, "gocache_tag_tag1", 720*time.Hour).Return(&redis.BoolCmd{})
+
+	store := NewRedis(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, "my-cache-value", lib_store.WithTags([]string{"tag1"}))
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, set)
+}
+
+func TestRedisSetIfNotExistsWhenErrorOccurs(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	expectedErr := errors.New("an unexpected error occurred")
+
+	client := NewMockRedisClientInterface(ctrl)
+	client.EXPECT().SetNX(ctx, "my-key", "my-cache-value", time.Duration(0)).
+		Return(redis.NewBoolResult(false, expectedErr))
+
+	store := NewRedis(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, "my-key", "my-cache-value")
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+	assert.False(t, set)
+}
+
+// redis.UniversalClient has to keep satisfying RedisClientInterface so that the
+// same store can be used against a single node, Sentinel or a cluster.
+var _ RedisClientInterface = (redis.UniversalClient)(nil)

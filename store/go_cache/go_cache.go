@@ -25,6 +25,7 @@ type GoCacheClientInterface interface {
 	Get(k string) (any, bool)
 	GetWithExpiration(k string) (any, time.Time, bool)
 	Set(k string, x any, d time.Duration)
+	Add(k string, x any, d time.Duration) error
 	Delete(k string)
 	Flush()
 }
@@ -81,6 +82,27 @@ func (s *GoCacheStore) Set(ctx context.Context, key any, value any, options ...l
 	}
 
 	return nil
+}
+
+// SetIfNotExists defines data in GoCache memory cache for given key identifier
+// only when it does not already exist, and reports whether it has been written
+func (s *GoCacheStore) SetIfNotExists(_ context.Context, key any, value any, options ...lib_store.Option) (bool, error) {
+	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
+
+	// go-cache only fails Add when the key is already there and not expired
+	if err := s.client.Add(key.(string), value, opts.Expiration); err != nil {
+		return false, nil
+	}
+
+	if tags := opts.Tags; len(tags) > 0 {
+		ttl := opts.TagsTTL
+		if ttl == 0 {
+			ttl = TagKeyExpiry
+		}
+		s.setTags(key, tags, ttl)
+	}
+
+	return true, nil
 }
 
 func (s *GoCacheStore) setTags(key any, tags []string, ttl time.Duration) {

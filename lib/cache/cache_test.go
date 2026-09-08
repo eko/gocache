@@ -494,3 +494,63 @@ func TestCacheCloseWhenStoreIsNotCloseable(t *testing.T) {
 	// When - Then
 	assert.Nil(t, cache.Close())
 }
+
+func TestCacheSetIfNotExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	mockedStore := mockstore.NewMockSetIfNotExistsStore(ctrl)
+	mockedStore.EXPECT().SetIfNotExists(ctx, "my-key", "my-value", libstore.OptionsMatcher{
+		Expiration: 5 * time.Second,
+	}).Return(true, nil)
+
+	cache := New[string](mockedStore)
+
+	// When
+	set, err := cache.SetIfNotExists(ctx, "my-key", "my-value", libstore.WithExpiration(5*time.Second))
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, set)
+}
+
+func TestCacheSetIfNotExistsWhenKeyAlreadyExists(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	mockedStore := mockstore.NewMockSetIfNotExistsStore(ctrl)
+	mockedStore.EXPECT().SetIfNotExists(ctx, "my-key", "my-value").Return(false, nil)
+
+	cache := New[string](mockedStore)
+
+	// When
+	set, err := cache.SetIfNotExists(ctx, "my-key", "my-value")
+
+	// Then
+	assert.Nil(t, err)
+	assert.False(t, set)
+}
+
+func TestCacheSetIfNotExistsWhenStoreDoesNotSupportIt(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	mockedStore := mockstore.NewMockStoreInterface(ctrl)
+	mockedStore.EXPECT().GetType().Return("my-store")
+
+	cache := New[string](mockedStore)
+
+	// When
+	set, err := cache.SetIfNotExists(ctx, "my-key", "my-value")
+
+	// Then
+	assert.False(t, set)
+	assert.ErrorIs(t, err, libstore.ErrNotSupported)
+	assert.EqualError(t, err, "operation not supported by this store: my-store")
+}

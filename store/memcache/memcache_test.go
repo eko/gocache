@@ -483,3 +483,72 @@ func TestMemcacheGetType(t *testing.T) {
 	// When - Then
 	assert.Equal(t, MemcacheType, store.GetType())
 }
+
+func TestMemcacheSetIfNotExists(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockMemcacheClientInterface(t)
+	client.EXPECT().Add(&memcache.Item{
+		Key:        cacheKey,
+		Value:      cacheValue,
+		Expiration: int32(5),
+	}).Return(nil)
+
+	store := NewMemcache(client, lib_store.WithExpiration(3*time.Second))
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue, lib_store.WithExpiration(5*time.Second))
+
+	// Then
+	assert.Nil(t, err)
+	assert.True(t, set)
+}
+
+func TestMemcacheSetIfNotExistsWhenKeyAlreadyExists(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	cacheKey := "my-key"
+	cacheValue := []byte("my-cache-value")
+
+	client := NewMockMemcacheClientInterface(t)
+	client.EXPECT().Add(&memcache.Item{
+		Key:   cacheKey,
+		Value: cacheValue,
+	}).Return(memcache.ErrNotStored)
+
+	store := NewMemcache(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, cacheKey, cacheValue)
+
+	// Then
+	assert.Nil(t, err)
+	assert.False(t, set)
+}
+
+func TestMemcacheSetIfNotExistsWhenErrorOccurs(t *testing.T) {
+	// Given
+	ctx := context.Background()
+
+	expectedErr := errors.New("an unexpected error occurred")
+
+	client := NewMockMemcacheClientInterface(t)
+	client.EXPECT().Add(&memcache.Item{
+		Key:   "my-key",
+		Value: []byte("my-cache-value"),
+	}).Return(expectedErr)
+
+	store := NewMemcache(client)
+
+	// When
+	set, err := store.SetIfNotExists(ctx, "my-key", []byte("my-cache-value"))
+
+	// Then
+	assert.Equal(t, expectedErr, err)
+	assert.False(t, set)
+}

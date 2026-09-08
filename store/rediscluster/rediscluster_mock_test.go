@@ -150,6 +150,20 @@ func (mr *MockRedisClusterClientInterfaceMockRecorder) Set(ctx, key, values, exp
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockRedisClusterClientInterface)(nil).Set), ctx, key, values, expiration)
 }
 
+// SetNX mocks base method.
+func (m *MockRedisClusterClientInterface) SetNX(ctx context.Context, key string, values any, expiration time.Duration) *v9.BoolCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetNX", ctx, key, values, expiration)
+	ret0, _ := ret[0].(*v9.BoolCmd)
+	return ret0
+}
+
+// SetNX indicates an expected call of SetNX.
+func (mr *MockRedisClusterClientInterfaceMockRecorder) SetNX(ctx, key, values, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetNX", reflect.TypeOf((*MockRedisClusterClientInterface)(nil).SetNX), ctx, key, values, expiration)
+}
+
 // TTL mocks base method.
 func (m *MockRedisClusterClientInterface) TTL(ctx context.Context, key string) *v9.DurationCmd {
 	m.ctrl.T.Helper()

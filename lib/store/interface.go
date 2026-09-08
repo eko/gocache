@@ -15,3 +15,16 @@ type StoreInterface interface {
 	Clear(ctx context.Context) error
 	GetType() string
 }
+
+// SetIfNotExistsStore is implemented by stores able to atomically write a value
+// only when the key does not exist yet.
+//
+// It is an optional interface: stores whose client has no such primitive do not
+// implement it, and cache.Cache returns ErrNotSupported for them.
+type SetIfNotExistsStore interface {
+	StoreInterface
+
+	// SetIfNotExists sets the value for the given key only when it does not
+	// already exist, and reports whether it has been written.
+	SetIfNotExists(ctx context.Context, key any, value any, options ...Option) (bool, error)
+}

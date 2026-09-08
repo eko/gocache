@@ -15,6 +15,7 @@ type RedisClusterClientInterface interface {
 	TTL(ctx context.Context, key string) *redis.DurationCmd
 	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
 	Set(ctx context.Context, key string, values any, expiration time.Duration) *redis.StatusCmd
+	SetNX(ctx context.Context, key string, values any, expiration time.Duration) *redis.BoolCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
 	FlushAll(ctx context.Context) *redis.StatusCmd
 	SAdd(ctx context.Context, key string, members ...any) *redis.IntCmd
@@ -83,6 +84,23 @@ func (s *RedisClusterStore) Set(ctx context.Context, key any, value any, options
 	}
 
 	return nil
+}
+
+// SetIfNotExists defines data in Redis for given key identifier only when it
+// does not already exist, and reports whether it has been written
+func (s *RedisClusterStore) SetIfNotExists(ctx context.Context, key any, value any, options ...lib_store.Option) (bool, error) {
+	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
+
+	set, err := s.clusclient.SetNX(ctx, key.(string), value, opts.Expiration).Result()
+	if err != nil || !set {
+		return false, err
+	}
+
+	if tags := opts.Tags; len(tags) > 0 {
+		s.setTags(ctx, key, tags)
+	}
+
+	return true, nil
 }
 
 func (s *RedisClusterStore) setTags(ctx context.Context, key any, tags []string) {

@@ -1,6 +1,12 @@
 package store
 
+import "errors"
+
 const NOT_FOUND_ERR string = "value not found in store"
+
+// ErrNotSupported is returned by operations that the underlying store is not
+// able to perform.
+var ErrNotSupported = errors.New("operation not supported by this store")
 
 type NotFound struct {
 	cause error

@@ -105,6 +105,36 @@ func (s *MemcacheStore) Set(ctx context.Context, key any, value any, options ...
 	return nil
 }
 
+// SetIfNotExists defines data in Memcache for given key identifier only when it
+// does not already exist, and reports whether it has been written
+func (s *MemcacheStore) SetIfNotExists(ctx context.Context, key any, value any, options ...lib_store.Option) (bool, error) {
+	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
+
+	item := &memcache.Item{
+		Key:        key.(string),
+		Value:      value.([]byte),
+		Expiration: int32(opts.Expiration.Seconds()),
+	}
+
+	if err := s.client.Add(item); err != nil {
+		if errors.Is(err, memcache.ErrNotStored) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	if tags := opts.Tags; len(tags) > 0 {
+		ttl := opts.TagsTTL
+		if ttl == 0 {
+			ttl = TagKeyExpiry
+		}
+		s.setTags(ctx, key, tags, ttl)
+	}
+
+	return true, nil
+}
+
 func (s *MemcacheStore) setTags(ctx context.Context, key any, tags []string, ttl time.Duration) {
 	group, ctx := errgroup.WithContext(ctx)
 	for _, tag := range tags {

@@ -2,6 +2,7 @@ package codec
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -81,6 +82,28 @@ func (c *Codec) Set(ctx context.Context, key any, value any, options ...store.Op
 	}
 
 	return err
+}
+
+// SetIfNotExists sets a value for a given key identifier only when it does not
+// already exist. It returns store.ErrNotSupported when the underlying store has
+// no atomic primitive to do so.
+func (c *Codec) SetIfNotExists(ctx context.Context, key any, value any, options ...store.Option) (bool, error) {
+	setter, ok := c.store.(store.SetIfNotExistsStore)
+	if !ok {
+		return false, fmt.Errorf("%w: %s", store.ErrNotSupported, c.store.GetType())
+	}
+
+	set, err := setter.SetIfNotExists(ctx, key, value, options...)
+
+	c.statsMtx.Lock()
+	defer c.statsMtx.Unlock()
+	if err == nil {
+		c.stats.SetSuccess++
+	} else {
+		c.stats.SetError++
+	}
+
+	return set, err
 }
 
 // Delete allows to remove a value for a given key identifier
