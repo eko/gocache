@@ -3,7 +3,7 @@ module github.com/eko/gocache/store/hazelcast/v4
 go 1.25
 
 require (
-	github.com/eko/gocache/lib/v4 v4.2.5
+	github.com/eko/gocache/lib/v4 v4.3.0
 	github.com/hazelcast/hazelcast-go-client v1.4.1
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0

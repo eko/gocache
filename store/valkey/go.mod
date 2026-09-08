@@ -3,7 +3,7 @@ module github.com/eko/gocache/store/valkey/v4
 go 1.25
 
 require (
-	github.com/eko/gocache/lib/v4 v4.2.5
+	github.com/eko/gocache/lib/v4 v4.3.0
 	github.com/stretchr/testify v1.11.1
 	github.com/valkey-io/valkey-go v1.0.59
 	github.com/valkey-io/valkey-go/mock v1.0.59
