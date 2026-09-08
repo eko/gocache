@@ -67,12 +67,15 @@ func (s *ValkeyStore) Set(ctx context.Context, key any, value any, options ...li
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
 	ttl := int64(opts.Expiration.Seconds())
 	var cmd valkey.Completed
-	switch value.(type) {
+	switch v := value.(type) {
 	case string:
-		cmd = s.client.B().Set().Key(key.(string)).Value(value.(string)).ExSeconds(ttl).Build()
+		cmd = s.client.B().Set().Key(key.(string)).Value(v).ExSeconds(ttl).Build()
 
 	case []byte:
-		cmd = s.client.B().Set().Key(key.(string)).Value(valkey.BinaryString(value.([]byte))).ExSeconds(ttl).Build()
+		cmd = s.client.B().Set().Key(key.(string)).Value(valkey.BinaryString(v)).ExSeconds(ttl).Build()
+
+	default:
+		return fmt.Errorf("value type not supported by Valkey store: %T", value)
 	}
 	err := s.client.Do(ctx, cmd).Error()
 	if err != nil {

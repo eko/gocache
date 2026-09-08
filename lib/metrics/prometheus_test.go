@@ -215,3 +215,28 @@ func TestNewPrometheusWhenCollectorIsAlreadyRegistered(t *testing.T) {
 	assert.Len(t, metrics, 1)
 	assert.Len(t, metrics[0].GetMetric(), 2)
 }
+
+func TestPrometheusRecordFromCodecDoesNotBlockWhenChannelIsFull(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	testCodec := mockcodec.NewMockCodecInterface(ctrl)
+
+	// Built without NewPrometheus so that no recorder drains the channel
+	metrics := &Prometheus{codecChannel: make(chan codec.CodecInterface, 1)}
+	metrics.codecChannel <- testCodec
+
+	// When
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		metrics.RecordFromCodec(testCodec)
+	}()
+
+	// Then
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("RecordFromCodec blocked while the codec channel was full")
+	}
+}

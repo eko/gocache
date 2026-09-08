@@ -212,3 +212,18 @@ func TestRedisGetType(t *testing.T) {
 	// When - Then
 	assert.Equal(t, RueidisType, store.GetType())
 }
+
+func TestRueidisSetWhenValueTypeIsNotSupported(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	store := NewRueidis(mock.NewClient(ctrl))
+
+	// When
+	err := store.Set(ctx, "my-key", 42)
+
+	// Then
+	assert.EqualError(t, err, "value type not supported by Rueidis store: int")
+}

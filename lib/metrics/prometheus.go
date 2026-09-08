@@ -130,7 +130,14 @@ func (m *Prometheus) recorder() {
 	}
 }
 
-// RecordFromCodec sends the given codec into the codec channel to be read from recorder
+// RecordFromCodec sends the given codec into the codec channel to be read from recorder.
+//
+// It never blocks the caller: recorded values are cumulative, so dropping an
+// update when the recorder cannot keep up only makes the exported values
+// slightly staler instead of slowing down the cache itself.
 func (m *Prometheus) RecordFromCodec(codec codec.CodecInterface) {
-	m.codecChannel <- codec
+	select {
+	case m.codecChannel <- codec:
+	default:
+	}
 }

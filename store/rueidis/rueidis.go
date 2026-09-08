@@ -80,12 +80,15 @@ func (s *RueidisStore) Set(ctx context.Context, key any, value any, options ...l
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
 	ttl := int64(opts.Expiration.Seconds())
 	var cmd rueidis.Completed
-	switch value.(type) {
+	switch v := value.(type) {
 	case string:
-		cmd = s.client.B().Set().Key(key.(string)).Value(value.(string)).ExSeconds(ttl).Build()
+		cmd = s.client.B().Set().Key(key.(string)).Value(v).ExSeconds(ttl).Build()
 
 	case []byte:
-		cmd = s.client.B().Set().Key(key.(string)).Value(rueidis.BinaryString(value.([]byte))).ExSeconds(ttl).Build()
+		cmd = s.client.B().Set().Key(key.(string)).Value(rueidis.BinaryString(v)).ExSeconds(ttl).Build()
+
+	default:
+		return fmt.Errorf("value type not supported by Rueidis store: %T", value)
 	}
 	err := s.client.Do(ctx, cmd).Error()
 	if err != nil {
