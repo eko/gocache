@@ -1,3 +1,9 @@
+// Package pegasus provides a gocache store for Apache Pegasus.
+//
+// Deprecated: this store is built on github.com/XiaoMi/pegasus-go-client, which
+// has been archived upstream since May 2022 and pulls in unmaintained
+// dependencies. It is kept working but no longer developed, and will be removed
+// in the next major version. See https://github.com/eko/gocache/issues/221.
 package pegasus
 
 import (
@@ -42,12 +48,16 @@ type OptionsPegasus struct {
 }
 
 // PegasusStore is a store for Pegasus
+//
+// Deprecated: see the package documentation.
 type PegasusStore struct {
 	client  pegasus.Client
 	options *OptionsPegasus
 }
 
 // NewPegasus creates a new store to pegasus instance(s)
+//
+// Deprecated: see the package documentation.
 func NewPegasus(ctx context.Context, options *OptionsPegasus) (*PegasusStore, error) {
 	if options == nil {
 		options = &OptionsPegasus{}

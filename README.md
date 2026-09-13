@@ -31,7 +31,7 @@ Here is what it brings in detail:
 - [Redis (rueidis)](https://github.com/redis/rueidis) (redis/rueidis)
 - [Valkey](https://github.com/valkey-io/valkey-go) (valkey-io/valkey-go)
 - [Freecache](https://github.com/coocood/freecache) (coocood/freecache)
-- [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/)
+- [Pegasus](https://pegasus.apache.org/) ([apache/incubator-pegasus](https://github.com/apache/incubator-pegasus)) [benchmark](https://pegasus.apache.org/overview/benchmark/) — **deprecated**, see below
 - [Hazelcast](https://github.com/hazelcast/hazelcast-go-client) (hazelcast-go-client/hazelcast)
 - More to come soon
 
@@ -307,8 +307,16 @@ value := cacheManager.Get(ctx, "my-key")
 
 #### Pegasus
 
+> [!WARNING]
+> **This store is deprecated and will be removed in the next major version.** It is built on
+> [XiaoMi/pegasus-go-client](https://github.com/XiaoMi/pegasus-go-client), which has been archived upstream
+> since May 2022 and pulls in unmaintained dependencies. Migrating to
+> [apache/incubator-pegasus](https://github.com/apache/incubator-pegasus) is blocked: that module has no
+> tagged release and its admin API has changed. It keeps working and existing versions stay available, but it
+> is no longer developed — see [#221](https://github.com/eko/gocache/issues/221) if you want to take it over.
+
 ```go
-pegasusStore, err := pegasus_store.NewPegasus(&store.OptionsPegasus{
+pegasusStore, err := pegasus_store.NewPegasus(ctx, &pegasus_store.OptionsPegasus{
     MetaServers: []string{"127.0.0.1:34601", "127.0.0.1:34602", "127.0.0.1:34603"},
 })
 

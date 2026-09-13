@@ -54,6 +54,8 @@ updates:
       prefix: "[gomod/memcache] "
   open-pull-requests-limit: 10
 
+# Deprecated store built on an archived client: a limit of 0 turns off routine
+# version updates while still letting security updates through.
 - package-ecosystem: gomod
   directory: "/store/pegasus"
   schedule:
@@ -61,7 +63,7 @@ updates:
     time: "04:00"
     commit-message:
       prefix: "[gomod/pegasus] "
-  open-pull-requests-limit: 10
+  open-pull-requests-limit: 0
 
 - package-ecosystem: gomod
   directory: "/store/redis"
@@ -97,4 +99,13 @@ updates:
     time: "04:00"
     commit-message:
       prefix: "[gomod/rueidis] "
+  open-pull-requests-limit: 10
+
+- package-ecosystem: gomod
+  directory: "/store/valkey"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/valkey] "
   open-pull-requests-limit: 10
