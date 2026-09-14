@@ -27,6 +27,7 @@ Here is what it brings in detail:
 - [Memory (ristretto)](https://github.com/dgraph-io/ristretto) (dgraph-io/ristretto)
 - [Memory (go-cache)](https://github.com/patrickmn/go-cache) (patrickmn/go-cache)
 - [Memcache](https://github.com/bradfitz/gomemcache) (bradfitz/memcache)
+- [NATS JetStream KV](https://docs.nats.io/nats-concepts/jetstream/key-value-store) (nats-io/nats.go)
 - [Redis](https://github.com/go-redis/redis) (go-redis/redis)
 - [Redis (rueidis)](https://github.com/redis/rueidis) (redis/rueidis)
 - [Valkey](https://github.com/valkey-io/valkey-go) (valkey-io/valkey-go)
@@ -47,6 +48,7 @@ strings (Ristretto excepted, where the key type is a generic parameter).
 | Go-cache      | any                                      | as stored                  | yes                | yes  | yes                |
 | Hazelcast     | any serializable by the client           | as stored                  | yes                | yes  | no                 |
 | Memcache      | `[]byte`                                 | `[]byte`                   | yes                | yes  | yes                |
+| NATS KV       | `string`, `[]byte`                       | `[]byte`                   | no, bucket-wide    | no   | yes                |
 | Pegasus       | anything `cast.ToString` handles         | `[]byte`                   | yes                | yes  | no                 |
 | Redis         | anything go-redis can marshal            | `string`                   | yes                | yes  | yes                |
 | Redis cluster | anything go-redis can marshal            | `string`                   | yes                | yes  | yes                |
@@ -87,6 +89,7 @@ go get github.com/eko/gocache/store/freecache/v4
 go get github.com/eko/gocache/store/go_cache/v4
 go get github.com/eko/gocache/store/hazelcast/v4
 go get github.com/eko/gocache/store/memcache/v4
+go get github.com/eko/gocache/store/nats/v4
 go get github.com/eko/gocache/store/pegasus/v4
 go get github.com/eko/gocache/store/redis/v4
 go get github.com/eko/gocache/store/rediscluster/v4

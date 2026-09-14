@@ -34,6 +34,7 @@ jobs:
           - go_cache
           - hazelcast
           - memcache
+          - nats
           - pegasus
           - redis
           - rediscluster
