@@ -35,6 +35,8 @@ mocks:
 	mockgen -source=store/freecache/freecache.go -destination=store/freecache/freecache_mock_test.go -package=freecache
 	mockgen -source=store/go_cache/go_cache.go -destination=store/go_cache/go_cache_mock_test.go -package=go_cache
 	mockgen -source=store/hazelcast/hazelcast.go -destination=store/hazelcast/hazelcast_mock_test.go -package=hazelcast
+	mockgen -source=store/nats/nats.go -destination=store/nats/nats_mock_test.go -package=nats
+	cd store/nats && mockgen -destination=nats_interfaces_mock_test.go -package=nats github.com/nats-io/nats.go/jetstream KeyValueEntry,KeyValueStatus,KeyLister
 
 test:
 	cd lib; GOGC=10 go test -v -p=4 ./...

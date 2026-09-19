@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	lib_store "github.com/eko/gocache/lib/v4/store"
@@ -20,7 +21,7 @@ type NatsClientInterface interface {
 	Put(ctx context.Context, key string, value []byte) (uint64, error)
 	Create(ctx context.Context, key string, value []byte, opts ...jetstream.KVCreateOpt) (uint64, error)
 	Delete(ctx context.Context, key string, opts ...jetstream.KVDeleteOpt) error
-	Keys(ctx context.Context, opts ...jetstream.WatchOpt) ([]string, error)
+	ListKeys(ctx context.Context, opts ...jetstream.WatchOpt) (jetstream.KeyLister, error)
 	Status(ctx context.Context) (jetstream.KeyValueStatus, error)
 }
 
@@ -28,15 +29,34 @@ var _ NatsClientInterface = (jetstream.KeyValue)(nil)
 
 // NatsStore is a cache store backed by a NATS JetStream key-value bucket.
 type NatsStore struct {
-	client NatsClientInterface
+	client   NatsClientInterface
+	options  *lib_store.Options
+	configMu sync.Mutex
+	config   *jetstream.KeyValueConfig
 }
 
 var _ lib_store.StoreInterface = (*NatsStore)(nil)
 var _ lib_store.SetIfNotExistsStore = (*NatsStore)(nil)
 
 // NewNats creates a store backed by the given JetStream key-value bucket.
-func NewNats(client NatsClientInterface) *NatsStore {
-	return &NatsStore{client: client}
+func NewNats(client NatsClientInterface, options ...lib_store.Option) *NatsStore {
+	return &NatsStore{client: client, options: lib_store.ApplyOptions(options...)}
+}
+
+// bucketConfig caches successful configuration reads. Failed reads can be retried.
+// Construct a new store if the bucket configuration is changed externally.
+func (s *NatsStore) bucketConfig(ctx context.Context) (jetstream.KeyValueConfig, error) {
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+	if s.config == nil {
+		status, err := s.client.Status(ctx)
+		if err != nil {
+			return jetstream.KeyValueConfig{}, err
+		}
+		config := status.Config()
+		s.config = &config
+	}
+	return *s.config, nil
 }
 
 // Get returns data stored for a given key.
@@ -54,6 +74,7 @@ func (s *NatsStore) Get(ctx context.Context, key any) (any, error) {
 
 // GetWithTTL returns data stored for a given key and the remaining bucket TTL.
 // NATS configures expiration on the bucket rather than on individual Put calls.
+// Per-key Create TTLs are not exposed by KeyValueEntry and may expire sooner.
 func (s *NatsStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration, error) {
 	entry, err := s.client.Get(ctx, key.(string))
 	if isNotFound(err) {
@@ -63,12 +84,12 @@ func (s *NatsStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration
 		return nil, 0, err
 	}
 
-	status, err := s.client.Status(ctx)
+	config, err := s.bucketConfig(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	ttl := status.TTL()
+	ttl := config.TTL
 	if ttl > 0 {
 		ttl -= time.Since(entry.Created())
 		if ttl < 0 {
@@ -80,7 +101,11 @@ func (s *NatsStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration
 }
 
 // Set stores a value for a given key.
-func (s *NatsStore) Set(ctx context.Context, key any, value any, _ ...lib_store.Option) error {
+func (s *NatsStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
+	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
+	if opts.Expiration != 0 || len(opts.Tags) > 0 || opts.TagsTTL != 0 {
+		return fmt.Errorf("NATS KV Set does not support per-key expiration or tags: %w", lib_store.ErrNotSupported)
+	}
 	data, err := toBytes(value)
 	if err != nil {
 		return err
@@ -91,13 +116,31 @@ func (s *NatsStore) Set(ctx context.Context, key any, value any, _ ...lib_store.
 }
 
 // SetIfNotExists stores a value only if the key does not already exist.
-func (s *NatsStore) SetIfNotExists(ctx context.Context, key any, value any, _ ...lib_store.Option) (bool, error) {
+func (s *NatsStore) SetIfNotExists(ctx context.Context, key any, value any, options ...lib_store.Option) (bool, error) {
+	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
+	if len(opts.Tags) > 0 || opts.TagsTTL != 0 {
+		return false, fmt.Errorf("NATS KV does not support tags: %w", lib_store.ErrNotSupported)
+	}
+	if opts.Expiration < 0 {
+		return false, fmt.Errorf("NATS KV expiration must not be negative")
+	}
 	data, err := toBytes(value)
 	if err != nil {
 		return false, err
 	}
 
-	_, err = s.client.Create(ctx, key.(string), data)
+	var createOptions []jetstream.KVCreateOpt
+	if opts.Expiration > 0 {
+		config, err := s.bucketConfig(ctx)
+		if err != nil {
+			return false, err
+		}
+		if config.LimitMarkerTTL == 0 {
+			return false, fmt.Errorf("NATS KV per-key expiration requires LimitMarkerTTL on the bucket: %w", lib_store.ErrNotSupported)
+		}
+		createOptions = append(createOptions, jetstream.KeyTTL(opts.Expiration))
+	}
+	_, err = s.client.Create(ctx, key.(string), data, createOptions...)
 	if errors.Is(err, jetstream.ErrKeyExists) {
 		return false, nil
 	}
@@ -117,17 +160,14 @@ func (s *NatsStore) Delete(ctx context.Context, key any) error {
 	return err
 }
 
-// Invalidate reports that tag-based invalidation is not available in NATS KV.
-func (s *NatsStore) Invalidate(_ context.Context, options ...lib_store.InvalidateOption) error {
-	if len(lib_store.ApplyInvalidateOptions(options...).Tags) == 0 {
-		return nil
-	}
-	return fmt.Errorf("NATS KV does not support tag invalidation: %w", lib_store.ErrNotSupported)
+// Invalidate is a no-op because tagged writes are not supported by this store.
+func (s *NatsStore) Invalidate(_ context.Context, _ ...lib_store.InvalidateOption) error {
+	return nil
 }
 
 // Clear removes all current keys from the bucket.
 func (s *NatsStore) Clear(ctx context.Context) error {
-	keys, err := s.client.Keys(ctx)
+	keys, err := s.client.ListKeys(ctx)
 	if errors.Is(err, jetstream.ErrNoKeysFound) {
 		return nil
 	}
@@ -135,12 +175,13 @@ func (s *NatsStore) Clear(ctx context.Context) error {
 		return err
 	}
 
-	for _, key := range keys {
+	defer keys.Stop()
+	for key := range keys.Keys() {
 		if err := s.Delete(ctx, key); err != nil {
 			return err
 		}
 	}
-	return nil
+	return ctx.Err()
 }
 
 // GetType returns the store type.

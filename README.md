@@ -48,7 +48,7 @@ strings (Ristretto excepted, where the key type is a generic parameter).
 | Go-cache      | any                                      | as stored                  | yes                | yes  | yes                |
 | Hazelcast     | any serializable by the client           | as stored                  | yes                | yes  | no                 |
 | Memcache      | `[]byte`                                 | `[]byte`                   | yes                | yes  | yes                |
-| NATS KV       | `string`, `[]byte`                       | `[]byte`                   | no, bucket-wide    | no   | yes                |
+| NATS KV       | `string`, `[]byte`                       | `[]byte`                   | on create only     | no   | yes                |
 | Pegasus       | anything `cast.ToString` handles         | `[]byte`                   | yes                | yes  | no                 |
 | Redis         | anything go-redis can marshal            | `string`                   | yes                | yes  | yes                |
 | Redis cluster | anything go-redis can marshal            | `string`                   | yes                | yes  | yes                |
@@ -365,6 +365,69 @@ if err != nil {
 fmt.Printf("Get the key '%s' from the hazelcast cache. Result: %s", "my-key", value)
 ```
 
+#### NATS
+
+Create a JetStream key-value bucket and pass it to `NewNats`:
+
+```go
+import (
+    "context"
+    "time"
+
+    "github.com/eko/gocache/lib/v4/store"
+    nats_store "github.com/eko/gocache/store/nats/v4"
+    "github.com/nats-io/nats.go"
+    "github.com/nats-io/nats.go/jetstream"
+)
+
+func example() error {
+    nc, err := nats.Connect(nats.DefaultURL)
+    if err != nil { return err }
+    defer nc.Close()
+    js, err := jetstream.New(nc)
+    if err != nil { return err }
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    kv, err := js.CreateOrUpdateKeyValue(ctx, jetstream.KeyValueConfig{
+        Bucket: "cache",
+        TTL: 5*time.Minute,
+        LimitMarkerTTL: 10*time.Second,
+    })
+    if err != nil { return err }
+    cacheStore := nats_store.NewNats(kv)
+    if err := cacheStore.Set(ctx, "key", "value"); err != nil { return err }
+    acquired, err := cacheStore.SetIfNotExists(ctx, "lock", "owner", store.WithExpiration(30*time.Second))
+    if err != nil { return err }
+    if !acquired {
+        // Another owner already holds the lock.
+    }
+    return nil
+}
+```
+
+`Set` uses the bucket TTL and rejects per-key expiration options. `SetIfNotExists`
+uses atomic `Create` and supports positive per-key expiration through `KeyTTL`,
+requiring NATS Server 2.11+ and a bucket with `LimitMarkerTTL` enabled. Negative
+expiration is rejected; zero leaves expiration to the bucket. Constructor options
+are defaults, overridden by per-call options. Tagged writes are rejected;
+`Invalidate` is a no-op, consistent with stores without tag support.
+
+`GetWithTTL` reports remaining **bucket** TTL, not a per-key `Create` TTL (which the
+KeyValue entry API does not expose). Do not use it to extend an expiring lock in
+another cache. Bucket configuration is cached after the first successful read;
+recreate the store after changing that configuration. `Clear` streams keys using
+`ListKeys`, avoiding materializing the entire key list.
+
+The NATS module needs its initial `store/nats/v4.x.y` release tag before its
+`go get` command is available. For integration tests and benchmarks, run a local
+JetStream server and set `NATS_TEST_URL`:
+
+```sh
+cd store/nats
+NATS_TEST_URL=nats://127.0.0.1:4222 go test -race ./...
+NATS_TEST_URL=nats://127.0.0.1:4222 go test -run '^$' -bench . -benchmem
+```
+
 ### A chained cache
 
 Here, we will chain caches in the following order: first in memory with Ristretto store, then in Redis (as a fallback):
@@ -539,7 +602,8 @@ books := marshaler.NewCache[*Book](cache.NewMetric[[]byte](promMetrics, cache.Ne
 ### Setting a value only if the key is free
 
 `SetIfNotExists()` writes a value only when the key does not exist yet and reports whether it did, using the
-atomic primitive of the underlying store (`SETNX` for Redis, `add` for Memcache and Go-cache). It is the
+atomic primitive of the underlying store (`SETNX` for Redis, `add` for Memcache and Go-cache,
+`Create` for NATS JetStream KV). It is the
 building block for idempotent writes and simple distributed locks, which `Get()` followed by `Set()` cannot
 give you:
 
