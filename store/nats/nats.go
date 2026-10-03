@@ -101,10 +101,13 @@ func (s *NatsStore) GetWithTTL(ctx context.Context, key any) (any, time.Duration
 }
 
 // Set stores a value for a given key.
+// Put has no per-key TTL, so the expiration option is ignored and the bucket
+// TTL applies: returning an error here would make ChainCache unable to refill
+// this store, as it always back-propagates values with an expiration.
 func (s *NatsStore) Set(ctx context.Context, key any, value any, options ...lib_store.Option) error {
 	opts := lib_store.ApplyOptionsWithDefault(s.options, options...)
-	if opts.Expiration != 0 || len(opts.Tags) > 0 || opts.TagsTTL != 0 {
-		return fmt.Errorf("NATS KV Set does not support per-key expiration or tags: %w", lib_store.ErrNotSupported)
+	if len(opts.Tags) > 0 || opts.TagsTTL != 0 {
+		return fmt.Errorf("NATS KV does not support tags: %w", lib_store.ErrNotSupported)
 	}
 	data, err := toBytes(value)
 	if err != nil {
@@ -167,16 +170,22 @@ func (s *NatsStore) Invalidate(_ context.Context, _ ...lib_store.InvalidateOptio
 
 // Clear removes all current keys from the bucket.
 func (s *NatsStore) Clear(ctx context.Context) error {
-	keys, err := s.client.ListKeys(ctx)
-	if errors.Is(err, jetstream.ErrNoKeysFound) {
-		return nil
-	}
+	lister, err := s.client.ListKeys(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer keys.Stop()
-	for key := range keys.Keys() {
+	keys := lister.Keys()
+	// The lister goroutine does a blocking send on its channel, which neither
+	// Stop nor a context cancellation can interrupt: it has to be drained for
+	// the goroutine to exit when returning early.
+	defer func() {
+		_ = lister.Stop()
+		for range keys {
+		}
+	}()
+
+	for key := range keys {
 		if err := s.Delete(ctx, key); err != nil {
 			return err
 		}

@@ -113,14 +113,24 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func TestSetRejectsExpirationAndTagsBeforeWriting(t *testing.T) {
+func TestSetRejectsTagsBeforeWriting(t *testing.T) {
 	for _, option := range []lib_store.Option{
-		lib_store.WithExpiration(time.Minute), lib_store.WithExpiration(-time.Second),
 		lib_store.WithTags([]string{"users"}), lib_store.WithTagsTTL(time.Minute),
 	} {
 		client := NewMockNatsClientInterface(gomock.NewController(t))
 		assert.ErrorIs(t, NewNats(client).Set(context.Background(), "key", "value", option), lib_store.ErrNotSupported)
 		assert.ErrorIs(t, NewNats(client, option).Set(context.Background(), "key", "value"), lib_store.ErrNotSupported)
+	}
+}
+
+func TestSetIgnoresExpiration(t *testing.T) {
+	for _, option := range []lib_store.Option{
+		lib_store.WithExpiration(time.Minute), lib_store.WithExpiration(-time.Second),
+	} {
+		client := NewMockNatsClientInterface(gomock.NewController(t))
+		client.EXPECT().Put(gomock.Any(), "key", []byte("value")).Return(uint64(1), nil).Times(2)
+		assert.NoError(t, NewNats(client).Set(context.Background(), "key", "value", option))
+		assert.NoError(t, NewNats(client, option).Set(context.Background(), "key", "value"))
 	}
 }
 
@@ -216,15 +226,48 @@ func TestClearStopsListerOnSuccessAndFailure(t *testing.T) {
 	}
 }
 
-func TestClearListErrors(t *testing.T) {
-	for _, wantErr := range []error{jetstream.ErrNoKeysFound, errors.New("list failed")} {
-		client := NewMockNatsClientInterface(gomock.NewController(t))
-		client.EXPECT().ListKeys(gomock.Any()).Return(nil, wantErr)
-		err := NewNats(client).Clear(context.Background())
-		if errors.Is(wantErr, jetstream.ErrNoKeysFound) {
-			assert.NoError(t, err)
-		} else {
-			assert.ErrorIs(t, err, wantErr)
+// blockingLister mirrors the nats.go keyLister producer: a goroutine doing a
+// blocking send that only ends once the channel has been fully consumed.
+type blockingLister struct {
+	keys chan string
+	done chan struct{}
+}
+
+func newBlockingLister(count int) *blockingLister {
+	lister := &blockingLister{keys: make(chan string), done: make(chan struct{})}
+	go func() {
+		defer close(lister.done)
+		defer close(lister.keys)
+		for i := 0; i < count; i++ {
+			lister.keys <- "key"
 		}
+	}()
+	return lister
+}
+
+func (l *blockingLister) Keys() <-chan string { return l.keys }
+
+func (l *blockingLister) Stop() error { return nil }
+
+func TestClearDrainsListerOnFailure(t *testing.T) {
+	client := NewMockNatsClientInterface(gomock.NewController(t))
+	lister := newBlockingLister(10)
+	wantErr := errors.New("delete failed")
+	client.EXPECT().ListKeys(gomock.Any()).Return(lister, nil)
+	client.EXPECT().Delete(gomock.Any(), "key").Return(wantErr)
+
+	assert.ErrorIs(t, NewNats(client).Clear(context.Background()), wantErr)
+
+	select {
+	case <-lister.done:
+	case <-time.After(time.Second):
+		t.Fatal("lister goroutine is still blocked after Clear returned")
 	}
+}
+
+func TestClearListError(t *testing.T) {
+	wantErr := errors.New("list failed")
+	client := NewMockNatsClientInterface(gomock.NewController(t))
+	client.EXPECT().ListKeys(gomock.Any()).Return(nil, wantErr)
+	assert.ErrorIs(t, NewNats(client).Clear(context.Background()), wantErr)
 }

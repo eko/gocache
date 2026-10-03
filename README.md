@@ -405,7 +405,8 @@ func example() error {
 }
 ```
 
-`Set` uses the bucket TTL and rejects per-key expiration options. `SetIfNotExists`
+`Set` uses the bucket TTL: per-key expiration options are accepted but ignored,
+so the store keeps working behind a `ChainCache`. `SetIfNotExists`
 uses atomic `Create` and supports positive per-key expiration through `KeyTTL`,
 requiring NATS Server 2.11+ and a bucket with `LimitMarkerTTL` enabled. Negative
 expiration is rejected; zero leaves expiration to the bucket. Constructor options

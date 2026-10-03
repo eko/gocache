@@ -71,6 +71,8 @@ func TestIntegrationExpirationAndOverrides(t *testing.T) {
 	written, err = store.SetIfNotExists(ctx, "lock", "new-owner")
 	require.NoError(t, err)
 	require.True(t, written)
+	require.NoError(t, store.Set(ctx, "default-expiration", "value"))
+	require.NoError(t, store.Set(ctx, "chained", "value", lib_store.WithExpiration(time.Minute)))
 }
 
 func TestIntegrationConcurrentCreateAndClear(t *testing.T) {
