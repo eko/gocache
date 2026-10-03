@@ -9,6 +9,31 @@ on:
       - "*"
 
 jobs:
+  test_nats_integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+      - name: Start isolated JetStream server
+        run: |
+          docker run -d --name nats-test -p 4222:4222 nats:2.12.0 -js
+          for attempt in $(seq 1 30); do
+            if docker logs nats-test 2>&1 | grep -q 'Server is ready'; then exit 0; fi
+            sleep 1
+          done
+          docker logs nats-test
+          exit 1
+      - name: Run NATS integration tests
+        working-directory: store/nats
+        env:
+          NATS_TEST_URL: nats://127.0.0.1:4222
+        run: go test -v -race ./...
+      - name: Stop JetStream server
+        if: always()
+        run: docker rm -f nats-test
+
   test_lib:
     runs-on: ubuntu-latest
     strategy:
@@ -34,6 +59,7 @@ jobs:
           - go_cache
           - hazelcast
           - memcache
+          - nats
           - pegasus
           - redis
           - rediscluster

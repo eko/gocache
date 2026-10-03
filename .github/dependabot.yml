@@ -54,6 +54,15 @@ updates:
       prefix: "[gomod/memcache] "
   open-pull-requests-limit: 10
 
+- package-ecosystem: gomod
+  directory: "/store/nats"
+  schedule:
+    interval: daily
+    time: "04:00"
+    commit-message:
+      prefix: "[gomod/nats] "
+  open-pull-requests-limit: 10
+
 # Deprecated store built on an archived client: a limit of 0 turns off routine
 # version updates while still letting security updates through.
 - package-ecosystem: gomod
