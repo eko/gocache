@@ -636,6 +636,15 @@ You can attach some tags to items you create so you can easily invalidate some o
 
 Tags are stored using the same storage you choose for your cache.
 
+> [!WARNING]
+> A tag is stored as its own entry listing the tagged keys, separate from the items themselves. When a store
+> evicts entries to free memory (Redis or Valkey with an `allkeys-*` or `volatile-*` `maxmemory-policy`,
+> Memcache, Bigcache, Freecache, Ristretto, ...), it can drop a tag entry while the items it references are
+> still cached. Invalidating that tag then removes nothing, and those items stay until they expire.
+>
+> If tag invalidation must be reliable, give the store enough memory headroom, or use the `noeviction` policy
+> on Redis and Valkey, and keep an expiration on tagged items so a lost tag only delays their removal.
+
 Here is an example on how to use it:
 
 ```go
