@@ -29,6 +29,46 @@ func TestNewRueidis(t *testing.T) {
 	assert.Equal(t, &lib_store.Options{Expiration: 6 * time.Second, ClientSideCacheExpiration: time.Second * 8}, store.options)
 }
 
+func TestRueidisGetWithTTL(t *testing.T) {
+	ctx := context.Background()
+
+	for _, tc := range []struct {
+		name      string
+		redisTTL  int64
+		wantValue any
+		wantTTL   time.Duration
+		wantMiss  bool
+	}{
+		{name: "returns value and TTL", redisTTL: 10, wantValue: "my-value", wantTTL: 10 * time.Second},
+		{name: "key about to expire is a miss", redisTTL: 0, wantMiss: true},
+		{name: "key expired after get is a miss", redisTTL: -2, wantMiss: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			ctrl := gomock.NewController(t)
+
+			// rueidis mock client
+			client := mock.NewClient(ctrl)
+			client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisString("my-value")))
+			client.EXPECT().DoCache(ctx, mock.Match("TTL", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.RedisInt64(tc.redisTTL)))
+
+			store := NewRueidis(client)
+
+			// When
+			value, ttl, err := store.GetWithTTL(ctx, "my-key")
+
+			// Then
+			if tc.wantMiss {
+				assert.ErrorIs(t, err, lib_store.NotFound{})
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.wantValue, value)
+			assert.Equal(t, tc.wantTTL, ttl)
+		})
+	}
+}
+
 func TestRueidisGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)

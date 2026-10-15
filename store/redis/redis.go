@@ -69,6 +69,13 @@ func (s *RedisStore) GetWithTTL(ctx context.Context, key any) (any, time.Duratio
 		return nil, 0, err
 	}
 
+	// TTL is rounded to whole seconds, so it is 0 in a key's last half second, and -2 once the key
+	// expired after the GET. Returning 0 would mean "no expiration" (e.g. to a chain cache copying
+	// the entry into an upper store), so report both as a miss.
+	if ttl == 0 || ttl == -2 {
+		return nil, 0, lib_store.NotFoundWithCause(redis.Nil)
+	}
+
 	return object, ttl, err
 }
 

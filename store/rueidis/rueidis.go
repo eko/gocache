@@ -61,6 +61,14 @@ func (s *RueidisStore) GetWithTTL(ctx context.Context, key any) (any, time.Durat
 	}
 
 	ttl, _ := s.GetTTL(ctx, key)
+
+	// TTL is rounded to whole seconds, so it is 0 in a key's last half second, and -2 once the key
+	// expired after the GET. Returning 0 would mean "no expiration" (e.g. to a chain cache copying
+	// the entry into an upper store), so report both as a miss.
+	if err == nil && (ttl == 0 || ttl == -2*time.Second) {
+		return nil, 0, lib_store.NotFoundWithCause(rueidis.Nil)
+	}
+
 	return str, ttl, err
 }
 
