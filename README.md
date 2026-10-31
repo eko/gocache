@@ -58,6 +58,10 @@ strings (Ristretto excepted, where the key type is a generic parameter).
 
 ¹ Ristretto tags need string keys and a value type able to hold the tag list (`string`, `[]byte` or `any`).
 
+Memcached does not expose the remaining TTL of an item, so `GetWithTTL()` on the Memcache store returns the
+store default expiration. In a chain, set one with `store.WithExpiration()` on `NewMemcache()`: copies in the
+upper stores use it, and without it they never expire.
+
 `cache.Cache` converts between `string` and `[]byte` for you, so `cache.New[string](bigcacheStore)` and
 `cache.New[[]byte](redisStore)` both work. To store anything else in a store that only handles bytes, use the
 [marshaler wrapper](#a-marshaler-wrapper).

@@ -76,7 +76,15 @@ func (s *MemcacheStore) GetWithTTL(_ context.Context, key any) (any, time.Durati
 		return nil, 0, lib_store.NotFoundWithCause(errors.New("unable to retrieve data from memcache"))
 	}
 
-	return item.Value, time.Duration(item.Expiration) * time.Second, err
+	// The memcached get command does not return an item's expiration, so it comes back as 0, which
+	// means "no expiration" to a chain cache copying the entry into an upper store. Report the store
+	// default instead so that the copy does not outlive the item indefinitely.
+	ttl := time.Duration(item.Expiration) * time.Second
+	if ttl == 0 {
+		ttl = s.options.Expiration
+	}
+
+	return item.Value, ttl, err
 }
 
 // Set defines data in Memcache for given key identifier

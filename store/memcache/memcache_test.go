@@ -111,6 +111,44 @@ func TestMemcacheGetWithTTL(t *testing.T) {
 	assert.Equal(t, 5*time.Second, ttl)
 }
 
+func TestMemcacheGetWithTTLWhenExpirationNotReturned(t *testing.T) {
+	testCases := []struct {
+		name    string
+		options []lib_store.Option
+		wantTTL time.Duration
+	}{
+		{
+			name:    "falls back to the store expiration",
+			options: []lib_store.Option{lib_store.WithExpiration(3 * time.Second)},
+			wantTTL: 3 * time.Second,
+		},
+		{
+			name:    "stays 0 without a store expiration",
+			wantTTL: 0,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// Given
+			ctx := context.Background()
+
+			client := NewMockMemcacheClientInterface(t)
+			client.EXPECT().Get("my-key").Return(&memcache.Item{Value: []byte("my-cache-value")}, nil)
+
+			store := NewMemcache(client, testCase.options...)
+
+			// When
+			value, ttl, err := store.GetWithTTL(ctx, "my-key")
+
+			// Then
+			assert.NoError(t, err)
+			assert.Equal(t, []byte("my-cache-value"), value)
+			assert.Equal(t, testCase.wantTTL, ttl)
+		})
+	}
+}
+
 func TestMemcacheGetWithTTLWhenMissingItem(t *testing.T) {
 	// Given
 	ctx := context.Background()
