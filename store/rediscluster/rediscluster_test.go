@@ -45,6 +45,45 @@ func TestRedisClusterGet(t *testing.T) {
 	assert.NotNil(t, value)
 }
 
+func TestRedisClusterGetWithTTL(t *testing.T) {
+	ctx := context.Background()
+
+	for _, tc := range []struct {
+		name      string
+		redisTTL  time.Duration
+		wantValue any
+		wantTTL   time.Duration
+		wantMiss  bool
+	}{
+		{name: "returns value and TTL", redisTTL: 10 * time.Second, wantValue: "value", wantTTL: 10 * time.Second},
+		{name: "key about to expire is a miss", redisTTL: 0, wantMiss: true},
+		{name: "key expired after get is a miss", redisTTL: -2, wantMiss: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			ctrl := gomock.NewController(t)
+
+			client := NewMockRedisClusterClientInterface(ctrl)
+			client.EXPECT().Get(ctx, "my-key").Return(redis.NewStringResult("value", nil))
+			client.EXPECT().TTL(ctx, "my-key").Return(redis.NewDurationResult(tc.redisTTL, nil))
+
+			store := NewRedisCluster(client)
+
+			// When
+			value, ttl, err := store.GetWithTTL(ctx, "my-key")
+
+			// Then
+			if tc.wantMiss {
+				assert.ErrorIs(t, err, lib_store.NotFound{})
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.wantValue, value)
+			assert.Equal(t, tc.wantTTL, ttl)
+		})
+	}
+}
+
 func TestRedisClusterSet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)

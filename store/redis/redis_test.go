@@ -310,6 +310,34 @@ func TestRedisGetWithTTL(t *testing.T) {
 	t.Run("TTL Fetch Error", func(t *testing.T) {
 		testTTLFetchError(t, ctx, client, store)
 	})
+
+	t.Run("Key About To Expire", func(t *testing.T) {
+		testExpiringKeyIsMiss(t, ctx, client, store, 0)
+	})
+
+	t.Run("Key Expired After Get", func(t *testing.T) {
+		testExpiringKeyIsMiss(t, ctx, client, store, -2)
+	})
+}
+
+// testExpiringKeyIsMiss covers TTL replies that must not reach callers as a 0 ("no expiration") TTL.
+func testExpiringKeyIsMiss(t *testing.T, ctx context.Context, client *MockRedisClientInterface, store *RedisStore, redisTTL time.Duration) {
+	// Given
+	key := "my-key"
+	client.EXPECT().
+		Get(ctx, key).
+		Return(redis.NewStringResult("value", nil))
+	client.EXPECT().
+		TTL(ctx, key).
+		Return(redis.NewDurationResult(redisTTL, nil))
+
+	// When
+	value, ttl, err := store.GetWithTTL(ctx, key)
+
+	// Then
+	assert.ErrorIs(t, err, lib_store.NotFound{})
+	assert.Nil(t, value)
+	assert.Equal(t, 0*time.Second, ttl)
 }
 
 func testReturnsValueAndTTL(t *testing.T, ctx context.Context, client *MockRedisClientInterface, store *RedisStore) {
