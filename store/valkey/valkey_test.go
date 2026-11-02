@@ -29,6 +29,78 @@ func TestNewValkey(t *testing.T) {
 	assert.Equal(t, &lib_store.Options{Expiration: 6 * time.Second, ClientSideCacheExpiration: time.Second * 8}, store.options)
 }
 
+func TestValkeyGetWithTTL(t *testing.T) {
+	ctx := context.Background()
+
+	for _, tc := range []struct {
+		name       string
+		get        valkey.ValkeyMessage
+		valkeyTTL  int64
+		wantTTL    time.Duration
+		wantMiss   bool
+		wantGetErr bool
+	}{
+		{name: "returns value and TTL", get: mock.ValkeyString("my-value"), valkeyTTL: 10, wantTTL: 10 * time.Second},
+		{name: "key without expiry is not a miss", get: mock.ValkeyString("my-value"), valkeyTTL: -1},
+		{name: "key about to expire is a miss", get: mock.ValkeyString("my-value"), valkeyTTL: 0, wantMiss: true},
+		{name: "key expired after get is a miss", get: mock.ValkeyString("my-value"), valkeyTTL: -2, wantMiss: true},
+		{name: "get error is not turned into a miss", get: mock.ValkeyError("WRONGTYPE"), valkeyTTL: 0, wantGetErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			ctrl := gomock.NewController(t)
+
+			// valkey mock client
+			client := mock.NewClient(ctrl)
+			client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(tc.get))
+			client.EXPECT().DoCache(ctx, mock.Match("TTL", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.ValkeyInt64(tc.valkeyTTL))).MaxTimes(1)
+
+			store := NewValkey(client)
+
+			// When
+			value, ttl, err := store.GetWithTTL(ctx, "my-key")
+
+			// Then
+			switch {
+			case tc.wantMiss:
+				assert.ErrorIs(t, err, lib_store.NotFound{})
+				assert.Nil(t, value)
+				assert.Equal(t, time.Duration(0), ttl)
+			case tc.wantGetErr:
+				var valkeyErr *valkey.ValkeyError
+				assert.ErrorAs(t, err, &valkeyErr)
+				assert.NotErrorIs(t, err, lib_store.NotFound{})
+			default:
+				assert.NoError(t, err)
+				assert.Equal(t, "my-value", value)
+				if tc.wantTTL != 0 {
+					assert.Equal(t, tc.wantTTL, ttl)
+				}
+			}
+		})
+	}
+}
+
+func TestValkeyGetWithTTLNotFound(t *testing.T) {
+	// Given
+	ctrl := gomock.NewController(t)
+
+	ctx := context.Background()
+
+	// valkey mock client
+	client := mock.NewClient(ctrl)
+	client.EXPECT().DoCache(ctx, mock.Match("GET", "my-key"), defaultClientSideCacheExpiration).Return(mock.Result(mock.ValkeyNil()))
+
+	store := NewValkey(client)
+
+	// When
+	_, ttl, err := store.GetWithTTL(ctx, "my-key")
+
+	// Then
+	assert.ErrorIs(t, err, lib_store.NotFound{})
+	assert.Equal(t, time.Duration(0), ttl)
+}
+
 func TestValkeyGet(t *testing.T) {
 	// Given
 	ctrl := gomock.NewController(t)
