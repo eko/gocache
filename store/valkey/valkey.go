@@ -57,9 +57,29 @@ func (s *ValkeyStore) GetWithTTL(ctx context.Context, key any) (any, time.Durati
 	res := s.client.DoCache(ctx, cmd, s.options.ClientSideCacheExpiration)
 	str, err := res.ToString()
 	if valkey.IsValkeyNil(err) {
+		return str, 0, lib_store.NotFoundWithCause(err)
+	}
+
+	ttl, _ := s.GetTTL(ctx, key)
+
+	// TTL is 0 in a key's last half second and -2 once it expired after the GET: a miss, not "no expiration".
+	if err == nil && (ttl == 0 || ttl == -2*time.Second) {
+		return nil, 0, lib_store.NotFoundWithCause(valkey.Nil)
+	}
+
+	return str, ttl, err
+}
+
+// GetTTL returns the remaining TTL of a given key
+func (s *ValkeyStore) GetTTL(ctx context.Context, key any) (time.Duration, error) {
+	cmd := s.client.B().Ttl().Key(key.(string)).Cache()
+	res := s.client.DoCache(ctx, cmd, s.options.ClientSideCacheExpiration)
+	castResult, err := res.ToInt64()
+	if valkey.IsValkeyNil(err) {
 		err = lib_store.NotFoundWithCause(err)
 	}
-	return str, time.Duration(res.CacheTTL()) * time.Second, err
+
+	return time.Duration(castResult) * time.Second, err
 }
 
 // Set defines data in Valkey for given key identifier
